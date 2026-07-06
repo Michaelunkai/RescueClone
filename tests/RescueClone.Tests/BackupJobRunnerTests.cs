@@ -87,6 +87,7 @@ public sealed class BackupJobRunnerTests
         Assert.IsNotNull(result.ScriptHooks);
         Assert.AreEqual(2, result.ScriptHooks.Count);
         CollectionAssert.AreEqual(new[] { "pre-backup", "post-backup" }, result.ScriptHooks.Select(h => h.Phase).ToArray());
+        Assert.IsTrue(result.ScriptHooks.All(h => !h.TimedOut));
         Assert.IsTrue(File.ReadAllText(hookLog).Contains("hooked-docs|pre-backup", StringComparison.Ordinal));
         Assert.IsTrue(File.ReadAllText(hookLog).Contains("hooked-docs|post-backup", StringComparison.Ordinal));
 
@@ -94,6 +95,34 @@ public sealed class BackupJobRunnerTests
         Assert.IsNotNull(log);
         Assert.IsNotNull(log.ScriptHooks);
         Assert.AreEqual(2, log.ScriptHooks.Count);
+    }
+
+    [TestMethod]
+    public void RunFailsWhenScriptHookExceedsTimeout()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var slowHook = Path.Combine(root, "slow.cmd");
+        File.WriteAllText(slowHook, """
+        @echo off
+        ping -n 6 127.0.0.1 >nul
+        """);
+        var job = new BackupJobDefinition(
+            "slow-hook",
+            "Slow Hook",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "slow.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            PreBackupScriptPath: slowHook,
+            ScriptHookTimeoutSeconds: 1);
+
+        Assert.ThrowsException<TimeoutException>(() => new BackupJobRunner().Run(job));
     }
 
     [TestMethod]
@@ -118,6 +147,30 @@ public sealed class BackupJobRunnerTests
 
         Assert.IsFalse(result.Valid);
         Assert.IsTrue(result.Errors.Any(e => e.Contains("PreBackupScriptPath", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void ValidateRejectsInvalidScriptHookTimeout()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var job = new BackupJobDefinition(
+            "bad-timeout",
+            "Bad Timeout",
+            Enabled: true,
+            source,
+            Path.Combine(root, "out.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            ScriptHookTimeoutSeconds: 0);
+
+        var result = new BackupJobRunner().Validate(job);
+
+        Assert.IsFalse(result.Valid);
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("ScriptHookTimeoutSeconds", StringComparison.Ordinal)));
     }
 
     [TestMethod]

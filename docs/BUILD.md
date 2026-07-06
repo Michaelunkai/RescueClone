@@ -67,7 +67,8 @@ Backup job JSON example:
   "verifyAfterCreate": true,
   "logDirectory": "F:\\Backups\\Logs",
   "preBackupScriptPath": "F:\\Backups\\Scripts\\before-backup.cmd",
-  "postBackupScriptPath": "F:\\Backups\\Scripts\\after-backup.cmd"
+  "postBackupScriptPath": "F:\\Backups\\Scripts\\after-backup.cmd",
+  "scriptHookTimeoutSeconds": 300
 }
 ```
 

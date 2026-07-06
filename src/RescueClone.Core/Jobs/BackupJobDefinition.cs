@@ -13,7 +13,8 @@ public sealed record BackupJobDefinition(
     bool VerifyAfterCreate,
     string? LogDirectory,
     string? PreBackupScriptPath = null,
-    string? PostBackupScriptPath = null)
+    string? PostBackupScriptPath = null,
+    int? ScriptHookTimeoutSeconds = null)
 {
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? JobId : Name;
@@ -42,6 +43,7 @@ public sealed record BackupScriptHookResult(
     string Phase,
     string ScriptPath,
     int ExitCode,
+    bool TimedOut,
     string Output,
     DateTimeOffset StartedUtc,
     DateTimeOffset FinishedUtc);
