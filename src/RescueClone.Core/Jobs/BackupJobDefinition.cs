@@ -14,7 +14,8 @@ public sealed record BackupJobDefinition(
     string? LogDirectory,
     string? PreBackupScriptPath = null,
     string? PostBackupScriptPath = null,
-    int? ScriptHookTimeoutSeconds = null)
+    int? ScriptHookTimeoutSeconds = null,
+    int? LogRetentionCount = null)
 {
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? JobId : Name;
@@ -35,6 +36,7 @@ public sealed record BackupJobRunResult(
     long OriginalBytes,
     long StoredBytes,
     string LogPath,
+    string HtmlReportPath,
     DateTimeOffset StartedUtc,
     DateTimeOffset FinishedUtc,
     IReadOnlyList<BackupScriptHookResult>? ScriptHooks = null);

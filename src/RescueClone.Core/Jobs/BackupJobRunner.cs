@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -49,6 +50,8 @@ public sealed class BackupJobRunner
             errors.Add($"PostBackupScriptPath does not exist: {job.PostBackupScriptPath}");
         if (job.ScriptHookTimeoutSeconds is <= 0)
             errors.Add("ScriptHookTimeoutSeconds must be greater than zero when set.");
+        if (job.LogRetentionCount is <= 0)
+            errors.Add("LogRetentionCount must be greater than zero when set.");
 
         return new BackupJobValidationResult(errors.Count == 0, errors, warnings);
     }
@@ -85,7 +88,7 @@ public sealed class BackupJobRunner
             hooks.Add(RunScriptHook("post-backup", job.PostBackupScriptPath, job));
 
         var finished = DateTimeOffset.UtcNow;
-        var logPath = WriteRunLog(job, started, finished, created, verified, rootSha, hooks);
+        var reports = WriteRunReports(job, started, finished, created, verified, rootSha, hooks);
         return new BackupJobRunResult(
             job.JobId,
             job.Name,
@@ -95,7 +98,8 @@ public sealed class BackupJobRunner
             created.FileCount,
             created.OriginalBytes,
             created.StoredBytes,
-            logPath,
+            reports.JsonPath,
+            reports.HtmlPath,
             started,
             finished,
             hooks);
@@ -173,14 +177,16 @@ public sealed class BackupJobRunner
         return string.IsNullOrWhiteSpace(error) ? output.Trim() : $"{output.Trim()}{Environment.NewLine}{error.Trim()}".Trim();
     }
 
-    private static string WriteRunLog(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks)
+    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks)
     {
         var directory = string.IsNullOrWhiteSpace(job.LogDirectory)
             ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
             : job.LogDirectory;
         Directory.CreateDirectory(directory);
         var safeId = string.Join("_", job.JobId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
-        var logPath = Path.Combine(directory, $"{safeId}-{started:yyyyMMdd-HHmmss}.json");
+        var stamp = started.ToString("yyyyMMdd-HHmmss");
+        var logPath = Path.Combine(directory, $"{safeId}-{stamp}.json");
+        var htmlPath = Path.Combine(directory, $"{safeId}-{stamp}.html");
         var payload = new BackupJobRunResult(
             job.JobId,
             job.Name,
@@ -191,11 +197,73 @@ public sealed class BackupJobRunner
             report.OriginalBytes,
             report.StoredBytes,
             logPath,
+            htmlPath,
             started,
             finished,
             hooks);
         File.WriteAllText(logPath, JsonSerializer.Serialize(payload, JsonOptions));
-        return logPath;
+        File.WriteAllText(htmlPath, BuildHtmlReport(payload));
+        RotateReports(directory, safeId, job.LogRetentionCount);
+        return new BackupJobReportPaths(logPath, htmlPath);
+    }
+
+    private static string BuildHtmlReport(BackupJobRunResult report)
+    {
+        var hookRows = report.ScriptHooks is null
+            ? string.Empty
+            : string.Join(Environment.NewLine, report.ScriptHooks.Select(h => $"<tr><td>{WebUtility.HtmlEncode(h.Phase)}</td><td>{WebUtility.HtmlEncode(h.ScriptPath)}</td><td>{h.ExitCode}</td><td>{h.TimedOut}</td><td><pre>{WebUtility.HtmlEncode(h.Output)}</pre></td></tr>"));
+
+        return $$"""
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <title>RescueClone Backup Report - {{WebUtility.HtmlEncode(report.JobId)}}</title>
+          <style>
+            body { font-family: Segoe UI, Arial, sans-serif; margin: 24px; color: #1f2937; }
+            table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+            th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
+            th { background: #f3f4f6; }
+            pre { margin: 0; white-space: pre-wrap; }
+          </style>
+        </head>
+        <body>
+          <h1>RescueClone Backup Report</h1>
+          <table>
+            <tr><th>Job</th><td>{{WebUtility.HtmlEncode(report.Name)}} ({{WebUtility.HtmlEncode(report.JobId)}})</td></tr>
+            <tr><th>Image</th><td>{{WebUtility.HtmlEncode(report.ImagePath)}}</td></tr>
+            <tr><th>Verified</th><td>{{report.Verified}}</td></tr>
+            <tr><th>Files</th><td>{{report.FileCount}}</td></tr>
+            <tr><th>Original Bytes</th><td>{{report.OriginalBytes}}</td></tr>
+            <tr><th>Stored Bytes</th><td>{{report.StoredBytes}}</td></tr>
+            <tr><th>Root SHA-256</th><td>{{WebUtility.HtmlEncode(report.RootSha256)}}</td></tr>
+            <tr><th>Started UTC</th><td>{{report.StartedUtc:O}}</td></tr>
+            <tr><th>Finished UTC</th><td>{{report.FinishedUtc:O}}</td></tr>
+          </table>
+          <h2>Script Hooks</h2>
+          <table>
+            <tr><th>Phase</th><th>Script</th><th>Exit Code</th><th>Timed Out</th><th>Output</th></tr>
+            {{hookRows}}
+          </table>
+        </body>
+        </html>
+        """;
+    }
+
+    private static void RotateReports(string directory, string safeId, int? keepCount)
+    {
+        if (keepCount is null)
+            return;
+
+        foreach (var extension in new[] { ".json", ".html" })
+        {
+            var files = Directory.EnumerateFiles(directory, $"{safeId}-*{extension}")
+                .Select(path => new FileInfo(path))
+                .OrderByDescending(file => file.Name, StringComparer.Ordinal)
+                .Skip(keepCount.Value);
+            foreach (var file in files)
+                file.Delete();
+        }
     }
 
     private static JsonSerializerOptions CreateJsonOptions()
@@ -204,4 +272,6 @@ public sealed class BackupJobRunner
         options.Converters.Add(new JsonStringEnumConverter());
         return options;
     }
+
+    private sealed record BackupJobReportPaths(string JsonPath, string HtmlPath);
 }

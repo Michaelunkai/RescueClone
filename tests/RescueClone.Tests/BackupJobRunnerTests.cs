@@ -53,10 +53,13 @@ public sealed class BackupJobRunnerTests
         Assert.AreEqual(1, result.FileCount);
         Assert.IsTrue(File.Exists(result.ImagePath));
         Assert.IsTrue(File.Exists(result.LogPath));
+        Assert.IsTrue(File.Exists(result.HtmlReportPath));
+        StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "RescueClone Backup Report");
 
         var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.IsNotNull(log);
         Assert.AreEqual(result.RootSha256, log.RootSha256);
+        Assert.AreEqual(result.HtmlReportPath, log.HtmlReportPath);
     }
 
     [TestMethod]
@@ -95,6 +98,35 @@ public sealed class BackupJobRunnerTests
         Assert.IsNotNull(log);
         Assert.IsNotNull(log.ScriptHooks);
         Assert.AreEqual(2, log.ScriptHooks.Count);
+    }
+
+    [TestMethod]
+    public void RunRotatesJsonAndHtmlReportsByKeepCount()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var logDirectory = Path.Combine(root, "logs");
+        var job = new BackupJobDefinition(
+            "rotating-docs",
+            "Rotating Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "rotating.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: logDirectory,
+            LogRetentionCount: 1);
+
+        var runner = new BackupJobRunner();
+        runner.Run(job);
+        System.Threading.Thread.Sleep(1100);
+        var second = runner.Run(job);
+
+        CollectionAssert.AreEqual(new[] { second.LogPath }, Directory.GetFiles(logDirectory, "rotating-docs-*.json"));
+        CollectionAssert.AreEqual(new[] { second.HtmlReportPath }, Directory.GetFiles(logDirectory, "rotating-docs-*.html"));
     }
 
     [TestMethod]
@@ -171,6 +203,30 @@ public sealed class BackupJobRunnerTests
 
         Assert.IsFalse(result.Valid);
         Assert.IsTrue(result.Errors.Any(e => e.Contains("ScriptHookTimeoutSeconds", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void ValidateRejectsInvalidLogRetentionCount()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var job = new BackupJobDefinition(
+            "bad-retention",
+            "Bad Retention",
+            Enabled: true,
+            source,
+            Path.Combine(root, "out.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            LogRetentionCount: 0);
+
+        var result = new BackupJobRunner().Validate(job);
+
+        Assert.IsFalse(result.Valid);
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("LogRetentionCount", StringComparison.Ordinal)));
     }
 
     [TestMethod]

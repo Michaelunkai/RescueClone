@@ -68,7 +68,8 @@ Backup job JSON example:
   "logDirectory": "F:\\Backups\\Logs",
   "preBackupScriptPath": "F:\\Backups\\Scripts\\before-backup.cmd",
   "postBackupScriptPath": "F:\\Backups\\Scripts\\after-backup.cmd",
-  "scriptHookTimeoutSeconds": 300
+  "scriptHookTimeoutSeconds": 300,
+  "logRetentionCount": 20
 }
 ```
 
