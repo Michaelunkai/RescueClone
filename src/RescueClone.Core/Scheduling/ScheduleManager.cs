@@ -17,6 +17,9 @@ public sealed class ScheduleManager
             definition.Frequency,
             definition.StartTime,
             definition.RunMissedOnStart,
+            definition.EventLogName,
+            definition.EventId,
+            definition.EventSource,
             xml);
     }
 
@@ -54,20 +57,20 @@ public sealed class ScheduleManager
             throw new ArgumentException("CliPath is required.");
         if (!File.Exists(definition.CliPath))
             throw new FileNotFoundException(definition.CliPath);
+        if (definition.Frequency == ScheduleFrequency.Event)
+        {
+            if (string.IsNullOrWhiteSpace(definition.EventLogName))
+                throw new ArgumentException("EventLogName is required for event schedules.");
+            if (definition.EventId is null or <= 0)
+                throw new ArgumentException("EventId must be greater than zero for event schedules.");
+        }
     }
 
     private static string BuildTaskXml(ScheduleDefinition definition)
     {
         var escapedCli = SecurityElement.Escape(Path.GetFullPath(definition.CliPath));
         var escapedJob = SecurityElement.Escape(Path.GetFullPath(definition.JobFilePath));
-        var startBoundary = DateTime.Today.Add(definition.StartTime.ToTimeSpan()).ToString("s");
-        var trigger = definition.Frequency switch
-        {
-            ScheduleFrequency.Daily => "<ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>",
-            ScheduleFrequency.Weekly => "<ScheduleByWeek><WeeksInterval>1</WeeksInterval><DaysOfWeek><Monday /></DaysOfWeek></ScheduleByWeek>",
-            ScheduleFrequency.Monthly => "<ScheduleByMonth><DaysOfMonth><Day>1</Day></DaysOfMonth><Months><January /><February /><March /><April /><May /><June /><July /><August /><September /><October /><November /><December /></Months></ScheduleByMonth>",
-            _ => throw new ArgumentOutOfRangeException(nameof(definition.Frequency))
-        };
+        var trigger = BuildTriggerXml(definition);
 
         return $$"""
         <?xml version="1.0" encoding="UTF-16"?>
@@ -77,11 +80,7 @@ public sealed class ScheduleManager
             <Description>RescueClone scheduled backup job</Description>
           </RegistrationInfo>
           <Triggers>
-            <CalendarTrigger>
-              <StartBoundary>{{startBoundary}}</StartBoundary>
-              <Enabled>true</Enabled>
-              {{trigger}}
-            </CalendarTrigger>
+            {{trigger}}
           </Triggers>
           <Principals>
             <Principal id="Author">
@@ -116,6 +115,42 @@ public sealed class ScheduleManager
           </Actions>
         </Task>
         """;
+    }
+
+    private static string BuildTriggerXml(ScheduleDefinition definition)
+    {
+        if (definition.Frequency == ScheduleFrequency.Event)
+        {
+            var eventLog = definition.EventLogName!.Trim();
+            var providerClause = string.IsNullOrWhiteSpace(definition.EventSource)
+                ? string.Empty
+                : $" and *[System[Provider[@Name='{definition.EventSource.Trim()}']]]";
+            var subscription = SecurityElement.Escape($"<QueryList><Query Id=\"0\" Path=\"{eventLog}\"><Select Path=\"{eventLog}\">*[System[(EventID={definition.EventId})]]{providerClause}</Select></Query></QueryList>");
+
+            return $$"""
+            <EventTrigger>
+              <Enabled>true</Enabled>
+              <Subscription>{{subscription}}</Subscription>
+            </EventTrigger>
+            """;
+        }
+
+        var startBoundary = DateTime.Today.Add(definition.StartTime.ToTimeSpan()).ToString("s");
+        var trigger = definition.Frequency switch
+        {
+            ScheduleFrequency.Daily => "<ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>",
+            ScheduleFrequency.Weekly => "<ScheduleByWeek><WeeksInterval>1</WeeksInterval><DaysOfWeek><Monday /></DaysOfWeek></ScheduleByWeek>",
+            ScheduleFrequency.Monthly => "<ScheduleByMonth><DaysOfMonth><Day>1</Day></DaysOfMonth><Months><January /><February /><March /><April /><May /><June /><July /><August /><September /><October /><November /><December /></Months></ScheduleByMonth>",
+            _ => throw new ArgumentOutOfRangeException(nameof(definition.Frequency))
+        };
+
+        return $$"""
+            <CalendarTrigger>
+              <StartBoundary>{{startBoundary}}</StartBoundary>
+              <Enabled>true</Enabled>
+              {{trigger}}
+            </CalendarTrigger>
+            """;
     }
 
     private static ScheduleRegistrationReport RunSchTasks(params string[] args)

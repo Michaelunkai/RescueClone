@@ -161,13 +161,19 @@ function Get-RCSchedulePlan {
         [Parameter(Mandatory=$true)][string]$TaskName,
         [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$JobFilePath,
         [string]$CliPath,
-        [ValidateSet('Daily','Weekly','Monthly')][string]$Frequency = 'Daily',
+        [ValidateSet('Daily','Weekly','Monthly','Event')][string]$Frequency = 'Daily',
         [string]$Time = '02:00',
-        [switch]$RunMissed
+        [switch]$RunMissed,
+        [string]$EventLog,
+        [int]$EventId,
+        [string]$EventSource
     )
     $args = @('schedule','plan','--task-name',$TaskName,'--job-file',$JobFilePath,'--frequency',$Frequency,'--time',$Time)
     if ($PSBoundParameters.ContainsKey('CliPath')) { $args += @('--cli-path',$CliPath) }
     if ($RunMissed) { $args += '--run-missed' }
+    if ($PSBoundParameters.ContainsKey('EventLog')) { $args += @('--event-log',$EventLog) }
+    if ($PSBoundParameters.ContainsKey('EventId')) { $args += @('--event-id',[string]$EventId) }
+    if ($PSBoundParameters.ContainsKey('EventSource')) { $args += @('--event-source',$EventSource) }
     Invoke-RCJson -ArgumentList $args
 }
 
@@ -177,14 +183,20 @@ function Register-RCSchedule {
         [Parameter(Mandatory=$true)][string]$TaskName,
         [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$JobFilePath,
         [string]$CliPath,
-        [ValidateSet('Daily','Weekly','Monthly')][string]$Frequency = 'Daily',
+        [ValidateSet('Daily','Weekly','Monthly','Event')][string]$Frequency = 'Daily',
         [string]$Time = '02:00',
-        [switch]$RunMissed
+        [switch]$RunMissed,
+        [string]$EventLog,
+        [int]$EventId,
+        [string]$EventSource
     )
     if ($PSCmdlet.ShouldProcess($TaskName, "Register RescueClone scheduled task")) {
         $args = @('schedule','register','--task-name',$TaskName,'--job-file',$JobFilePath,'--frequency',$Frequency,'--time',$Time)
         if ($PSBoundParameters.ContainsKey('CliPath')) { $args += @('--cli-path',$CliPath) }
         if ($RunMissed) { $args += '--run-missed' }
+        if ($PSBoundParameters.ContainsKey('EventLog')) { $args += @('--event-log',$EventLog) }
+        if ($PSBoundParameters.ContainsKey('EventId')) { $args += @('--event-id',[string]$EventId) }
+        if ($PSBoundParameters.ContainsKey('EventSource')) { $args += @('--event-source',$EventSource) }
         Invoke-RCJson -ArgumentList $args
     }
 }

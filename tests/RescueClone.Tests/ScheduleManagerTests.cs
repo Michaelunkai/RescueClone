@@ -48,6 +48,49 @@ public sealed class ScheduleManagerTests
     }
 
     [TestMethod]
+    public void PlanCreatesEventTriggerXml()
+    {
+        var root = NewTempDirectory();
+        var job = WriteFile(root, "job.json");
+        var cli = WriteFile(root, "rc.exe");
+
+        var plan = new ScheduleManager().Plan(new ScheduleDefinition(
+            "event-docs",
+            job,
+            cli,
+            ScheduleFrequency.Event,
+            new TimeOnly(0, 0),
+            RunMissedOnStart: false,
+            EventLogName: "Application",
+            EventId: 1000,
+            EventSource: "RescueClone"));
+
+        StringAssert.Contains(plan.TaskXml, "<EventTrigger>");
+        StringAssert.Contains(plan.TaskXml, "<Subscription>");
+        StringAssert.Contains(plan.TaskXml, "EventID=1000");
+        StringAssert.Contains(plan.TaskXml, "Provider[@Name=&apos;RescueClone&apos;]");
+        Assert.AreEqual("Application", plan.EventLogName);
+        Assert.AreEqual(1000, plan.EventId);
+        Assert.AreEqual("RescueClone", plan.EventSource);
+    }
+
+    [TestMethod]
+    public void EventScheduleRequiresEventLogAndEventId()
+    {
+        var root = NewTempDirectory();
+        var job = WriteFile(root, "job.json");
+        var cli = WriteFile(root, "rc.exe");
+
+        Assert.ThrowsException<ArgumentException>(() => new ScheduleManager().Plan(new ScheduleDefinition(
+            "broken-event",
+            job,
+            cli,
+            ScheduleFrequency.Event,
+            new TimeOnly(0, 0),
+            RunMissedOnStart: false)));
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesScheduleParity()
     {
         var plan = FeatureCatalog.All.Single(f => f.FeatureId == "schedule.plan");

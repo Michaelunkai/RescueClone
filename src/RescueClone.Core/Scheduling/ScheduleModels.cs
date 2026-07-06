@@ -4,7 +4,8 @@ public enum ScheduleFrequency
 {
     Daily,
     Weekly,
-    Monthly
+    Monthly,
+    Event
 }
 
 public sealed record ScheduleDefinition(
@@ -13,7 +14,10 @@ public sealed record ScheduleDefinition(
     string CliPath,
     ScheduleFrequency Frequency,
     TimeOnly StartTime,
-    bool RunMissedOnStart);
+    bool RunMissedOnStart,
+    string? EventLogName = null,
+    int? EventId = null,
+    string? EventSource = null);
 
 public sealed record SchedulePlan(
     string TaskName,
@@ -22,6 +26,9 @@ public sealed record SchedulePlan(
     ScheduleFrequency Frequency,
     TimeOnly StartTime,
     bool RunMissedOnStart,
+    string? EventLogName,
+    int? EventId,
+    string? EventSource,
     string TaskXml);
 
 public sealed record ScheduleRegistrationReport(

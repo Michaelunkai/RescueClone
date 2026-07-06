@@ -108,7 +108,10 @@ static int RunSchedule(string command, Dictionary<string, string> values)
         values.GetValueOrDefault("cli-path", Environment.ProcessPath ?? "rc.exe"),
         Enum.Parse<ScheduleFrequency>(values.GetValueOrDefault("frequency", "Daily"), ignoreCase: true),
         TimeOnly.Parse(values.GetValueOrDefault("time", "02:00")),
-        values.ContainsKey("run-missed"));
+        values.ContainsKey("run-missed"),
+        values.GetValueOrDefault("event-log"),
+        TryParseInt(values, "event-id"),
+        values.GetValueOrDefault("event-source"));
 
     switch (command)
     {
@@ -281,8 +284,8 @@ static void PrintHelp()
     rc job run --file <job.json> [--force-disabled]
     rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
     rc retention apply --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
-    rc schedule plan --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly] [--time HH:mm] [--run-missed]
-    rc schedule register --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly] [--time HH:mm] [--run-missed]
+    rc schedule plan --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly|Event] [--time HH:mm] [--run-missed] [--event-log <log>] [--event-id <id>] [--event-source <source>]
+    rc schedule register --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly|Event] [--time HH:mm] [--run-missed] [--event-log <log>] [--event-id <id>] [--event-source <source>]
     rc schedule unregister --task-name <name>
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]

@@ -161,6 +161,9 @@ public partial class MainWindow : Window
             string.IsNullOrWhiteSpace(ScheduleCliPathBox.Text) ? Environment.ProcessPath ?? "rc.exe" : ScheduleCliPathBox.Text,
             frequency,
             TimeOnly.Parse(ScheduleTimeBox.Text),
-            ScheduleRunMissedBox.IsChecked == true);
+            ScheduleRunMissedBox.IsChecked == true,
+            EmptyToNull(ScheduleEventLogBox.Text),
+            ParseNullableInt(ScheduleEventIdBox.Text),
+            EmptyToNull(ScheduleEventSourceBox.Text));
     }
 }
