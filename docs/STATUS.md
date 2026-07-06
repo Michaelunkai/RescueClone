@@ -25,11 +25,12 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Job runs can perform post-create verification and write a structured JSON run log.
 - Job runs can execute configured pre-backup and post-backup script hooks non-interactively, fail the job on nonzero hook exit or timeout, and include hook exit/output records in the structured JSON run log.
 - Job runs write paired machine-readable JSON and human-readable HTML reports and can rotate old reports by per-job keep count.
+- Job runs can publish a Windows Application Event Log notification through the built-in Windows event creation tool and record the notification result in JSON and HTML reports.
 - Retention can select and delete `*.rcimg` files by newest-file keep count, max age, and free-space threshold; it does not yet perform GFS chain consolidation.
 - Scheduler registration writes Windows Task Scheduler tasks that run `rc job run --file <job>`, supports daily, weekly, monthly calendar triggers, event-log triggers, and maps missed runs to Task Scheduler `StartWhenAvailable`.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 
-The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, image mounting driver, scheduler service, email notifications, GFS chain consolidation, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
+The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, image mounting driver, scheduler service, email notifications, failure Event Log notifications, GFS chain consolidation, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
 
 The local machine has incomplete .NET SDK payloads under `C:\Program Files\dotnet`. This repo is retargeted to .NET 10 and seeds a project-local SDK from the complete Codex-local cache.
 

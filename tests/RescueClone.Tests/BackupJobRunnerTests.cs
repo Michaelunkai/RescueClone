@@ -130,6 +130,40 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void RunCanWriteWindowsEventLogNotification()
+    {
+        var eventCreate = Path.Combine(Environment.SystemDirectory, "eventcreate.exe");
+        Assert.IsTrue(File.Exists(eventCreate), "eventcreate.exe is required on supported Windows targets.");
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var job = new BackupJobDefinition(
+            "event-log-docs",
+            "Event Log Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "event-log.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            NotifyWindowsEventLog: true);
+
+        var result = new BackupJobRunner().Run(job);
+
+        Assert.IsNotNull(result.WindowsEventLogNotification);
+        Assert.IsTrue(result.WindowsEventLogNotification.Requested);
+        Assert.IsTrue(result.WindowsEventLogNotification.Succeeded, result.WindowsEventLogNotification.Message);
+        StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "Notifications");
+
+        var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.IsNotNull(log);
+        Assert.IsNotNull(log.WindowsEventLogNotification);
+        Assert.IsTrue(log.WindowsEventLogNotification.Succeeded, log.WindowsEventLogNotification.Message);
+    }
+
+    [TestMethod]
     public void RunFailsWhenScriptHookExceedsTimeout()
     {
         var root = NewTempDirectory();

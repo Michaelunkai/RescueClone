@@ -15,7 +15,8 @@ public sealed record BackupJobDefinition(
     string? PreBackupScriptPath = null,
     string? PostBackupScriptPath = null,
     int? ScriptHookTimeoutSeconds = null,
-    int? LogRetentionCount = null)
+    int? LogRetentionCount = null,
+    bool NotifyWindowsEventLog = false)
 {
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? JobId : Name;
@@ -39,7 +40,8 @@ public sealed record BackupJobRunResult(
     string HtmlReportPath,
     DateTimeOffset StartedUtc,
     DateTimeOffset FinishedUtc,
-    IReadOnlyList<BackupScriptHookResult>? ScriptHooks = null);
+    IReadOnlyList<BackupScriptHookResult>? ScriptHooks = null,
+    BackupNotificationResult? WindowsEventLogNotification = null);
 
 public sealed record BackupScriptHookResult(
     string Phase,
@@ -49,3 +51,9 @@ public sealed record BackupScriptHookResult(
     string Output,
     DateTimeOffset StartedUtc,
     DateTimeOffset FinishedUtc);
+
+public sealed record BackupNotificationResult(
+    string Channel,
+    bool Requested,
+    bool Succeeded,
+    string Message);

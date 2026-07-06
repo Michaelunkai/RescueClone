@@ -88,7 +88,8 @@ public sealed class BackupJobRunner
             hooks.Add(RunScriptHook("post-backup", job.PostBackupScriptPath, job));
 
         var finished = DateTimeOffset.UtcNow;
-        var reports = WriteRunReports(job, started, finished, created, verified, rootSha, hooks);
+        var notification = PublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
+        var reports = WriteRunReports(job, started, finished, created, verified, rootSha, hooks, notification);
         return new BackupJobRunResult(
             job.JobId,
             job.Name,
@@ -102,7 +103,8 @@ public sealed class BackupJobRunner
             reports.HtmlPath,
             started,
             finished,
-            hooks);
+            hooks,
+            notification);
     }
 
     private static BackupScriptHookResult RunScriptHook(string phase, string scriptPath, BackupJobDefinition job)
@@ -177,7 +179,42 @@ public sealed class BackupJobRunner
         return string.IsNullOrWhiteSpace(error) ? output.Trim() : $"{output.Trim()}{Environment.NewLine}{error.Trim()}".Trim();
     }
 
-    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks)
+    private static BackupNotificationResult? PublishWindowsEventLogNotification(BackupJobDefinition job, bool success, string message)
+    {
+        if (!job.NotifyWindowsEventLog)
+            return null;
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = Path.Combine(Environment.SystemDirectory, "eventcreate.exe"),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        startInfo.ArgumentList.Add("/L");
+        startInfo.ArgumentList.Add("APPLICATION");
+        startInfo.ArgumentList.Add("/T");
+        startInfo.ArgumentList.Add(success ? "INFORMATION" : "ERROR");
+        startInfo.ArgumentList.Add("/SO");
+        startInfo.ArgumentList.Add("RescueClone");
+        startInfo.ArgumentList.Add("/ID");
+        startInfo.ArgumentList.Add(success ? "1000" : "1001");
+        startInfo.ArgumentList.Add("/D");
+        startInfo.ArgumentList.Add(message);
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start eventcreate.exe.");
+        var output = process.StandardOutput.ReadToEnd();
+        var error = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        return new BackupNotificationResult(
+            "WindowsEventLog",
+            Requested: true,
+            Succeeded: process.ExitCode == 0,
+            Message: CombineOutput(output, error));
+    }
+
+    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification)
     {
         var directory = string.IsNullOrWhiteSpace(job.LogDirectory)
             ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
@@ -200,7 +237,8 @@ public sealed class BackupJobRunner
             htmlPath,
             started,
             finished,
-            hooks);
+            hooks,
+            notification);
         File.WriteAllText(logPath, JsonSerializer.Serialize(payload, JsonOptions));
         File.WriteAllText(htmlPath, BuildHtmlReport(payload));
         RotateReports(directory, safeId, job.LogRetentionCount);
@@ -244,6 +282,13 @@ public sealed class BackupJobRunner
           <table>
             <tr><th>Phase</th><th>Script</th><th>Exit Code</th><th>Timed Out</th><th>Output</th></tr>
             {{hookRows}}
+          </table>
+          <h2>Notifications</h2>
+          <table>
+            <tr><th>Channel</th><td>{{WebUtility.HtmlEncode(report.WindowsEventLogNotification?.Channel ?? "WindowsEventLog")}}</td></tr>
+            <tr><th>Requested</th><td>{{report.WindowsEventLogNotification?.Requested ?? false}}</td></tr>
+            <tr><th>Succeeded</th><td>{{report.WindowsEventLogNotification?.Succeeded ?? false}}</td></tr>
+            <tr><th>Message</th><td><pre>{{WebUtility.HtmlEncode(report.WindowsEventLogNotification?.Message ?? string.Empty)}}</pre></td></tr>
           </table>
         </body>
         </html>

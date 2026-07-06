@@ -69,7 +69,8 @@ Backup job JSON example:
   "preBackupScriptPath": "F:\\Backups\\Scripts\\before-backup.cmd",
   "postBackupScriptPath": "F:\\Backups\\Scripts\\after-backup.cmd",
   "scriptHookTimeoutSeconds": 300,
-  "logRetentionCount": 20
+  "logRetentionCount": 20,
+  "notifyWindowsEventLog": true
 }
 ```
 
