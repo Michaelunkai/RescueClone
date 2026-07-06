@@ -164,6 +164,39 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void RunRethrowsOriginalFailureWhenFailureNotificationIsEnabled()
+    {
+        var eventCreate = Path.Combine(Environment.SystemDirectory, "eventcreate.exe");
+        Assert.IsTrue(File.Exists(eventCreate), "eventcreate.exe is required on supported Windows targets.");
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var failingHook = Path.Combine(root, "fail.cmd");
+        File.WriteAllText(failingHook, """
+        @echo off
+        echo failing hook
+        exit /b 17
+        """);
+        var job = new BackupJobDefinition(
+            "failure-event-log-docs",
+            "Failure Event Log Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "failure-event-log.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            PreBackupScriptPath: failingHook,
+            NotifyWindowsEventLog: true);
+
+        var ex = Assert.ThrowsException<InvalidOperationException>(() => new BackupJobRunner().Run(job));
+
+        StringAssert.Contains(ex.Message, "pre-backup script failed with exit code 17");
+    }
+
+    [TestMethod]
     public void RunFailsWhenScriptHookExceedsTimeout()
     {
         var root = NewTempDirectory();

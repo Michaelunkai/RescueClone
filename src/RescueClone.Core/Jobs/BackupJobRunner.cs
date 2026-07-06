@@ -65,6 +65,19 @@ public sealed class BackupJobRunner
         if (!validation.Valid)
             throw new InvalidOperationException(string.Join(Environment.NewLine, validation.Errors));
 
+        try
+        {
+            return RunValidated(job);
+        }
+        catch (Exception ex)
+        {
+            _ = TryPublishWindowsEventLogNotification(job, success: false, $"Backup job {job.JobId} failed: {ex.Message}");
+            throw;
+        }
+    }
+
+    private BackupJobRunResult RunValidated(BackupJobDefinition job)
+    {
         var started = DateTimeOffset.UtcNow;
         var imageParent = Path.GetDirectoryName(Path.GetFullPath(job.ImagePath));
         if (!string.IsNullOrWhiteSpace(imageParent))
@@ -88,7 +101,7 @@ public sealed class BackupJobRunner
             hooks.Add(RunScriptHook("post-backup", job.PostBackupScriptPath, job));
 
         var finished = DateTimeOffset.UtcNow;
-        var notification = PublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
+        var notification = TryPublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
         var reports = WriteRunReports(job, started, finished, created, verified, rootSha, hooks, notification);
         return new BackupJobRunResult(
             job.JobId,
@@ -179,39 +192,50 @@ public sealed class BackupJobRunner
         return string.IsNullOrWhiteSpace(error) ? output.Trim() : $"{output.Trim()}{Environment.NewLine}{error.Trim()}".Trim();
     }
 
-    private static BackupNotificationResult? PublishWindowsEventLogNotification(BackupJobDefinition job, bool success, string message)
+    private static BackupNotificationResult? TryPublishWindowsEventLogNotification(BackupJobDefinition job, bool success, string message)
     {
         if (!job.NotifyWindowsEventLog)
             return null;
 
-        var startInfo = new ProcessStartInfo
+        try
         {
-            FileName = Path.Combine(Environment.SystemDirectory, "eventcreate.exe"),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        startInfo.ArgumentList.Add("/L");
-        startInfo.ArgumentList.Add("APPLICATION");
-        startInfo.ArgumentList.Add("/T");
-        startInfo.ArgumentList.Add(success ? "INFORMATION" : "ERROR");
-        startInfo.ArgumentList.Add("/SO");
-        startInfo.ArgumentList.Add("RescueClone");
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = Path.Combine(Environment.SystemDirectory, "eventcreate.exe"),
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            startInfo.ArgumentList.Add("/L");
+            startInfo.ArgumentList.Add("APPLICATION");
+            startInfo.ArgumentList.Add("/T");
+            startInfo.ArgumentList.Add(success ? "INFORMATION" : "ERROR");
+            startInfo.ArgumentList.Add("/SO");
+            startInfo.ArgumentList.Add("RescueClone");
         startInfo.ArgumentList.Add("/ID");
-        startInfo.ArgumentList.Add(success ? "1000" : "1001");
-        startInfo.ArgumentList.Add("/D");
-        startInfo.ArgumentList.Add(message);
+            startInfo.ArgumentList.Add(success ? "1000" : "999");
+            startInfo.ArgumentList.Add("/D");
+            startInfo.ArgumentList.Add(message);
 
-        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start eventcreate.exe.");
-        var output = process.StandardOutput.ReadToEnd();
-        var error = process.StandardError.ReadToEnd();
-        process.WaitForExit();
-        return new BackupNotificationResult(
-            "WindowsEventLog",
-            Requested: true,
-            Succeeded: process.ExitCode == 0,
-            Message: CombineOutput(output, error));
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start eventcreate.exe.");
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            return new BackupNotificationResult(
+                "WindowsEventLog",
+                Requested: true,
+                Succeeded: process.ExitCode == 0,
+                Message: CombineOutput(output, error));
+        }
+        catch (Exception ex)
+        {
+            return new BackupNotificationResult(
+                "WindowsEventLog",
+                Requested: true,
+                Succeeded: false,
+                Message: ex.Message);
+        }
     }
 
     private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification)
