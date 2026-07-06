@@ -65,7 +65,9 @@ Backup job JSON example:
   "compression": "High",
   "password": null,
   "verifyAfterCreate": true,
-  "logDirectory": "F:\\Backups\\Logs"
+  "logDirectory": "F:\\Backups\\Logs",
+  "preBackupScriptPath": "F:\\Backups\\Scripts\\before-backup.cmd",
+  "postBackupScriptPath": "F:\\Backups\\Scripts\\after-backup.cmd"
 }
 ```
 

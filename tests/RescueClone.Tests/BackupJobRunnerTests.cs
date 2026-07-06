@@ -60,6 +60,67 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void RunExecutesPreAndPostBackupScriptHooks()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var hookLog = Path.Combine(root, "hook.log");
+        var preHook = WriteHook(root, "pre.cmd", hookLog);
+        var postHook = WriteHook(root, "post.cmd", hookLog);
+        var job = new BackupJobDefinition(
+            "hooked-docs",
+            "Hooked Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "hooked.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            PreBackupScriptPath: preHook,
+            PostBackupScriptPath: postHook);
+
+        var result = new BackupJobRunner().Run(job);
+
+        Assert.IsNotNull(result.ScriptHooks);
+        Assert.AreEqual(2, result.ScriptHooks.Count);
+        CollectionAssert.AreEqual(new[] { "pre-backup", "post-backup" }, result.ScriptHooks.Select(h => h.Phase).ToArray());
+        Assert.IsTrue(File.ReadAllText(hookLog).Contains("hooked-docs|pre-backup", StringComparison.Ordinal));
+        Assert.IsTrue(File.ReadAllText(hookLog).Contains("hooked-docs|post-backup", StringComparison.Ordinal));
+
+        var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.IsNotNull(log);
+        Assert.IsNotNull(log.ScriptHooks);
+        Assert.AreEqual(2, log.ScriptHooks.Count);
+    }
+
+    [TestMethod]
+    public void ValidateRejectsMissingScriptHook()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var job = new BackupJobDefinition(
+            "missing-hook",
+            "Missing Hook",
+            Enabled: true,
+            source,
+            Path.Combine(root, "out.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            PreBackupScriptPath: Path.Combine(root, "missing.cmd"));
+
+        var result = new BackupJobRunner().Validate(job);
+
+        Assert.IsFalse(result.Valid);
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("PreBackupScriptPath", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
     public void LoadAcceptsStringCompressionFromJson()
     {
         var root = NewTempDirectory();
@@ -89,6 +150,16 @@ public sealed class BackupJobRunnerTests
     {
         var path = Path.Combine(Path.GetTempPath(), "rescueclone-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(path);
+        return path;
+    }
+
+    private static string WriteHook(string root, string name, string hookLog)
+    {
+        var path = Path.Combine(root, name);
+        File.WriteAllText(path, $"""
+        @echo off
+        echo %RESCUECLONE_JOB_ID%^|%RESCUECLONE_HOOK_PHASE%^|%RESCUECLONE_SOURCE_PATH%^|%RESCUECLONE_IMAGE_PATH%>>"{hookLog}"
+        """);
         return path;
     }
 }

@@ -11,7 +11,9 @@ public sealed record BackupJobDefinition(
     CompressionMode Compression,
     string? Password,
     bool VerifyAfterCreate,
-    string? LogDirectory)
+    string? LogDirectory,
+    string? PreBackupScriptPath = null,
+    string? PostBackupScriptPath = null)
 {
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? JobId : Name;
@@ -32,5 +34,14 @@ public sealed record BackupJobRunResult(
     long OriginalBytes,
     long StoredBytes,
     string LogPath,
+    DateTimeOffset StartedUtc,
+    DateTimeOffset FinishedUtc,
+    IReadOnlyList<BackupScriptHookResult>? ScriptHooks = null);
+
+public sealed record BackupScriptHookResult(
+    string Phase,
+    string ScriptPath,
+    int ExitCode,
+    string Output,
     DateTimeOffset StartedUtc,
     DateTimeOffset FinishedUtc);
