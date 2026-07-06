@@ -124,3 +124,16 @@ function Get-RCRestorePlan {
     if ($PSBoundParameters.ContainsKey('BcdStorePath')) { $args += @('--bcd-store',$BcdStorePath) }
     Invoke-RCJson -ArgumentList $args
 }
+
+function Start-RCOperation {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$RequestPath,
+        [string]$LogDirectory
+    )
+    if ($PSCmdlet.ShouldProcess($RequestPath, "Run RescueClone operation request")) {
+        $args = @('operation','run','--request',$RequestPath)
+        if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+        Invoke-RCJson -ArgumentList $args
+    }
+}

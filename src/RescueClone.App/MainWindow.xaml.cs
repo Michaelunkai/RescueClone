@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Windows;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Operations;
 using RescueClone.Core.RestorePlanning;
 
 namespace RescueClone.App;
@@ -12,6 +13,7 @@ public partial class MainWindow : Window
     private readonly ImageEngine _engine = new();
     private readonly BackupJobRunner _jobRunner = new();
     private readonly RestorePlanner _restorePlanner = new();
+    private readonly OperationRunner _operationRunner = new();
 
     public MainWindow()
     {
@@ -64,6 +66,13 @@ public partial class MainWindow : Window
                 PlanHasEfiBox.IsChecked == true,
                 EmptyToNull(PlanBcdStorePathBox.Text)));
         });
+    }
+
+    private void RunOperation_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _operationRunner.Run(
+            _operationRunner.LoadRequest(OperationRequestPathBox.Text),
+            EmptyToNull(OperationLogDirectoryBox.Text)));
     }
 
     private void RunAndReport<T>(Func<T> action)

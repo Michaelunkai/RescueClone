@@ -35,6 +35,7 @@ CLI examples:
 .\RC.cmd job validate --file .\backup-job.json
 .\RC.cmd job run --file .\backup-job.json
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
+.\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
 ```
 
 Backup job JSON example:
@@ -53,6 +54,19 @@ Backup job JSON example:
 }
 ```
 
+Operation request JSON example:
+
+```json
+{
+  "kind": "image.verify",
+  "operationId": "verify-sample",
+  "parameters": {
+    "image": "F:\\Backups\\Images\\daily-docs.rcimg",
+    "password": null
+  }
+}
+```
+
 PowerShell examples:
 
 ```powershell
@@ -63,6 +77,7 @@ Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password
 Test-RCBackupJob -Path .\backup-job.json
 Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
+Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
 ```
 
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive.

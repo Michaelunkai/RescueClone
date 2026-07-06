@@ -9,7 +9,9 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for directory restore.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
+- GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
 - A shared engine so all three interfaces execute the same implementation.
+- Local operation runs record operation ID, kind, state, timestamps, result JSON, error text, and an optional report file path.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Job runs can perform post-create verification and write a structured JSON run log.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.

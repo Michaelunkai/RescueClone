@@ -1,6 +1,7 @@
 using System.Text.Json;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Operations;
 using RescueClone.Core.RestorePlanning;
 
 var exitCode = Run(args);
@@ -29,8 +30,11 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "restore")
             return RunRestore(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "operation")
+            return RunOperation(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, or rc restore <plan>.");
+            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc restore <plan>, or rc operation <run>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -69,6 +73,17 @@ static int Run(string[] args)
         Console.Error.WriteLine(ex.Message);
         return 2;
     }
+}
+
+static int RunOperation(string command, Dictionary<string, string> values)
+{
+    if (command != "run")
+        throw new ArgumentException($"Unknown operation command: {command}");
+
+    var runner = new OperationRunner();
+    var request = runner.LoadRequest(Required(values, "request"));
+    WriteJson(runner.Run(request, values.GetValueOrDefault("log-directory")));
+    return 0;
 }
 
 static int RunRestore(string command, Dictionary<string, string> values)
@@ -161,5 +176,6 @@ static void PrintHelp()
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
+    rc operation run --request <operation.json> [--log-directory <dir>]
     """);
 }
