@@ -127,6 +127,27 @@
                     <Button Grid.Row="2" Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Run Operation" Click="RunOperation_Click"/>
                 </Grid>
             </TabItem>
+            <TabItem Header="Retention">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="RetentionRepositoryBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Repository folder"/>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBox x:Name="RetentionPatternBox" Width="160" Text="*.rcimg" ToolTip="File pattern" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RetentionKeepCountBox" Width="120" ToolTip="Keep count" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RetentionMaxAgeDaysBox" Width="120" ToolTip="Max age days" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RetentionMinFreeBytesBox" Width="180" ToolTip="Minimum free bytes"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                        <Button Width="140" Height="34" Content="Plan Retention" Click="PlanRetention_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Apply Retention" Click="ApplyRetention_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
             <TabItem Header="Volumes">
                 <Grid Margin="12">
                     <Button Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Refresh Volumes" Click="RefreshVolumes_Click"/>

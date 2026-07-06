@@ -8,6 +8,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for image verification.
 - GUI, CLI, and PowerShell surfaces for directory restore.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
+- GUI, CLI, and PowerShell surfaces for retention planning and retention enforcement on directory-image repositories.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
 - GUI, CLI, and PowerShell surfaces for read-only volume and disk inventory.
@@ -21,6 +22,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Volume inventory reports drive root, readiness, drive type, file system, label, total/free bytes, and whether the root matches the running Windows system root.
 - Disk inventory reports disk number, friendly name, serial number, partition style, bus type, size, boot/system flags, offline state, and read-only state using built-in Windows storage cmdlets in read-only mode.
 - Job runs can perform post-create verification and write a structured JSON run log.
+- Retention can select and delete `*.rcimg` files by newest-file keep count, max age, and free-space threshold; it does not yet perform GFS chain consolidation.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 
 The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, image mounting driver, scheduler service, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.

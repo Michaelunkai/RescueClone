@@ -1,5 +1,6 @@
 using System.Text.Json;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
 
 namespace RescueClone.Core.Operations;
@@ -74,6 +75,18 @@ public sealed class OperationRunner
                 BoolValue(request, "overwrite"))),
             "job.backup.directory.validate" => _jobRunner.Validate(_jobRunner.Load(RequiredString(request, "file"))),
             "job.backup.directory.run" => _jobRunner.Run(_jobRunner.Load(RequiredString(request, "file")), BoolValue(request, "forceDisabled")),
+            "retention.plan" => new RetentionManager().Plan(new RetentionOptions(
+                RequiredString(request, "repository"),
+                OptionalString(request, "pattern") ?? "*.rcimg",
+                IntValue(request, "keepCount"),
+                IntValue(request, "maxAgeDays"),
+                LongValue(request, "minFreeBytes"))),
+            "retention.apply" => new RetentionManager().Apply(new RetentionOptions(
+                RequiredString(request, "repository"),
+                OptionalString(request, "pattern") ?? "*.rcimg",
+                IntValue(request, "keepCount"),
+                IntValue(request, "maxAgeDays"),
+                LongValue(request, "minFreeBytes"))),
             "restore.plan.readonly" => _restorePlanner.Plan(new RestorePlanOptions(
                 RequiredString(request, "image"),
                 OptionalString(request, "password"),
@@ -143,6 +156,18 @@ public sealed class OperationRunner
             JsonValueKind.Number => value.GetInt64(),
             JsonValueKind.String when long.TryParse(value.GetString(), out var parsed) => parsed,
             _ => throw new ArgumentException($"Operation parameter must be a 64-bit integer: {name}")
+        };
+    }
+
+    private static int? IntValue(OperationRequest request, string name)
+    {
+        if (!request.Parameters.TryGetValue(name, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number => value.GetInt32(),
+            JsonValueKind.String when int.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => throw new ArgumentException($"Operation parameter must be a 32-bit integer: {name}")
         };
     }
 

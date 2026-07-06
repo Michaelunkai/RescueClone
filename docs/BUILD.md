@@ -40,6 +40,8 @@ CLI examples:
 .\RC.cmd image restore --image .\sample.rcimg --target .\sample-restore --password secret
 .\RC.cmd job validate --file .\backup-job.json
 .\RC.cmd job run --file .\backup-job.json
+.\RC.cmd retention plan --repository .\images --pattern *.rcimg --keep-count 3 --max-age-days 30
+.\RC.cmd retention apply --repository .\images --pattern *.rcimg --keep-count 3 --max-age-days 30
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
 .\RC.cmd storage volumes
@@ -85,6 +87,8 @@ Test-RCImage -ImagePath .\sample.rcimg -Password secret
 Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password secret -Confirm:$false
 Test-RCBackupJob -Path .\backup-job.json
 Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
+Get-RCRetentionPlan -RepositoryPath .\images -Pattern *.rcimg -KeepCount 3 -MaxAgeDays 30
+Invoke-RCRetention -RepositoryPath .\images -Pattern *.rcimg -KeepCount 3 -MaxAgeDays 30 -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
 Get-RCVolume

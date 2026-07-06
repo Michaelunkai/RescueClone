@@ -3,6 +3,7 @@ using RescueClone.Core;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
+using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Storage;
 
@@ -32,6 +33,9 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "restore")
             return RunRestore(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "retention")
+            return RunRetention(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length >= 2 && args[0] == "operation")
             return RunOperation(args[1], ParseOptions(args.Skip(2).ToArray()));
 
@@ -42,7 +46,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc restore <plan>, rc operation <run>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc retention <plan|apply>, rc restore <plan>, rc operation <run>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -81,6 +85,29 @@ static int Run(string[] args)
     {
         Console.Error.WriteLine(ex.Message);
         return 2;
+    }
+}
+
+static int RunRetention(string command, Dictionary<string, string> values)
+{
+    var manager = new RetentionManager();
+    var options = new RetentionOptions(
+        Required(values, "repository"),
+        values.GetValueOrDefault("pattern", "*.rcimg"),
+        TryParseInt(values, "keep-count"),
+        TryParseInt(values, "max-age-days"),
+        TryParseLong(values, "min-free-bytes"));
+
+    switch (command)
+    {
+        case "plan":
+            WriteJson(manager.Plan(options));
+            return 0;
+        case "apply":
+            WriteJson(manager.Apply(options));
+            return 0;
+        default:
+            throw new ArgumentException($"Unknown retention command: {command}");
     }
 }
 
@@ -184,6 +211,15 @@ static long? TryParseLong(Dictionary<string, string> values, string key)
     return parsed;
 }
 
+static int? TryParseInt(Dictionary<string, string> values, string key)
+{
+    if (!values.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
+        return null;
+    if (!int.TryParse(value, out var parsed))
+        throw new ArgumentException($"Invalid --{key}: {value}");
+    return parsed;
+}
+
 static string Required(Dictionary<string, string> values, string key)
 {
     if (!values.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
@@ -207,6 +243,8 @@ static void PrintHelp()
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]
+    rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
+    rc retention apply --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]
     rc storage volumes

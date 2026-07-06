@@ -5,6 +5,7 @@ using RescueClone.Core;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
+using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Storage;
 
@@ -16,6 +17,7 @@ public partial class MainWindow : Window
     private readonly BackupJobRunner _jobRunner = new();
     private readonly RestorePlanner _restorePlanner = new();
     private readonly OperationRunner _operationRunner = new();
+    private readonly RetentionManager _retentionManager = new();
     private readonly VolumeEnumerator _volumeEnumerator = new();
     private readonly DiskEnumerator _diskEnumerator = new();
 
@@ -80,6 +82,26 @@ public partial class MainWindow : Window
             EmptyToNull(OperationLogDirectoryBox.Text)));
     }
 
+    private void PlanRetention_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _retentionManager.Plan(new RetentionOptions(
+            RetentionRepositoryBox.Text,
+            string.IsNullOrWhiteSpace(RetentionPatternBox.Text) ? "*.rcimg" : RetentionPatternBox.Text,
+            ParseNullableInt(RetentionKeepCountBox.Text),
+            ParseNullableInt(RetentionMaxAgeDaysBox.Text),
+            ParseNullableLong(RetentionMinFreeBytesBox.Text))));
+    }
+
+    private void ApplyRetention_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _retentionManager.Apply(new RetentionOptions(
+            RetentionRepositoryBox.Text,
+            string.IsNullOrWhiteSpace(RetentionPatternBox.Text) ? "*.rcimg" : RetentionPatternBox.Text,
+            ParseNullableInt(RetentionKeepCountBox.Text),
+            ParseNullableInt(RetentionMaxAgeDaysBox.Text),
+            ParseNullableLong(RetentionMinFreeBytesBox.Text))));
+    }
+
     private void RefreshVolumes_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _volumeEnumerator.ListVolumes());
@@ -108,6 +130,8 @@ public partial class MainWindow : Window
     }
 
     private static string? EmptyToNull(string value) => string.IsNullOrEmpty(value) ? null : value;
+
+    private static int? ParseNullableInt(string value) => string.IsNullOrWhiteSpace(value) ? null : int.Parse(value);
 
     private static long? ParseNullableLong(string value) => string.IsNullOrWhiteSpace(value) ? null : long.Parse(value);
 }

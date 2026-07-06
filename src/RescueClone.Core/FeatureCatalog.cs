@@ -11,6 +11,8 @@ public static class FeatureCatalog
         new("image.restore.directory", "Restore Image", "rc image restore", "Restore-RCImage", true),
         new("job.backup.directory.validate", "Backup Job", "rc job validate", "Test-RCBackupJob", true),
         new("job.backup.directory.run", "Backup Job", "rc job run", "Start-RCBackupJob", true),
+        new("retention.plan", "Retention", "rc retention plan", "Get-RCRetentionPlan", true),
+        new("retention.apply", "Retention", "rc retention apply", "Invoke-RCRetention", true),
         new("restore.plan.readonly", "Restore Plan", "rc restore plan", "Get-RCRestorePlan", true),
         new("operation.run.local", "Operations", "rc operation run", "Start-RCOperation", true),
         new("storage.volume.list", "Volumes", "rc storage volumes", "Get-RCVolume", true),

@@ -9,6 +9,8 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Directory restore | Restore Image tab | `rc image restore` | `Restore-RCImage` |
 | Directory backup job validate | Backup Job tab | `rc job validate` | `Test-RCBackupJob` |
 | Directory backup job run | Backup Job tab | `rc job run` | `Start-RCBackupJob` |
+| Retention plan | Retention tab | `rc retention plan` | `Get-RCRetentionPlan` |
+| Retention apply | Retention tab | `rc retention apply` | `Invoke-RCRetention` |
 | Read-only restore plan | Restore Plan tab | `rc restore plan` | `Get-RCRestorePlan` |
 | Durable local operation run | Operations tab | `rc operation run` | `Start-RCOperation` |
 | Read-only volume inventory | Volumes tab | `rc storage volumes` | `Get-RCVolume` |

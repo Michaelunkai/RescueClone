@@ -121,6 +121,40 @@ function Start-RCBackupJob {
     }
 }
 
+function Get-RCRetentionPlan {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [string]$Pattern = '*.rcimg',
+        [int]$KeepCount,
+        [int]$MaxAgeDays,
+        [long]$MinFreeBytes
+    )
+    $args = @('retention','plan','--repository',$RepositoryPath,'--pattern',$Pattern)
+    if ($PSBoundParameters.ContainsKey('KeepCount')) { $args += @('--keep-count',[string]$KeepCount) }
+    if ($PSBoundParameters.ContainsKey('MaxAgeDays')) { $args += @('--max-age-days',[string]$MaxAgeDays) }
+    if ($PSBoundParameters.ContainsKey('MinFreeBytes')) { $args += @('--min-free-bytes',[string]$MinFreeBytes) }
+    Invoke-RCJson -ArgumentList $args
+}
+
+function Invoke-RCRetention {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [string]$Pattern = '*.rcimg',
+        [int]$KeepCount,
+        [int]$MaxAgeDays,
+        [long]$MinFreeBytes
+    )
+    if ($PSCmdlet.ShouldProcess($RepositoryPath, "Apply RescueClone retention policy")) {
+        $args = @('retention','apply','--repository',$RepositoryPath,'--pattern',$Pattern)
+        if ($PSBoundParameters.ContainsKey('KeepCount')) { $args += @('--keep-count',[string]$KeepCount) }
+        if ($PSBoundParameters.ContainsKey('MaxAgeDays')) { $args += @('--max-age-days',[string]$MaxAgeDays) }
+        if ($PSBoundParameters.ContainsKey('MinFreeBytes')) { $args += @('--min-free-bytes',[string]$MinFreeBytes) }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
 function Get-RCRestorePlan {
     [CmdletBinding()]
     param(
