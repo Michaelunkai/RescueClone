@@ -132,6 +132,11 @@
                     <Button Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Refresh Volumes" Click="RefreshVolumes_Click"/>
                 </Grid>
             </TabItem>
+            <TabItem Header="Disks">
+                <Grid Margin="12">
+                    <Button Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Refresh Disks" Click="RefreshDisks_Click"/>
+                </Grid>
+            </TabItem>
             <TabItem Header="Native Engine">
                 <Grid Margin="12">
                     <Button Width="160" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Native Status" Click="NativeStatus_Click"/>

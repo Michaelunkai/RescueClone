@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly RestorePlanner _restorePlanner = new();
     private readonly OperationRunner _operationRunner = new();
     private readonly VolumeEnumerator _volumeEnumerator = new();
+    private readonly DiskEnumerator _diskEnumerator = new();
 
     public MainWindow()
     {
@@ -82,6 +83,11 @@ public partial class MainWindow : Window
     private void RefreshVolumes_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _volumeEnumerator.ListVolumes());
+    }
+
+    private void RefreshDisks_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _diskEnumerator.ListDisks());
     }
 
     private void NativeStatus_Click(object sender, RoutedEventArgs e)

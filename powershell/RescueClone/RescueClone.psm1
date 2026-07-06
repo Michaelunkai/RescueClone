@@ -45,6 +45,12 @@ function Get-RCVolume {
     Invoke-RCJson -ArgumentList @('storage','volumes')
 }
 
+function Get-RCDisk {
+    [CmdletBinding()]
+    param()
+    Invoke-RCJson -ArgumentList @('storage','disks')
+}
+
 function Get-RCNativeStatus {
     [CmdletBinding()]
     param()

@@ -10,7 +10,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
-- GUI, CLI, and PowerShell surfaces for read-only volume inventory.
+- GUI, CLI, and PowerShell surfaces for read-only volume and disk inventory.
 - GUI, CLI, and PowerShell surfaces for native engine status.
 - A shared engine so all three interfaces execute the same implementation.
 - A native C++ DLL owns v2 block layout planning behind a plain C ABI and is called by the managed image writer.
@@ -19,6 +19,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify and restore read both formats.
 - V2 directory images include block offsets, per-block SHA-256 hashes, file hashes, a root manifest hash, and a fixed footer that points to the manifest.
 - Volume inventory reports drive root, readiness, drive type, file system, label, total/free bytes, and whether the root matches the running Windows system root.
+- Disk inventory reports disk number, friendly name, serial number, partition style, bus type, size, boot/system flags, offline state, and read-only state using built-in Windows storage cmdlets in read-only mode.
 - Job runs can perform post-create verification and write a structured JSON run log.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 
@@ -35,4 +36,5 @@ Portable dependency status:
 - NuGet packages and .NET CLI home are redirected to project-local folders during `scripts\Build-Portable.ps1`.
 - Temporary files are redirected to `.tmp` during build and portable tests.
 - Native C++ output is built to `native\bin\RescueClone.Native.dll` by `scripts\Build-Native.ps1` using an F-local MinGW compiler when available.
+- Disk inventory calls built-in Windows PowerShell and `Get-Disk`; this is an operating-system dependency and does not install new C-drive tooling.
 - After `.dotnet-sdk` is seeded, normal build and runtime paths are project-local. The default seed source is still C on this host unless a different SDK root is passed.

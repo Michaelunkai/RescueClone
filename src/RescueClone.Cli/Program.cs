@@ -86,10 +86,17 @@ static int Run(string[] args)
 
 static int RunStorage(string command)
 {
-    if (command != "volumes")
-        throw new ArgumentException($"Unknown storage command: {command}");
-    WriteJson(new VolumeEnumerator().ListVolumes());
-    return 0;
+    switch (command)
+    {
+        case "volumes":
+            WriteJson(new VolumeEnumerator().ListVolumes());
+            return 0;
+        case "disks":
+            WriteJson(new DiskEnumerator().ListDisks());
+            return 0;
+        default:
+            throw new ArgumentException($"Unknown storage command: {command}");
+    }
 }
 
 static int RunNative(string command)
@@ -203,6 +210,7 @@ static void PrintHelp()
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]
     rc storage volumes
+    rc storage disks
     rc native status
     """);
 }

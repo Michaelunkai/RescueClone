@@ -14,6 +14,7 @@ public static class FeatureCatalog
         new("restore.plan.readonly", "Restore Plan", "rc restore plan", "Get-RCRestorePlan", true),
         new("operation.run.local", "Operations", "rc operation run", "Start-RCOperation", true),
         new("storage.volume.list", "Volumes", "rc storage volumes", "Get-RCVolume", true),
+        new("storage.disk.list", "Disks", "rc storage disks", "Get-RCDisk", true),
         new("native.status", "Native Engine", "rc native status", "Get-RCNativeStatus", true)
     };
 
