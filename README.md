@@ -1,0 +1,29 @@
+# RescueClone
+
+RescueClone is a clean-room Windows backup/recovery suite foundation. The current verified slice supports directory image creation, verification, and restore through the GUI, CLI, and PowerShell module.
+
+This is not a Macrium Reflect clone. It does not currently implement VSS disk imaging, boot repair, kernel drivers, image mounting, rescue media, scheduler services, or bare-metal restore.
+
+## Portable Build
+
+```powershell
+.\scripts\Build-Portable.ps1
+.\scripts\Test-Portable.ps1
+```
+
+Published runtime entry points:
+
+- CLI: `.\RC.cmd`
+- GUI: `.\RUN-GUI.cmd`
+- PowerShell: `Import-Module .\powershell\RescueClone\RescueClone.psd1 -Force`
+
+The portable build writes dependency/cache material under this project folder instead of the user profile:
+
+- `.dotnet-sdk` when `scripts\Install-FLocalDotNet.ps1` is run
+- `.nuget-packages`
+- `.dotnet-home`
+- `.tmp`
+- `publish\cli`
+- `publish\gui`
+
+Build-time note: run `scripts\Install-FLocalDotNet.ps1` once to seed `.dotnet-sdk` from the complete Codex-local .NET 10 SDK cache. After that, `scripts\Build-Portable.ps1` uses `.dotnet-sdk\dotnet.exe` and avoids `C:\Program Files\dotnet` for builds too.

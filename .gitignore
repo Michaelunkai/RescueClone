@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.nuget-packages/
+.dotnet-home/
+.dotnet-sdk/
+.tmp/
+proof/
+publish/
+artifacts/
+TestResults/
+.serena/
+*.user
