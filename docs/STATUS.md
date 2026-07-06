@@ -11,7 +11,9 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
 - GUI, CLI, and PowerShell surfaces for read-only volume inventory.
+- GUI, CLI, and PowerShell surfaces for native engine status.
 - A shared engine so all three interfaces execute the same implementation.
+- A native C++ DLL owns v2 block layout planning behind a plain C ABI and is called by the managed image writer.
 - Local operation runs record operation ID, kind, state, timestamps, result JSON, error text, and an optional report file path.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify and restore read both formats.
@@ -32,4 +34,5 @@ Portable dependency status:
 - `scripts\Install-FLocalDotNet.ps1` can seed a project-local `.dotnet-sdk`.
 - NuGet packages and .NET CLI home are redirected to project-local folders during `scripts\Build-Portable.ps1`.
 - Temporary files are redirected to `.tmp` during build and portable tests.
+- Native C++ output is built to `native\bin\RescueClone.Native.dll` by `scripts\Build-Native.ps1` using an F-local MinGW compiler when available.
 - After `.dotnet-sdk` is seeded, normal build and runtime paths are project-local. The default seed source is still C on this host unless a different SDK root is passed.

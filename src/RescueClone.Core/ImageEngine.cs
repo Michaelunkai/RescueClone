@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using RescueClone.Core.Native;
 
 namespace RescueClone.Core;
 
@@ -85,15 +86,14 @@ public sealed class ImageEngine
             var raw = File.ReadAllBytes(file);
             var fileHash = Convert.ToHexString(SHA256.HashData(raw)).ToLowerInvariant();
             var blocks = new List<V2BlockEntry>();
-            for (var offset = 0; offset < raw.Length; offset += V2BlockSize)
+            foreach (var plan in NativeBlockPlanner.PlanV2Blocks(raw.LongLength, V2BlockSize))
             {
-                var length = Math.Min(V2BlockSize, raw.Length - offset);
-                var block = raw.AsSpan(offset, length).ToArray();
+                var block = raw.AsSpan(checked((int)plan.Offset), plan.Length).ToArray();
                 var stored = EncodePayload(block, options.Compression, options.Password);
                 var blockHash = Convert.ToHexString(SHA256.HashData(block)).ToLowerInvariant();
                 var payloadOffset = output.Position;
                 output.Write(stored);
-                blocks.Add(new V2BlockEntry(blocks.Count, payloadOffset, length, stored.LongLength, blockHash));
+                blocks.Add(new V2BlockEntry(plan.Index, payloadOffset, plan.Length, stored.LongLength, blockHash));
                 storedBytes += stored.LongLength;
             }
 

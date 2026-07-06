@@ -45,6 +45,12 @@ function Get-RCVolume {
     Invoke-RCJson -ArgumentList @('storage','volumes')
 }
 
+function Get-RCNativeStatus {
+    [CmdletBinding()]
+    param()
+    Invoke-RCJson -ArgumentList @('native','status')
+}
+
 function New-RCImage {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

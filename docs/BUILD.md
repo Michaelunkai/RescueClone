@@ -18,6 +18,12 @@ It publishes normal-use executables here:
 - `publish\cli\rc.exe`
 - `publish\gui\RescueClone.App.exe`
 
+It also builds the native C++ engine boundary here:
+
+- `native\bin\RescueClone.Native.dll`
+
+`scripts\Build-Native.ps1` auto-detects an F-local MinGW `g++.exe`; pass `-CompilerPath` to use a different compiler path.
+
 Direct SDK build commands are still available for development:
 
 ```powershell
@@ -37,6 +43,7 @@ CLI examples:
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
 .\RC.cmd storage volumes
+.\RC.cmd native status
 ```
 
 Backup job JSON example:
@@ -80,6 +87,7 @@ Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
 Get-RCVolume
+Get-RCNativeStatus
 ```
 
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive.

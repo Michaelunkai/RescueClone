@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Windows;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Storage;
@@ -81,6 +82,11 @@ public partial class MainWindow : Window
     private void RefreshVolumes_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _volumeEnumerator.ListVolumes());
+    }
+
+    private void NativeStatus_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(NativeDiagnostics.GetStatus);
     }
 
     private void RunAndReport<T>(Func<T> action)

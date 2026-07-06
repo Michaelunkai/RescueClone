@@ -12,5 +12,6 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Read-only restore plan | Restore Plan tab | `rc restore plan` | `Get-RCRestorePlan` |
 | Durable local operation run | Operations tab | `rc operation run` | `Start-RCOperation` |
 | Read-only volume inventory | Volumes tab | `rc storage volumes` | `Get-RCVolume` |
+| Native engine status | Native Engine tab | `rc native status` | `Get-RCNativeStatus` |
 
 The test suite asserts that every implemented feature has GUI, CLI, and PowerShell entries in the catalog. New functionality must be added to all three surfaces before it is marked implemented.

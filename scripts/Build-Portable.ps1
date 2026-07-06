@@ -32,6 +32,8 @@ function Invoke-Native {
     }
 }
 
+& (Join-Path $Root 'scripts\Build-Native.ps1') | Out-Host
+
 Invoke-Native $DotNet @('restore', (Join-Path $Root 'RescueClone.sln'), '--packages', $env:NUGET_PACKAGES, '-r', 'win-x64')
 Invoke-Native $DotNet @('test', (Join-Path $Root 'RescueClone.sln'), '-c', $Configuration, '--no-restore')
 
@@ -43,15 +45,23 @@ if (Test-Path -LiteralPath $guiOut) { Remove-Item -LiteralPath $guiOut -Recurse 
 Invoke-Native $DotNet @('publish', (Join-Path $Root 'src\RescueClone.Cli\rc.csproj'), '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:PublishSingleFile=true', '-p:IncludeNativeLibrariesForSelfExtract=true', '-o', $cliOut, '--no-restore')
 Invoke-Native $DotNet @('publish', (Join-Path $Root 'src\RescueClone.App\RescueClone.App.csproj'), '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:PublishSingleFile=true', '-p:IncludeNativeLibrariesForSelfExtract=true', '-o', $guiOut, '--no-restore')
 
+$nativeDll = Join-Path $Root 'native\bin\RescueClone.Native.dll'
+if (-not (Test-Path -LiteralPath $nativeDll)) { throw "Missing native DLL: $nativeDll" }
+Copy-Item -LiteralPath $nativeDll -Destination (Join-Path $cliOut 'RescueClone.Native.dll') -Force
+Copy-Item -LiteralPath $nativeDll -Destination (Join-Path $guiOut 'RescueClone.Native.dll') -Force
+
 $cliExe = Join-Path $cliOut 'rc.exe'
 $guiExe = Join-Path $guiOut 'RescueClone.App.exe'
 if (-not (Test-Path -LiteralPath $cliExe)) { throw "Missing CLI publish output: $cliExe" }
 if (-not (Test-Path -LiteralPath $guiExe)) { throw "Missing GUI publish output: $guiExe" }
+if (-not (Test-Path -LiteralPath (Join-Path $cliOut 'RescueClone.Native.dll'))) { throw "Missing CLI native publish output." }
+if (-not (Test-Path -LiteralPath (Join-Path $guiOut 'RescueClone.Native.dll'))) { throw "Missing GUI native publish output." }
 
 [pscustomobject]@{
     Root = $Root
     CliExe = $cliExe
     GuiExe = $guiExe
+    NativeDll = $nativeDll
     DotNet = $DotNet
     NuGetPackages = $env:NUGET_PACKAGES
     DotNetCliHome = $env:DOTNET_CLI_HOME
