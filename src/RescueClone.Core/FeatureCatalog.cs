@@ -12,7 +12,8 @@ public static class FeatureCatalog
         new("job.backup.directory.validate", "Backup Job", "rc job validate", "Test-RCBackupJob", true),
         new("job.backup.directory.run", "Backup Job", "rc job run", "Start-RCBackupJob", true),
         new("restore.plan.readonly", "Restore Plan", "rc restore plan", "Get-RCRestorePlan", true),
-        new("operation.run.local", "Operations", "rc operation run", "Start-RCOperation", true)
+        new("operation.run.local", "Operations", "rc operation run", "Start-RCOperation", true),
+        new("storage.volume.list", "Volumes", "rc storage volumes", "Get-RCVolume", true)
     };
 
     public static void AssertImplementedParity()

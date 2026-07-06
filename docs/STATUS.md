@@ -10,11 +10,13 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
+- GUI, CLI, and PowerShell surfaces for read-only volume inventory.
 - A shared engine so all three interfaces execute the same implementation.
 - Local operation runs record operation ID, kind, state, timestamps, result JSON, error text, and an optional report file path.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify and restore read both formats.
 - V2 directory images include block offsets, per-block SHA-256 hashes, file hashes, a root manifest hash, and a fixed footer that points to the manifest.
+- Volume inventory reports drive root, readiness, drive type, file system, label, total/free bytes, and whether the root matches the running Windows system root.
 - Job runs can perform post-create verification and write a structured JSON run log.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 

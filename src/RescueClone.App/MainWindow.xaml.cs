@@ -5,6 +5,7 @@ using RescueClone.Core;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Operations;
 using RescueClone.Core.RestorePlanning;
+using RescueClone.Core.Storage;
 
 namespace RescueClone.App;
 
@@ -14,6 +15,7 @@ public partial class MainWindow : Window
     private readonly BackupJobRunner _jobRunner = new();
     private readonly RestorePlanner _restorePlanner = new();
     private readonly OperationRunner _operationRunner = new();
+    private readonly VolumeEnumerator _volumeEnumerator = new();
 
     public MainWindow()
     {
@@ -74,6 +76,11 @@ public partial class MainWindow : Window
         RunAndReport(() => _operationRunner.Run(
             _operationRunner.LoadRequest(OperationRequestPathBox.Text),
             EmptyToNull(OperationLogDirectoryBox.Text)));
+    }
+
+    private void RefreshVolumes_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _volumeEnumerator.ListVolumes());
     }
 
     private void RunAndReport<T>(Func<T> action)

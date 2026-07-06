@@ -3,6 +3,7 @@ using RescueClone.Core;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Operations;
 using RescueClone.Core.RestorePlanning;
+using RescueClone.Core.Storage;
 
 var exitCode = Run(args);
 return exitCode;
@@ -33,8 +34,11 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "operation")
             return RunOperation(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "storage")
+            return RunStorage(args[1]);
+
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc restore <plan>, or rc operation <run>.");
+            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc restore <plan>, rc operation <run>, or rc storage <volumes>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -74,6 +78,14 @@ static int Run(string[] args)
         Console.Error.WriteLine(ex.Message);
         return 2;
     }
+}
+
+static int RunStorage(string command)
+{
+    if (command != "volumes")
+        throw new ArgumentException($"Unknown storage command: {command}");
+    WriteJson(new VolumeEnumerator().ListVolumes());
+    return 0;
 }
 
 static int RunOperation(string command, Dictionary<string, string> values)
@@ -178,5 +190,6 @@ static void PrintHelp()
     rc job run --file <job.json> [--force-disabled]
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]
+    rc storage volumes
     """);
 }

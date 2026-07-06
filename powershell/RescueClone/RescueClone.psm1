@@ -39,6 +39,12 @@ function Get-RCFeature {
     Invoke-RCJson -ArgumentList @('features')
 }
 
+function Get-RCVolume {
+    [CmdletBinding()]
+    param()
+    Invoke-RCJson -ArgumentList @('storage','volumes')
+}
+
 function New-RCImage {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(
