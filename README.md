@@ -4,6 +4,8 @@ RescueClone is a clean-room Windows backup/recovery suite foundation. The curren
 
 This is not a Macrium Reflect clone. It does not currently implement VSS disk imaging, boot repair, kernel drivers, image mounting, rescue media, scheduler services, or bare-metal restore.
 
+The full remaining engineering contract is tracked in `docs\REMAINING_CONTRACT.md`.
+
 ## Portable Build
 
 ```powershell
