@@ -7,8 +7,10 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for directory image creation.
 - GUI, CLI, and PowerShell surfaces for image verification.
 - GUI, CLI, and PowerShell surfaces for directory restore.
+- GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - A shared engine so all three interfaces execute the same implementation.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
+- Job runs can perform post-create verification and write a structured JSON run log.
 
 The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, image mounting driver, scheduler service, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
 

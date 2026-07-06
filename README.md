@@ -1,6 +1,6 @@
 # RescueClone
 
-RescueClone is a clean-room Windows backup/recovery suite foundation. The current verified slice supports directory image creation, verification, and restore through the GUI, CLI, and PowerShell module.
+RescueClone is a clean-room Windows backup/recovery suite foundation. The current verified slice supports directory image creation, verification, restore, and JSON-defined directory backup job runs through the GUI, CLI, and PowerShell module.
 
 This is not a Macrium Reflect clone. It does not currently implement VSS disk imaging, boot repair, kernel drivers, image mounting, rescue media, scheduler services, or bare-metal restore.
 

@@ -63,6 +63,21 @@
                     <Button Grid.Row="4" Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Restore Image" Click="RestoreImage_Click"/>
                 </Grid>
             </TabItem>
+            <TabItem Header="Backup Job">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="JobPathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Backup job JSON path"/>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <CheckBox x:Name="ForceDisabledJobBox" Content="Force disabled job" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Width="140" Height="34" Content="Validate Job" Click="ValidateJob_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Run Job" Click="RunJob_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
         </TabControl>
 
         <TextBox x:Name="OutputBox" Grid.Row="2" Height="120" Margin="0,14,0,0" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>

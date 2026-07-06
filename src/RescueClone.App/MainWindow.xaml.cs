@@ -2,12 +2,14 @@ using System;
 using System.Text.Json;
 using System.Windows;
 using RescueClone.Core;
+using RescueClone.Core.Jobs;
 
 namespace RescueClone.App;
 
 public partial class MainWindow : Window
 {
     private readonly ImageEngine _engine = new();
+    private readonly BackupJobRunner _jobRunner = new();
 
     public MainWindow()
     {
@@ -32,6 +34,16 @@ public partial class MainWindow : Window
     private void RestoreImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Restore(new RestoreOptions(RestoreImagePathBox.Text, TargetPathBox.Text, EmptyToNull(RestorePasswordBox.Password), OverwriteBox.IsChecked == true)));
+    }
+
+    private void ValidateJob_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.Validate(_jobRunner.Load(JobPathBox.Text)));
+    }
+
+    private void RunJob_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.Run(_jobRunner.Load(JobPathBox.Text), ForceDisabledJobBox.IsChecked == true));
     }
 
     private void RunAndReport<T>(Func<T> action)

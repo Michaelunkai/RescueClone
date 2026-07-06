@@ -80,3 +80,24 @@ function Restore-RCImage {
         Invoke-RCJson -ArgumentList $args
     }
 }
+
+function Test-RCBackupJob {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path
+    )
+    Invoke-RCJson -ArgumentList @('job','validate','--file',$Path)
+}
+
+function Start-RCBackupJob {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path,
+        [switch]$ForceDisabled
+    )
+    if ($PSCmdlet.ShouldProcess($Path, "Run backup job")) {
+        $args = @('job','run','--file',$Path)
+        if ($ForceDisabled) { $args += '--force-disabled' }
+        Invoke-RCJson -ArgumentList $args
+    }
+}

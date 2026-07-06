@@ -32,6 +32,24 @@ CLI examples:
 .\RC.cmd image create --source .\sample-source --image .\sample.rcimg --compression High --password secret
 .\RC.cmd image verify --image .\sample.rcimg --password secret
 .\RC.cmd image restore --image .\sample.rcimg --target .\sample-restore --password secret
+.\RC.cmd job validate --file .\backup-job.json
+.\RC.cmd job run --file .\backup-job.json
+```
+
+Backup job JSON example:
+
+```json
+{
+  "jobId": "daily-docs",
+  "name": "Daily Docs",
+  "enabled": true,
+  "sourcePath": "F:\\Backups\\Source",
+  "imagePath": "F:\\Backups\\Images\\daily-docs.rcimg",
+  "compression": "High",
+  "password": null,
+  "verifyAfterCreate": true,
+  "logDirectory": "F:\\Backups\\Logs"
+}
 ```
 
 PowerShell examples:
@@ -41,6 +59,8 @@ Import-Module .\powershell\RescueClone\RescueClone.psd1 -Force
 New-RCImage -SourcePath .\sample-source -ImagePath .\sample.rcimg -Compression High -Password secret -Confirm:$false
 Test-RCImage -ImagePath .\sample.rcimg -Password secret
 Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password secret -Confirm:$false
+Test-RCBackupJob -Path .\backup-job.json
+Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 ```
 
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive.

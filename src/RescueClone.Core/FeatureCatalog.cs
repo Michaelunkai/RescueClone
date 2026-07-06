@@ -8,7 +8,9 @@ public static class FeatureCatalog
     {
         new("image.create.directory", "Create Image", "rc image create", "New-RCImage", true),
         new("image.verify", "Verify Image", "rc image verify", "Test-RCImage", true),
-        new("image.restore.directory", "Restore Image", "rc image restore", "Restore-RCImage", true)
+        new("image.restore.directory", "Restore Image", "rc image restore", "Restore-RCImage", true),
+        new("job.backup.directory.validate", "Backup Job", "rc job validate", "Test-RCBackupJob", true),
+        new("job.backup.directory.run", "Backup Job", "rc job run", "Start-RCBackupJob", true)
     };
 
     public static void AssertImplementedParity()

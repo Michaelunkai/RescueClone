@@ -1,5 +1,6 @@
 using System.Text.Json;
 using RescueClone.Core;
+using RescueClone.Core.Jobs;
 
 var exitCode = Run(args);
 return exitCode;
@@ -21,8 +22,11 @@ static int Run(string[] args)
             return 0;
         }
 
+        if (args.Length >= 2 && args[0] == "job")
+            return RunJob(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore>.");
+            throw new ArgumentException("Expected: rc image <create|verify|restore> or rc job <validate|run>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -63,6 +67,23 @@ static int Run(string[] args)
     }
 }
 
+static int RunJob(string command, Dictionary<string, string> values)
+{
+    var runner = new BackupJobRunner();
+    var job = runner.Load(Required(values, "file"));
+    switch (command)
+    {
+        case "validate":
+            WriteJson(runner.Validate(job));
+            return 0;
+        case "run":
+            WriteJson(runner.Run(job, values.ContainsKey("force-disabled")));
+            return 0;
+        default:
+            throw new ArgumentException($"Unknown job command: {command}");
+    }
+}
+
 static Dictionary<string, string> ParseOptions(string[] args)
 {
     var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -72,7 +93,7 @@ static Dictionary<string, string> ParseOptions(string[] args)
         if (!arg.StartsWith("--", StringComparison.Ordinal))
             throw new ArgumentException($"Unexpected argument: {arg}");
         var name = arg[2..];
-        if (name == "overwrite")
+        if (name is "overwrite" or "force-disabled")
         {
             values[name] = "true";
             continue;
@@ -105,5 +126,7 @@ static void PrintHelp()
     rc image create --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>]
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
+    rc job validate --file <job.json>
+    rc job run --file <job.json> [--force-disabled]
     """);
 }
