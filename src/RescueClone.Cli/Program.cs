@@ -5,6 +5,7 @@ using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
+using RescueClone.Core.Scheduling;
 using RescueClone.Core.Storage;
 
 var exitCode = Run(args);
@@ -36,6 +37,9 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "retention")
             return RunRetention(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "schedule")
+            return RunSchedule(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length >= 2 && args[0] == "operation")
             return RunOperation(args[1], ParseOptions(args.Skip(2).ToArray()));
 
@@ -46,7 +50,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc retention <plan|apply>, rc restore <plan>, rc operation <run>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -85,6 +89,38 @@ static int Run(string[] args)
     {
         Console.Error.WriteLine(ex.Message);
         return 2;
+    }
+}
+
+static int RunSchedule(string command, Dictionary<string, string> values)
+{
+    var manager = new ScheduleManager();
+    if (command == "unregister")
+    {
+        var report = manager.Unregister(Required(values, "task-name"));
+        WriteJson(report);
+        return report.Succeeded ? 0 : 3;
+    }
+
+    var definition = new ScheduleDefinition(
+        Required(values, "task-name"),
+        Required(values, "job-file"),
+        values.GetValueOrDefault("cli-path", Environment.ProcessPath ?? "rc.exe"),
+        Enum.Parse<ScheduleFrequency>(values.GetValueOrDefault("frequency", "Daily"), ignoreCase: true),
+        TimeOnly.Parse(values.GetValueOrDefault("time", "02:00")),
+        values.ContainsKey("run-missed"));
+
+    switch (command)
+    {
+        case "plan":
+            WriteJson(manager.Plan(definition));
+            return 0;
+        case "register":
+            var report = manager.Register(definition);
+            WriteJson(report);
+            return report.Succeeded ? 0 : 3;
+        default:
+            throw new ArgumentException($"Unknown schedule command: {command}");
     }
 }
 
@@ -190,7 +226,7 @@ static Dictionary<string, string> ParseOptions(string[] args)
         if (!arg.StartsWith("--", StringComparison.Ordinal))
             throw new ArgumentException($"Unexpected argument: {arg}");
         var name = arg[2..];
-        if (name is "overwrite" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition")
+        if (name is "overwrite" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition" or "run-missed")
         {
             values[name] = "true";
             continue;
@@ -245,6 +281,9 @@ static void PrintHelp()
     rc job run --file <job.json> [--force-disabled]
     rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
     rc retention apply --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
+    rc schedule plan --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly] [--time HH:mm] [--run-missed]
+    rc schedule register --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly] [--time HH:mm] [--run-missed]
+    rc schedule unregister --task-name <name>
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]
     rc storage volumes

@@ -42,6 +42,9 @@ CLI examples:
 .\RC.cmd job run --file .\backup-job.json
 .\RC.cmd retention plan --repository .\images --pattern *.rcimg --keep-count 3 --max-age-days 30
 .\RC.cmd retention apply --repository .\images --pattern *.rcimg --keep-count 3 --max-age-days 30
+.\RC.cmd schedule plan --task-name nightly-docs --job-file .\backup-job.json --cli-path .\publish\cli\rc.exe --frequency Daily --time 02:00 --run-missed
+.\RC.cmd schedule register --task-name nightly-docs --job-file .\backup-job.json --cli-path .\publish\cli\rc.exe --frequency Daily --time 02:00 --run-missed
+.\RC.cmd schedule unregister --task-name nightly-docs
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
 .\RC.cmd storage volumes
@@ -89,6 +92,9 @@ Test-RCBackupJob -Path .\backup-job.json
 Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Get-RCRetentionPlan -RepositoryPath .\images -Pattern *.rcimg -KeepCount 3 -MaxAgeDays 30
 Invoke-RCRetention -RepositoryPath .\images -Pattern *.rcimg -KeepCount 3 -MaxAgeDays 30 -Confirm:$false
+Get-RCSchedulePlan -TaskName nightly-docs -JobFilePath .\backup-job.json -CliPath .\publish\cli\rc.exe -Frequency Daily -Time 02:00 -RunMissed
+Register-RCSchedule -TaskName nightly-docs -JobFilePath .\backup-job.json -CliPath .\publish\cli\rc.exe -Frequency Daily -Time 02:00 -RunMissed -Confirm:$false
+Unregister-RCSchedule -TaskName nightly-docs -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
 Get-RCVolume

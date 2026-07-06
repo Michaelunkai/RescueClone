@@ -7,6 +7,7 @@ using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
+using RescueClone.Core.Scheduling;
 using RescueClone.Core.Storage;
 
 namespace RescueClone.App;
@@ -18,6 +19,7 @@ public partial class MainWindow : Window
     private readonly RestorePlanner _restorePlanner = new();
     private readonly OperationRunner _operationRunner = new();
     private readonly RetentionManager _retentionManager = new();
+    private readonly ScheduleManager _scheduleManager = new();
     private readonly VolumeEnumerator _volumeEnumerator = new();
     private readonly DiskEnumerator _diskEnumerator = new();
 
@@ -102,6 +104,21 @@ public partial class MainWindow : Window
             ParseNullableLong(RetentionMinFreeBytesBox.Text))));
     }
 
+    private void PlanSchedule_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _scheduleManager.Plan(ReadScheduleDefinition()));
+    }
+
+    private void RegisterSchedule_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _scheduleManager.Register(ReadScheduleDefinition()));
+    }
+
+    private void UnregisterSchedule_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _scheduleManager.Unregister(ScheduleTaskNameBox.Text));
+    }
+
     private void RefreshVolumes_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _volumeEnumerator.ListVolumes());
@@ -134,4 +151,16 @@ public partial class MainWindow : Window
     private static int? ParseNullableInt(string value) => string.IsNullOrWhiteSpace(value) ? null : int.Parse(value);
 
     private static long? ParseNullableLong(string value) => string.IsNullOrWhiteSpace(value) ? null : long.Parse(value);
+
+    private ScheduleDefinition ReadScheduleDefinition()
+    {
+        var frequency = Enum.Parse<ScheduleFrequency>(((System.Windows.Controls.ComboBoxItem)ScheduleFrequencyBox.SelectedItem).Content.ToString()!);
+        return new ScheduleDefinition(
+            ScheduleTaskNameBox.Text,
+            ScheduleJobFileBox.Text,
+            string.IsNullOrWhiteSpace(ScheduleCliPathBox.Text) ? Environment.ProcessPath ?? "rc.exe" : ScheduleCliPathBox.Text,
+            frequency,
+            TimeOnly.Parse(ScheduleTimeBox.Text),
+            ScheduleRunMissedBox.IsChecked == true);
+    }
 }

@@ -148,6 +148,31 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            <TabItem Header="Scheduler">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="ScheduleTaskNameBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Task name"/>
+                    <TextBox x:Name="ScheduleJobFileBox" Grid.Row="1" Margin="0,0,0,8" ToolTip="Backup job JSON path"/>
+                    <TextBox x:Name="ScheduleCliPathBox" Grid.Row="2" Margin="0,0,0,8" ToolTip="rc.exe path"/>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal">
+                        <ComboBox x:Name="ScheduleFrequencyBox" Width="120" SelectedIndex="0" Margin="0,0,8,0">
+                            <ComboBoxItem Content="Daily"/>
+                            <ComboBoxItem Content="Weekly"/>
+                            <ComboBoxItem Content="Monthly"/>
+                        </ComboBox>
+                        <TextBox x:Name="ScheduleTimeBox" Width="90" Text="02:00" ToolTip="Start time HH:mm" Margin="0,0,8,0"/>
+                        <CheckBox x:Name="ScheduleRunMissedBox" Content="Run missed backup on next start" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Width="130" Height="34" Content="Plan Schedule" Click="PlanSchedule_Click" Margin="0,0,8,0"/>
+                        <Button Width="150" Height="34" Content="Register Schedule" Click="RegisterSchedule_Click" Margin="0,0,8,0"/>
+                        <Button Width="160" Height="34" Content="Unregister Schedule" Click="UnregisterSchedule_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
             <TabItem Header="Volumes">
                 <Grid Margin="12">
                     <Button Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Refresh Volumes" Click="RefreshVolumes_Click"/>

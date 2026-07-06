@@ -155,6 +155,50 @@ function Invoke-RCRetention {
     }
 }
 
+function Get-RCSchedulePlan {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$TaskName,
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$JobFilePath,
+        [string]$CliPath,
+        [ValidateSet('Daily','Weekly','Monthly')][string]$Frequency = 'Daily',
+        [string]$Time = '02:00',
+        [switch]$RunMissed
+    )
+    $args = @('schedule','plan','--task-name',$TaskName,'--job-file',$JobFilePath,'--frequency',$Frequency,'--time',$Time)
+    if ($PSBoundParameters.ContainsKey('CliPath')) { $args += @('--cli-path',$CliPath) }
+    if ($RunMissed) { $args += '--run-missed' }
+    Invoke-RCJson -ArgumentList $args
+}
+
+function Register-RCSchedule {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$TaskName,
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$JobFilePath,
+        [string]$CliPath,
+        [ValidateSet('Daily','Weekly','Monthly')][string]$Frequency = 'Daily',
+        [string]$Time = '02:00',
+        [switch]$RunMissed
+    )
+    if ($PSCmdlet.ShouldProcess($TaskName, "Register RescueClone scheduled task")) {
+        $args = @('schedule','register','--task-name',$TaskName,'--job-file',$JobFilePath,'--frequency',$Frequency,'--time',$Time)
+        if ($PSBoundParameters.ContainsKey('CliPath')) { $args += @('--cli-path',$CliPath) }
+        if ($RunMissed) { $args += '--run-missed' }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
+function Unregister-RCSchedule {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][string]$TaskName
+    )
+    if ($PSCmdlet.ShouldProcess($TaskName, "Unregister RescueClone scheduled task")) {
+        Invoke-RCJson -ArgumentList @('schedule','unregister','--task-name',$TaskName)
+    }
+}
+
 function Get-RCRestorePlan {
     [CmdletBinding()]
     param(

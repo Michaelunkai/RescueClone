@@ -9,6 +9,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for directory restore.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for retention planning and retention enforcement on directory-image repositories.
+- GUI, CLI, and PowerShell surfaces for Windows Task Scheduler XML planning and schedule register/unregister.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
 - GUI, CLI, and PowerShell surfaces for read-only volume and disk inventory.
@@ -23,9 +24,10 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Disk inventory reports disk number, friendly name, serial number, partition style, bus type, size, boot/system flags, offline state, and read-only state using built-in Windows storage cmdlets in read-only mode.
 - Job runs can perform post-create verification and write a structured JSON run log.
 - Retention can select and delete `*.rcimg` files by newest-file keep count, max age, and free-space threshold; it does not yet perform GFS chain consolidation.
+- Scheduler registration writes Windows Task Scheduler tasks that run `rc job run --file <job>`, supports daily, weekly, monthly calendar triggers, and maps missed runs to Task Scheduler `StartWhenAvailable`.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 
-The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, image mounting driver, scheduler service, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
+The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, image mounting driver, scheduler service, event-triggered schedules, pre/post backup hooks, email notifications, GFS chain consolidation, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
 
 The local machine has incomplete .NET SDK payloads under `C:\Program Files\dotnet`. This repo is retargeted to .NET 10 and seeds a project-local SDK from the complete Codex-local cache.
 
