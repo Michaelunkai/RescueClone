@@ -78,6 +78,37 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            <TabItem Header="Restore Plan">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="PlanImagePathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Image path"/>
+                    <TextBox x:Name="PlanTargetDiskIdBox" Grid.Row="1" Margin="0,0,0,8" ToolTip="Target disk identifier"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+                        <ComboBox x:Name="PlanBootModeBox" Width="120" SelectedIndex="1" Margin="0,0,8,0">
+                            <ComboBoxItem Content="Unknown"/>
+                            <ComboBoxItem Content="Bios"/>
+                            <ComboBoxItem Content="Uefi"/>
+                        </ComboBox>
+                        <TextBox x:Name="PlanTargetDiskSizeBox" Width="180" ToolTip="Target disk size bytes" Margin="0,0,8,0"/>
+                        <TextBox x:Name="PlanRequiredBytesBox" Width="180" ToolTip="Required bytes override"/>
+                    </StackPanel>
+                    <TextBox x:Name="PlanBcdStorePathBox" Grid.Row="3" Margin="0,0,0,8" ToolTip="BCD store path"/>
+                    <PasswordBox x:Name="PlanPasswordBox" Grid.Row="4" Width="260" HorizontalAlignment="Left" Margin="0,0,0,8" ToolTip="Optional image password"/>
+                    <StackPanel Grid.Row="5" Orientation="Horizontal">
+                        <CheckBox x:Name="PlanCurrentSystemDiskBox" Content="Target is current system disk" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <CheckBox x:Name="PlanHasEfiBox" Content="Has EFI System Partition" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Width="140" Height="34" Content="Plan Restore" Click="PlanRestore_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
         </TabControl>
 
         <TextBox x:Name="OutputBox" Grid.Row="2" Height="120" Margin="0,14,0,0" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>

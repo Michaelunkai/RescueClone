@@ -1,6 +1,7 @@
 using System.Text.Json;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.RestorePlanning;
 
 var exitCode = Run(args);
 return exitCode;
@@ -25,8 +26,11 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "job")
             return RunJob(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "restore")
+            return RunRestore(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore> or rc job <validate|run>.");
+            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, or rc restore <plan>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -67,6 +71,25 @@ static int Run(string[] args)
     }
 }
 
+static int RunRestore(string command, Dictionary<string, string> values)
+{
+    if (command != "plan")
+        throw new ArgumentException($"Unknown restore command: {command}");
+
+    var options = new RestorePlanOptions(
+        Required(values, "image"),
+        values.GetValueOrDefault("password"),
+        Required(values, "target-disk-id"),
+        TryParseLong(values, "target-disk-size-bytes"),
+        TryParseLong(values, "required-bytes"),
+        values.ContainsKey("target-is-current-system-disk"),
+        Enum.Parse<RestoreBootMode>(values.GetValueOrDefault("boot-mode", "Unknown"), ignoreCase: true),
+        values.ContainsKey("has-efi-system-partition"),
+        values.GetValueOrDefault("bcd-store"));
+    WriteJson(new RestorePlanner().Plan(options));
+    return 0;
+}
+
 static int RunJob(string command, Dictionary<string, string> values)
 {
     var runner = new BackupJobRunner();
@@ -93,7 +116,7 @@ static Dictionary<string, string> ParseOptions(string[] args)
         if (!arg.StartsWith("--", StringComparison.Ordinal))
             throw new ArgumentException($"Unexpected argument: {arg}");
         var name = arg[2..];
-        if (name is "overwrite" or "force-disabled")
+        if (name is "overwrite" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition")
         {
             values[name] = "true";
             continue;
@@ -103,6 +126,15 @@ static Dictionary<string, string> ParseOptions(string[] args)
         values[name] = args[++i];
     }
     return values;
+}
+
+static long? TryParseLong(Dictionary<string, string> values, string key)
+{
+    if (!values.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
+        return null;
+    if (!long.TryParse(value, out var parsed))
+        throw new ArgumentException($"Invalid --{key}: {value}");
+    return parsed;
 }
 
 static string Required(Dictionary<string, string> values, string key)
@@ -128,5 +160,6 @@ static void PrintHelp()
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]
+    rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     """);
 }

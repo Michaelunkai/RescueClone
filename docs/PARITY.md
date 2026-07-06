@@ -9,5 +9,6 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Directory restore | Restore Image tab | `rc image restore` | `Restore-RCImage` |
 | Directory backup job validate | Backup Job tab | `rc job validate` | `Test-RCBackupJob` |
 | Directory backup job run | Backup Job tab | `rc job run` | `Start-RCBackupJob` |
+| Read-only restore plan | Restore Plan tab | `rc restore plan` | `Get-RCRestorePlan` |
 
 The test suite asserts that every implemented feature has GUI, CLI, and PowerShell entries in the catalog. New functionality must be added to all three surfaces before it is marked implemented.

@@ -6,7 +6,7 @@
     CompanyName = 'RescueClone'
     Copyright = '(c) RescueClone'
     PowerShellVersion = '5.1'
-    FunctionsToExport = @('Get-RCFeature','New-RCImage','Test-RCImage','Restore-RCImage','Test-RCBackupJob','Start-RCBackupJob')
+    FunctionsToExport = @('Get-RCFeature','New-RCImage','Test-RCImage','Restore-RCImage','Test-RCBackupJob','Start-RCBackupJob','Get-RCRestorePlan')
     CmdletsToExport = @()
     VariablesToExport = '*'
     AliasesToExport = @()

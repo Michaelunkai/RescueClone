@@ -101,3 +101,26 @@ function Start-RCBackupJob {
         Invoke-RCJson -ArgumentList $args
     }
 }
+
+function Get-RCRestorePlan {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$ImagePath,
+        [string]$Password,
+        [Parameter(Mandatory=$true)][string]$TargetDiskId,
+        [long]$TargetDiskSizeBytes,
+        [long]$RequiredBytes,
+        [switch]$TargetIsCurrentSystemDisk,
+        [Parameter(Mandatory=$true)][ValidateSet('Bios','Uefi','Unknown')][string]$BootMode,
+        [switch]$HasEfiSystemPartition,
+        [string]$BcdStorePath
+    )
+    $args = @('restore','plan','--image',$ImagePath,'--target-disk-id',$TargetDiskId,'--boot-mode',$BootMode)
+    if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+    if ($PSBoundParameters.ContainsKey('TargetDiskSizeBytes')) { $args += @('--target-disk-size-bytes',[string]$TargetDiskSizeBytes) }
+    if ($PSBoundParameters.ContainsKey('RequiredBytes')) { $args += @('--required-bytes',[string]$RequiredBytes) }
+    if ($TargetIsCurrentSystemDisk) { $args += '--target-is-current-system-disk' }
+    if ($HasEfiSystemPartition) { $args += '--has-efi-system-partition' }
+    if ($PSBoundParameters.ContainsKey('BcdStorePath')) { $args += @('--bcd-store',$BcdStorePath) }
+    Invoke-RCJson -ArgumentList $args
+}

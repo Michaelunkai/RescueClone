@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Windows;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.RestorePlanning;
 
 namespace RescueClone.App;
 
@@ -10,6 +11,7 @@ public partial class MainWindow : Window
 {
     private readonly ImageEngine _engine = new();
     private readonly BackupJobRunner _jobRunner = new();
+    private readonly RestorePlanner _restorePlanner = new();
 
     public MainWindow()
     {
@@ -46,6 +48,24 @@ public partial class MainWindow : Window
         RunAndReport(() => _jobRunner.Run(_jobRunner.Load(JobPathBox.Text), ForceDisabledJobBox.IsChecked == true));
     }
 
+    private void PlanRestore_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() =>
+        {
+            var bootMode = Enum.Parse<RestoreBootMode>(((System.Windows.Controls.ComboBoxItem)PlanBootModeBox.SelectedItem).Content.ToString()!);
+            return _restorePlanner.Plan(new RestorePlanOptions(
+                PlanImagePathBox.Text,
+                EmptyToNull(PlanPasswordBox.Password),
+                PlanTargetDiskIdBox.Text,
+                ParseNullableLong(PlanTargetDiskSizeBox.Text),
+                ParseNullableLong(PlanRequiredBytesBox.Text),
+                PlanCurrentSystemDiskBox.IsChecked == true,
+                bootMode,
+                PlanHasEfiBox.IsChecked == true,
+                EmptyToNull(PlanBcdStorePathBox.Text)));
+        });
+    }
+
     private void RunAndReport<T>(Func<T> action)
     {
         try
@@ -59,4 +79,6 @@ public partial class MainWindow : Window
     }
 
     private static string? EmptyToNull(string value) => string.IsNullOrEmpty(value) ? null : value;
+
+    private static long? ParseNullableLong(string value) => string.IsNullOrWhiteSpace(value) ? null : long.Parse(value);
 }
