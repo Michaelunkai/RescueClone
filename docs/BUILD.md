@@ -29,7 +29,7 @@ dotnet test RescueClone.sln -c Release
 CLI examples:
 
 ```powershell
-.\RC.cmd image create --source .\sample-source --image .\sample.rcimg --compression High --password secret
+.\RC.cmd image create --source .\sample-source --image .\sample.rcimg --compression High --password secret --format V2
 .\RC.cmd image verify --image .\sample.rcimg --password secret
 .\RC.cmd image restore --image .\sample.rcimg --target .\sample-restore --password secret
 .\RC.cmd job validate --file .\backup-job.json
@@ -71,7 +71,7 @@ PowerShell examples:
 
 ```powershell
 Import-Module .\powershell\RescueClone\RescueClone.psd1 -Force
-New-RCImage -SourcePath .\sample-source -ImagePath .\sample.rcimg -Compression High -Password secret -Confirm:$false
+New-RCImage -SourcePath .\sample-source -ImagePath .\sample.rcimg -Compression High -Format V2 -Password secret -Confirm:$false
 Test-RCImage -ImagePath .\sample.rcimg -Password secret
 Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password secret -Confirm:$false
 Test-RCBackupJob -Path .\backup-job.json

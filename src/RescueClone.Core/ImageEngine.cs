@@ -7,10 +7,18 @@ namespace RescueClone.Core;
 
 public sealed class ImageEngine
 {
-    private static readonly byte[] Magic = Encoding.ASCII.GetBytes("RCIMG1\n");
+    private const int V2BlockSize = 1024 * 1024;
+    private static readonly byte[] V1Magic = Encoding.ASCII.GetBytes("RCIMG1\n");
+    private static readonly byte[] V2Magic = Encoding.ASCII.GetBytes("RCIMG2\n");
+    private static readonly byte[] V2FooterMagic = Encoding.ASCII.GetBytes("RCEND2\n");
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
 
     public ImageReport Create(ImageOptions options)
+    {
+        return options.Format == ImageContainerFormat.V1 ? CreateV1(options) : CreateV2(options);
+    }
+
+    private ImageReport CreateV1(ImageOptions options)
     {
         if (!Directory.Exists(options.SourcePath))
             throw new DirectoryNotFoundException(options.SourcePath);
@@ -22,7 +30,7 @@ public sealed class ImageEngine
             .ToArray();
 
         using var output = File.Create(options.ImagePath);
-        output.Write(Magic);
+        output.Write(V1Magic);
         WriteJson(output, new ContainerHeader(1, options.Compression.ToString(), options.Password is not null));
 
         var entries = new List<ImageFileEntry>();
@@ -48,15 +56,67 @@ public sealed class ImageEngine
         WriteJson(output, new EndMarker(true));
 
         var rootHash = ComputeRootHash(entries);
-        return new ImageReport(options.ImagePath, entries.Count, originalBytes, storedBytes, rootHash, entries);
+        return new ImageReport(options.ImagePath, entries.Count, originalBytes, storedBytes, rootHash, entries, FormatVersion: 1);
+    }
+
+    private ImageReport CreateV2(ImageOptions options)
+    {
+        if (!Directory.Exists(options.SourcePath))
+            throw new DirectoryNotFoundException(options.SourcePath);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(options.ImagePath)) ?? ".");
+        var sourceRoot = Path.GetFullPath(options.SourcePath);
+        var files = Directory.EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories)
+            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        using var output = File.Create(options.ImagePath);
+        output.Write(V2Magic);
+        WriteJson(output, new ContainerHeader(2, options.Compression.ToString(), options.Password is not null));
+
+        var entries = new List<ImageFileEntry>();
+        var manifestFiles = new List<V2FileManifest>();
+        long originalBytes = 0;
+        long storedBytes = 0;
+
+        foreach (var file in files)
+        {
+            var relative = Path.GetRelativePath(sourceRoot, file).Replace('\\', '/');
+            var raw = File.ReadAllBytes(file);
+            var fileHash = Convert.ToHexString(SHA256.HashData(raw)).ToLowerInvariant();
+            var blocks = new List<V2BlockEntry>();
+            for (var offset = 0; offset < raw.Length; offset += V2BlockSize)
+            {
+                var length = Math.Min(V2BlockSize, raw.Length - offset);
+                var block = raw.AsSpan(offset, length).ToArray();
+                var stored = EncodePayload(block, options.Compression, options.Password);
+                var blockHash = Convert.ToHexString(SHA256.HashData(block)).ToLowerInvariant();
+                var payloadOffset = output.Position;
+                output.Write(stored);
+                blocks.Add(new V2BlockEntry(blocks.Count, payloadOffset, length, stored.LongLength, blockHash));
+                storedBytes += stored.LongLength;
+            }
+
+            entries.Add(new ImageFileEntry(relative, raw.LongLength, blocks.Sum(b => b.StoredLength), fileHash));
+            manifestFiles.Add(new V2FileManifest(relative, raw.LongLength, fileHash, blocks));
+            originalBytes += raw.LongLength;
+        }
+
+        var rootHash = ComputeRootHash(entries);
+        var manifestOffset = output.Position;
+        WriteJson(output, new V2Manifest(rootHash, originalBytes, storedBytes, manifestFiles));
+        var manifestLength = output.Position - manifestOffset;
+        WriteV2Footer(output, new V2Footer(manifestOffset, manifestLength));
+
+        return new ImageReport(options.ImagePath, entries.Count, originalBytes, storedBytes, rootHash, entries, FormatVersion: 2);
     }
 
     public ImageReport Verify(string imagePath, string? password)
     {
-        var files = ReadImage(imagePath, password, restorePath: null, overwrite: false, verifyOnly: true);
+        var (files, formatVersion) = ReadImage(imagePath, password, restorePath: null, overwrite: false, verifyOnly: true);
         var originalBytes = files.Sum(f => f.OriginalLength);
         var storedBytes = files.Sum(f => f.StoredLength);
-        return new ImageReport(imagePath, files.Count, originalBytes, storedBytes, ComputeRootHash(files), files);
+        return new ImageReport(imagePath, files.Count, originalBytes, storedBytes, ComputeRootHash(files), files, formatVersion);
     }
 
     public RestoreReport Restore(RestoreOptions options)
@@ -65,18 +125,24 @@ public sealed class ImageEngine
             throw new IOException("Target path is not empty. Pass overwrite=true to restore into it.");
 
         Directory.CreateDirectory(options.TargetPath);
-        var files = ReadImage(options.ImagePath, options.Password, options.TargetPath, options.Overwrite, verifyOnly: false);
+        var (files, _) = ReadImage(options.ImagePath, options.Password, options.TargetPath, options.Overwrite, verifyOnly: false);
         return new RestoreReport(options.ImagePath, options.TargetPath, files.Count, files.Sum(f => f.OriginalLength));
     }
 
-    private static List<ImageFileEntry> ReadImage(string imagePath, string? password, string? restorePath, bool overwrite, bool verifyOnly)
+    private static (List<ImageFileEntry> Files, int FormatVersion) ReadImage(string imagePath, string? password, string? restorePath, bool overwrite, bool verifyOnly)
     {
         using var input = File.OpenRead(imagePath);
-        var magic = new byte[Magic.Length];
+        var magic = new byte[V1Magic.Length];
         ReadExactly(input, magic);
-        if (!magic.SequenceEqual(Magic))
-            throw new InvalidDataException("Not a RescueClone image.");
+        if (magic.SequenceEqual(V1Magic))
+            return (ReadV1Image(input, password, restorePath, overwrite, verifyOnly), 1);
+        if (magic.SequenceEqual(V2Magic))
+            return (ReadV2Image(input, imagePath, password, restorePath, overwrite, verifyOnly), 2);
+        throw new InvalidDataException("Not a RescueClone image.");
+    }
 
+    private static List<ImageFileEntry> ReadV1Image(Stream input, string? password, string? restorePath, bool overwrite, bool verifyOnly)
+    {
         var header = ReadJson<ContainerHeader>(input);
         var compression = Enum.Parse<CompressionMode>(header.Compression);
         if (header.Encrypted && string.IsNullOrEmpty(password))
@@ -114,6 +180,69 @@ public sealed class ImageEngine
         }
 
         return entries;
+    }
+
+    private static List<ImageFileEntry> ReadV2Image(FileStream input, string imagePath, string? password, string? restorePath, bool overwrite, bool verifyOnly)
+    {
+        var header = ReadJson<ContainerHeader>(input);
+        var compression = Enum.Parse<CompressionMode>(header.Compression);
+        if (header.Encrypted && string.IsNullOrEmpty(password))
+            throw new InvalidDataException("Image is encrypted; a password is required.");
+
+        var footer = ReadV2Footer(input);
+        input.Position = footer.ManifestOffset;
+        var manifest = ReadJson<V2Manifest>(input);
+        var entries = new List<ImageFileEntry>();
+
+        foreach (var file in manifest.Files)
+        {
+            var output = verifyOnly || restorePath is null ? null : OpenRestoreTarget(restorePath, file.RelativePath, overwrite);
+            using (output)
+            using (var hasher = SHA256.Create())
+            {
+                long storedLength = 0;
+                foreach (var block in file.Blocks.OrderBy(b => b.Index))
+                {
+                    input.Position = block.PayloadOffset;
+                    var stored = new byte[checked((int)block.StoredLength)];
+                    ReadExactly(input, stored);
+                    storedLength += stored.LongLength;
+                    var raw = DecodePayload(stored, compression, header.Encrypted ? password : null);
+                    if (raw.LongLength != block.OriginalLength)
+                        throw new InvalidDataException($"Block length mismatch for {file.RelativePath}.");
+                    var blockHash = Convert.ToHexString(SHA256.HashData(raw)).ToLowerInvariant();
+                    if (!StringComparer.OrdinalIgnoreCase.Equals(blockHash, block.Sha256))
+                        throw new InvalidDataException($"Block checksum mismatch for {file.RelativePath}.");
+
+                    hasher.TransformBlock(raw, 0, raw.Length, null, 0);
+                    output?.Write(raw);
+                }
+
+                hasher.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+                var fileHash = Convert.ToHexString(hasher.Hash ?? Array.Empty<byte>()).ToLowerInvariant();
+                if (!StringComparer.OrdinalIgnoreCase.Equals(fileHash, file.Sha256))
+                    throw new InvalidDataException($"Checksum mismatch for {file.RelativePath}.");
+
+                entries.Add(new ImageFileEntry(file.RelativePath, file.OriginalLength, storedLength, file.Sha256));
+            }
+        }
+
+        var rootHash = ComputeRootHash(entries);
+        if (!StringComparer.OrdinalIgnoreCase.Equals(rootHash, manifest.RootSha256))
+            throw new InvalidDataException($"Manifest root checksum mismatch in image: {imagePath}");
+        return entries;
+    }
+
+    private static FileStream OpenRestoreTarget(string restorePath, string relativePath, bool overwrite)
+    {
+        var target = Path.GetFullPath(Path.Combine(restorePath, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+        var root = Path.GetFullPath(restorePath);
+        if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException($"Unsafe relative path in image: {relativePath}");
+        Directory.CreateDirectory(Path.GetDirectoryName(target) ?? root);
+        if (File.Exists(target) && !overwrite)
+            throw new IOException($"Target file exists: {target}");
+        return File.Create(target);
     }
 
     private static byte[] EncodePayload(byte[] raw, CompressionMode compression, string? password)
@@ -190,6 +319,40 @@ public sealed class ImageEngine
         stream.Write(json);
     }
 
+    private static void WriteV2Footer(Stream stream, V2Footer footer)
+    {
+        var json = JsonSerializer.SerializeToUtf8Bytes(footer, JsonOptions);
+        stream.Write(json);
+        stream.Write(BitConverter.GetBytes(json.LongLength));
+        stream.Write(V2FooterMagic);
+    }
+
+    private static V2Footer ReadV2Footer(FileStream stream)
+    {
+        var trailerLength = sizeof(long) + V2FooterMagic.Length;
+        if (stream.Length < trailerLength)
+            throw new InvalidDataException("Invalid RescueClone v2 footer.");
+
+        stream.Position = stream.Length - V2FooterMagic.Length;
+        var footerMagic = new byte[V2FooterMagic.Length];
+        ReadExactly(stream, footerMagic);
+        if (!footerMagic.SequenceEqual(V2FooterMagic))
+            throw new InvalidDataException("Missing RescueClone v2 footer.");
+
+        stream.Position = stream.Length - trailerLength;
+        var lengthBytes = new byte[sizeof(long)];
+        ReadExactly(stream, lengthBytes);
+        var footerLength = BitConverter.ToInt64(lengthBytes);
+        if (footerLength < 2 || footerLength > 1024 * 1024)
+            throw new InvalidDataException("Invalid RescueClone v2 footer length.");
+
+        stream.Position = stream.Length - trailerLength - footerLength;
+        var footerJson = new byte[checked((int)footerLength)];
+        ReadExactly(stream, footerJson);
+        return JsonSerializer.Deserialize<V2Footer>(footerJson, JsonOptions)
+            ?? throw new InvalidDataException("Invalid RescueClone v2 footer record.");
+    }
+
     private static T ReadJson<T>(Stream stream)
     {
         return JsonSerializer.Deserialize<T>(ReadRawJson(stream), JsonOptions)
@@ -222,4 +385,8 @@ public sealed class ImageEngine
 
     private sealed record ContainerHeader(int Version, string Compression, bool Encrypted);
     private sealed record EndMarker(bool Done);
+    private sealed record V2BlockEntry(int Index, long PayloadOffset, long OriginalLength, long StoredLength, string Sha256);
+    private sealed record V2FileManifest(string RelativePath, long OriginalLength, string Sha256, IReadOnlyList<V2BlockEntry> Blocks);
+    private sealed record V2Manifest(string RootSha256, long OriginalBytes, long StoredBytes, IReadOnlyList<V2FileManifest> Files);
+    private sealed record V2Footer(long ManifestOffset, long ManifestLength);
 }

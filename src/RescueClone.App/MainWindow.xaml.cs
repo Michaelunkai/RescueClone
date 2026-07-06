@@ -26,7 +26,8 @@ public partial class MainWindow : Window
         RunAndReport(() =>
         {
             var compression = Enum.Parse<CompressionMode>(((System.Windows.Controls.ComboBoxItem)CompressionBox.SelectedItem).Content.ToString()!);
-            return _engine.Create(new ImageOptions(SourcePathBox.Text, ImagePathBox.Text, compression, EmptyToNull(CreatePasswordBox.Password)));
+            var format = Enum.Parse<ImageContainerFormat>(((System.Windows.Controls.ComboBoxItem)FormatBox.SelectedItem).Content.ToString()!);
+            return _engine.Create(new ImageOptions(SourcePathBox.Text, ImagePathBox.Text, compression, EmptyToNull(CreatePasswordBox.Password), format));
         });
     }
 

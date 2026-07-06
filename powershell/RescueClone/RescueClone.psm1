@@ -45,10 +45,11 @@ function New-RCImage {
         [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$SourcePath,
         [Parameter(Mandatory=$true)][string]$ImagePath,
         [ValidateSet('None','Medium','High')][string]$Compression = 'Medium',
+        [ValidateSet('V1','V2')][string]$Format = 'V2',
         [string]$Password
     )
     if ($PSCmdlet.ShouldProcess($ImagePath, "Create image from $SourcePath")) {
-        $args = @('image','create','--source',$SourcePath,'--image',$ImagePath,'--compression',$Compression)
+        $args = @('image','create','--source',$SourcePath,'--image',$ImagePath,'--compression',$Compression,'--format',$Format)
         if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
         Invoke-RCJson -ArgumentList $args
     }

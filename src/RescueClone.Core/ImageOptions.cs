@@ -7,11 +7,18 @@ public enum CompressionMode
     High
 }
 
+public enum ImageContainerFormat
+{
+    V1 = 1,
+    V2 = 2
+}
+
 public sealed record ImageOptions(
     string SourcePath,
     string ImagePath,
     CompressionMode Compression,
-    string? Password);
+    string? Password,
+    ImageContainerFormat Format = ImageContainerFormat.V2);
 
 public sealed record RestoreOptions(
     string ImagePath,
@@ -31,11 +38,11 @@ public sealed record ImageReport(
     long OriginalBytes,
     long StoredBytes,
     string RootSha256,
-    IReadOnlyList<ImageFileEntry> Files);
+    IReadOnlyList<ImageFileEntry> Files,
+    int FormatVersion = 1);
 
 public sealed record RestoreReport(
     string ImagePath,
     string TargetPath,
     int FileCount,
     long RestoredBytes);
-

@@ -4,7 +4,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 
 | Feature | GUI | CLI | PowerShell |
 | --- | --- | --- | --- |
-| Directory image create | Create Image tab | `rc image create` | `New-RCImage` |
+| Directory image create with v1/v2 format selection | Create Image tab | `rc image create` | `New-RCImage` |
 | Image verify | Verify Image tab | `rc image verify` | `Test-RCImage` |
 | Directory restore | Restore Image tab | `rc image restore` | `Restore-RCImage` |
 | Directory backup job validate | Backup Job tab | `rc job validate` | `Test-RCBackupJob` |

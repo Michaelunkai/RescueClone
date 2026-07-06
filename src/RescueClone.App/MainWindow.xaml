@@ -26,11 +26,17 @@
                     </Grid.RowDefinitions>
                     <TextBox x:Name="SourcePathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Source directory"/>
                     <TextBox x:Name="ImagePathBox" Grid.Row="1" Margin="0,0,0,8" ToolTip="Image output path"/>
-                    <ComboBox x:Name="CompressionBox" Grid.Row="2" Width="180" HorizontalAlignment="Left" Margin="0,0,0,8" SelectedIndex="1">
-                        <ComboBoxItem Content="None"/>
-                        <ComboBoxItem Content="Medium"/>
-                        <ComboBoxItem Content="High"/>
-                    </ComboBox>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+                        <ComboBox x:Name="CompressionBox" Width="180" HorizontalAlignment="Left" SelectedIndex="1" Margin="0,0,8,0">
+                            <ComboBoxItem Content="None"/>
+                            <ComboBoxItem Content="Medium"/>
+                            <ComboBoxItem Content="High"/>
+                        </ComboBox>
+                        <ComboBox x:Name="FormatBox" Width="90" HorizontalAlignment="Left" SelectedIndex="1">
+                            <ComboBoxItem Content="V1"/>
+                            <ComboBoxItem Content="V2"/>
+                        </ComboBox>
+                    </StackPanel>
                     <PasswordBox x:Name="CreatePasswordBox" Grid.Row="3" Width="260" HorizontalAlignment="Left" Margin="0,0,0,8" ToolTip="Optional password"/>
                     <Button Grid.Row="4" Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Create Image" Click="CreateImage_Click"/>
                 </Grid>

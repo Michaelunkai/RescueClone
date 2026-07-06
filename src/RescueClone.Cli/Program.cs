@@ -47,7 +47,8 @@ static int Run(string[] args)
                     Required(values, "source"),
                     Required(values, "image"),
                     Enum.Parse<CompressionMode>(values.GetValueOrDefault("compression", "Medium"), ignoreCase: true),
-                    values.GetValueOrDefault("password"));
+                    values.GetValueOrDefault("password"),
+                    Enum.Parse<ImageContainerFormat>(values.GetValueOrDefault("format", "V2"), ignoreCase: true));
                 WriteJson(engine.Create(create));
                 return 0;
 
@@ -170,7 +171,7 @@ static void PrintHelp()
     RescueClone CLI
 
     rc features
-    rc image create --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>]
+    rc image create --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--format V1|V2]
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job validate --file <job.json>

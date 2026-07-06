@@ -62,7 +62,8 @@ public sealed class OperationRunner
                 RequiredString(request, "source"),
                 RequiredString(request, "image"),
                 EnumValue<CompressionMode>(request, "compression", CompressionMode.Medium),
-                OptionalString(request, "password"))),
+                OptionalString(request, "password"),
+                EnumValue<ImageContainerFormat>(request, "format", ImageContainerFormat.V2))),
             "image.verify" => _imageEngine.Verify(
                 RequiredString(request, "image"),
                 OptionalString(request, "password")),
