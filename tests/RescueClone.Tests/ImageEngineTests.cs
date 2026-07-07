@@ -26,6 +26,7 @@ public sealed class ImageEngineTests
         Assert.AreEqual(2, created.FileCount);
         Assert.AreEqual(created.RootSha256, verified.RootSha256);
         Assert.AreEqual(2, report.FileCount);
+        Assert.IsTrue((File.GetAttributes(image) & FileAttributes.ReadOnly) != 0);
         Assert.AreEqual("alpha", File.ReadAllText(Path.Combine(restored, "alpha.txt")));
         Assert.AreEqual("beta", File.ReadAllText(Path.Combine(restored, "nested", "beta.txt")));
     }
@@ -49,6 +50,7 @@ public sealed class ImageEngineTests
         Assert.AreEqual(1, verified.FormatVersion);
         Assert.AreEqual(created.RootSha256, verified.RootSha256);
         Assert.AreEqual(1, report.FileCount);
+        Assert.IsTrue((File.GetAttributes(image) & FileAttributes.ReadOnly) != 0);
         Assert.AreEqual("alpha", File.ReadAllText(Path.Combine(restored, "alpha.txt")));
     }
 
@@ -66,6 +68,7 @@ public sealed class ImageEngineTests
         var payloadOffset = FindBytes(bytes, "alpha"u8.ToArray());
         Assert.IsTrue(payloadOffset > 0);
         bytes[payloadOffset] = (byte)'z';
+        File.SetAttributes(image, File.GetAttributes(image) & ~FileAttributes.ReadOnly);
         File.WriteAllBytes(image, bytes);
 
         Assert.ThrowsException<InvalidDataException>(() => new ImageEngine().Verify(image, null));

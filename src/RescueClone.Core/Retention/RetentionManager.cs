@@ -71,6 +71,7 @@ public sealed class RetentionManager
             if (!File.Exists(fullPath))
                 continue;
             deletedBytes += new FileInfo(fullPath).Length;
+            ClearReadOnly(fullPath);
             File.Delete(fullPath);
             deletedPaths.Add(fullPath);
         }
@@ -125,5 +126,12 @@ public sealed class RetentionManager
         return path.EndsWith(Path.DirectorySeparatorChar)
             ? path
             : path + Path.DirectorySeparatorChar;
+    }
+
+    private static void ClearReadOnly(string path)
+    {
+        var attributes = File.GetAttributes(path);
+        if ((attributes & FileAttributes.ReadOnly) != 0)
+            File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
     }
 }

@@ -20,6 +20,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify and restore read both formats.
 - V2 directory images include block offsets, per-block SHA-256 hashes, file hashes, a root manifest hash, and a fixed footer that points to the manifest.
+- Completed directory image files are marked read-only after creation; managed retention can clear that bit only for files selected by its deletion plan.
 - Volume inventory reports drive root, readiness, drive type, file system, label, total/free bytes, and whether the root matches the running Windows system root.
 - Disk inventory reports disk number, friendly name, serial number, partition style, bus type, size, boot/system flags, offline state, and read-only state using built-in Windows storage cmdlets in read-only mode.
 - Job runs can perform post-create verification and write a structured JSON run log.

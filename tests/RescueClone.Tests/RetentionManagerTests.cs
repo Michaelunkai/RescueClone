@@ -54,6 +54,7 @@ public sealed class RetentionManagerTests
         var root = NewTempDirectory();
         var keep = WriteImage(root, "keep.rcimg", 3, DateTimeOffset.UtcNow);
         var delete = WriteImage(root, "delete.rcimg", 3, DateTimeOffset.UtcNow.AddHours(-1));
+        File.SetAttributes(delete, File.GetAttributes(delete) | FileAttributes.ReadOnly);
 
         var report = new RetentionManager().Apply(new RetentionOptions(root, "*.rcimg", KeepCount: 1, MaxAgeDays: null, MinFreeBytes: null));
 

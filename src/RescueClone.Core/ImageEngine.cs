@@ -30,6 +30,7 @@ public sealed class ImageEngine : IImageEngine
             .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+        PrepareImageForWrite(options.ImagePath);
         using var output = File.Create(options.ImagePath);
         output.Write(V1Magic);
         WriteJson(output, new ContainerHeader(1, options.Compression.ToString(), options.Password is not null));
@@ -57,6 +58,8 @@ public sealed class ImageEngine : IImageEngine
         WriteJson(output, new EndMarker(true));
 
         var rootHash = ComputeRootHash(entries);
+        output.Dispose();
+        ProtectImage(options.ImagePath);
         return new ImageReport(options.ImagePath, entries.Count, originalBytes, storedBytes, rootHash, entries, FormatVersion: 1);
     }
 
@@ -71,6 +74,7 @@ public sealed class ImageEngine : IImageEngine
             .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+        PrepareImageForWrite(options.ImagePath);
         using var output = File.Create(options.ImagePath);
         output.Write(V2Magic);
         WriteJson(output, new ContainerHeader(2, options.Compression.ToString(), options.Password is not null));
@@ -108,6 +112,8 @@ public sealed class ImageEngine : IImageEngine
         var manifestLength = output.Position - manifestOffset;
         WriteV2Footer(output, new V2Footer(manifestOffset, manifestLength));
 
+        output.Dispose();
+        ProtectImage(options.ImagePath);
         return new ImageReport(options.ImagePath, entries.Count, originalBytes, storedBytes, rootHash, entries, FormatVersion: 2);
     }
 
@@ -255,6 +261,22 @@ public sealed class ImageEngine : IImageEngine
     {
         var decrypted = password is null ? stored : Decrypt(stored, password);
         return compression == CompressionMode.None ? decrypted : Gunzip(decrypted);
+    }
+
+    private static void PrepareImageForWrite(string imagePath)
+    {
+        if (!File.Exists(imagePath))
+            return;
+
+        var attributes = File.GetAttributes(imagePath);
+        if ((attributes & FileAttributes.ReadOnly) != 0)
+            File.SetAttributes(imagePath, attributes & ~FileAttributes.ReadOnly);
+    }
+
+    private static void ProtectImage(string imagePath)
+    {
+        var attributes = File.GetAttributes(imagePath);
+        File.SetAttributes(imagePath, attributes | FileAttributes.ReadOnly);
     }
 
     private static byte[] Gzip(byte[] raw, CompressionMode compression)
