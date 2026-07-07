@@ -46,8 +46,8 @@ $guiOut = Join-Path $Root 'publish\gui'
 if (Test-Path -LiteralPath $cliOut) { Remove-Item -LiteralPath $cliOut -Recurse -Force }
 if (Test-Path -LiteralPath $guiOut) { Remove-Item -LiteralPath $guiOut -Recurse -Force }
 
-Invoke-Native $DotNet @('publish', (Join-Path $Root 'src\RescueClone.Cli\rc.csproj'), '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:PublishSingleFile=true', '-p:IncludeNativeLibrariesForSelfExtract=true', '-o', $cliOut, '--no-restore')
-Invoke-Native $DotNet @('publish', (Join-Path $Root 'src\RescueClone.App\RescueClone.App.csproj'), '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:PublishSingleFile=true', '-p:IncludeNativeLibrariesForSelfExtract=true', '-o', $guiOut, '--no-restore')
+Invoke-Native $DotNet @('publish', (Join-Path $Root 'src\RescueClone.Cli\rc.csproj'), '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:PublishSingleFile=false', '-o', $cliOut, '--no-restore')
+Invoke-Native $DotNet @('publish', (Join-Path $Root 'src\RescueClone.App\RescueClone.App.csproj'), '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:PublishSingleFile=false', '-o', $guiOut, '--no-restore')
 
 $nativeDll = Join-Path $Root 'native\bin\RescueClone.Native.dll'
 if (-not (Test-Path -LiteralPath $nativeDll)) { throw "Missing native DLL: $nativeDll" }
