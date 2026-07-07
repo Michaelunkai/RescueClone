@@ -26,7 +26,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for GFS-style daily/weekly/monthly retention planning and enforcement on directory-image repositories.
 - GUI, CLI, and PowerShell surfaces for Windows Task Scheduler XML planning, register, status, run-now, and unregister.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
-- GUI, CLI, and PowerShell surfaces for unattended rescue answer-file creation and validation.
+- GUI, CLI, and PowerShell surfaces for unattended rescue answer-file creation, validation, and safe directory restore execution.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
 - GUI, CLI, and PowerShell surfaces for sending operation requests through a named-pipe service IPC host.
 - GUI, CLI, and PowerShell surfaces for Windows Service install planning, install, status, start, stop, and uninstall of the operation IPC host.
@@ -40,7 +40,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Local operation runs with a log directory also write a readable recovery-state JSON sidecar containing the original request and final report for both success and failure paths.
 - Local operation reports include structured audit events for operation start, success, and failure.
 - Failed local operation reports include structured `errorDetail` fields with a stable code, original message, and exception type.
-- Local operation runs can dispatch implemented image create/verify/repository-audit/repository-protection/source-compare/repository-list/browse/extract/project/list/unproject/restore operations, backup job create/update/delete/export/import/list/status/history/validate/run operations, count/age/free-space and GFS retention plan/apply operations, schedule plan/register/status/run/unregister operations, read-only restore planning, and rescue answer create/validate operations.
+- Local operation runs can dispatch implemented image create/verify/repository-audit/repository-protection/source-compare/repository-list/browse/extract/project/list/unproject/restore operations, backup job create/update/delete/export/import/list/status/history/validate/run operations, count/age/free-space and GFS retention plan/apply operations, schedule plan/register/status/run/unregister operations, read-only restore planning, and rescue answer create/validate/execute operations.
 - Named-pipe service IPC can host the operation runner and return structured operation reports to CLI, PowerShell, and GUI clients.
 - Windows Service registration installs `rc service host` as the same operation runner behind SCM start/stop/status/uninstall commands.
 - Windows Service recovery policy can configure and query SCM restart-on-failure actions for the operation host.
@@ -70,7 +70,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Retention can select and delete `*.rcimg` files by newest-file keep count, max age, free-space threshold, and GFS-style newest daily/weekly/monthly buckets; it does not yet perform incremental-chain consolidation.
 - Scheduler registration writes Windows Task Scheduler tasks that run `rc job run --file <job>`, supports daily, weekly, monthly calendar triggers, event-log triggers, maps missed runs to Task Scheduler `StartWhenAvailable`, and supports status/run-now management.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
-- Rescue answer files record repository, image, target disk, boot mode, BCD path, driver directories, network shares, boot repair, and reboot policy, then validate using the same restore planner. They are not bootable media.
+- Rescue answer files record repository, image, target disk, boot mode, BCD path, driver directories, network shares, boot repair, reboot policy, and optional directory restore target, then validate using the same restore planner. They can execute the directory restore target path only; they are not bootable media or bare-metal restore.
 
 The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, signed kernel image mounting driver, privileged driver service, scheduler service, GFS chain consolidation, tamper-protection driver, MSI/EXE installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
 

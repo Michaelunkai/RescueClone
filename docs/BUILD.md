@@ -88,8 +88,9 @@ CLI examples:
 .\RC.cmd schedule run --task-name nightly-docs
 .\RC.cmd schedule unregister --task-name nightly-docs
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
-.\RC.cmd rescue answer-create --output .\rescue-answer.json --repository .\images --image daily-docs.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576 --driver-directories .\drivers --network-shares \\server\share --reboot-after-restore --verify-image
+.\RC.cmd rescue answer-create --output .\rescue-answer.json --repository .\images --image daily-docs.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576 --driver-directories .\drivers --network-shares \\server\share --reboot-after-restore --verify-image --directory-restore-target .\rescue-answer-restore
 .\RC.cmd rescue answer-validate --file .\rescue-answer.json --verify-image
+.\RC.cmd rescue answer-execute --file .\rescue-answer.json --verify-image
 .\RC.cmd operation kinds
 .\RC.cmd operation validate --request .\operation.json
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
@@ -172,7 +173,7 @@ Supported local operation kinds currently include `image.create.directory`, `ima
 `job.backup.directory.list`, `job.backup.directory.status`, `job.backup.directory.history`, `job.backup.directory.validate`, `job.backup.directory.run`,
 `retention.plan`, `retention.apply`, `retention.gfs.plan`, `retention.gfs.apply`,
 `schedule.plan`, `schedule.register`, `schedule.status`, `schedule.run`, `schedule.unregister`,
-`restore.plan.readonly`, `rescue.answer.create`, `rescue.answer.validate`,
+`restore.plan.readonly`, `rescue.answer.create`, `rescue.answer.validate`, `rescue.answer.execute`,
 `logs.backup.list`, `storage.volume.list`, `storage.disk.list`, `storage.disk.safety`, and `native.status`.
 Use `rc operation kinds` or `Get-RCOperationKind` to retrieve the current operation kind catalog with required and optional parameters.
 Use `rc operation validate` or `Test-RCOperation` to validate a request file before execution.
@@ -226,8 +227,9 @@ Get-RCScheduleStatus -TaskName nightly-docs
 Start-RCSchedule -TaskName nightly-docs -Confirm:$false
 Unregister-RCSchedule -TaskName nightly-docs -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
-New-RCRescueAnswer -OutputPath .\rescue-answer.json -RepositoryPath .\images -ImagePath daily-docs.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576 -DriverDirectory .\drivers -NetworkShare \\server\share -RebootAfterRestore -VerifyImage -Confirm:$false
+New-RCRescueAnswer -OutputPath .\rescue-answer.json -RepositoryPath .\images -ImagePath daily-docs.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576 -DriverDirectory .\drivers -NetworkShare \\server\share -RebootAfterRestore -VerifyImage -DirectoryRestoreTargetPath .\rescue-answer-restore -Confirm:$false
 Test-RCRescueAnswer -Path .\rescue-answer.json -VerifyImage
+Start-RCRescueAnswer -Path .\rescue-answer.json -VerifyImage -Confirm:$false
 Get-RCOperationKind
 Test-RCOperation -RequestPath .\operation.json
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
@@ -257,7 +259,7 @@ Portable package note: `scripts\New-PortablePackage.ps1` creates a ZIP containin
 
 Projection note: `rc image project`, `Mount-RCImage`, and the GUI Project Image button create a managed read-only directory projection by restoring verified image content, marking projected files read-only, and writing `.rescueclone-projection.json`. `rc image projections`, `Get-RCImageMount`, and the GUI List Projections button enumerate those manifests under a selected root. `rc image unproject`, `Dismount-RCImage`, and the GUI Remove Projection button only remove directories with that manifest. This is a safe user-mode projection layer, not a signed kernel image-mount driver.
 
-Rescue answer note: `rc rescue answer-create`, `New-RCRescueAnswer`, and the GUI Rescue tab write a versioned unattended restore answer JSON with repository, image, target disk, boot mode, driver folders, network shares, boot repair, and reboot policy. Validation verifies the image when requested and reuses the restore planner blockers. This is not WinPE, ISO, USB, or PXE media creation.
+Rescue answer note: `rc rescue answer-create`, `New-RCRescueAnswer`, and the GUI Rescue tab write a versioned unattended restore answer JSON with repository, image, target disk, boot mode, driver folders, network shares, boot repair, reboot policy, and optional directory restore target. Validation verifies the image when requested and reuses the restore planner blockers. `rc rescue answer-execute` / `Start-RCRescueAnswer` execute only the safe directory restore target path when present. This is not WinPE, ISO, USB, PXE media creation, or bare-metal restore.
 
 GFS retention note: `rc retention gfs-plan`, `Get-RCGfsRetentionPlan`, and the GUI Retention tab keep the newest selected daily, weekly, and monthly buckets from a flat image repository and delete unselected images only when the apply command is used. This is GFS-style pruning for standalone directory images; it is not incremental-chain consolidation.
 

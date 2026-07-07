@@ -214,10 +214,15 @@ public sealed class OperationRunner
                 OptionalStringListValue(request, "networkShares"),
                 BoolValue(request, "repairBoot", defaultValue: true),
                 BoolValue(request, "rebootAfterRestore"),
-                BoolValue(request, "verifyImage"))),
+                BoolValue(request, "verifyImage"),
+                OptionalString(request, "directoryRestoreTarget"))),
             "rescue.answer.validate" => new RescueAnswerManager(_imageEngine, _restorePlanner).Validate(
                 RequiredString(request, "file"),
                 BoolValue(request, "verifyImage")),
+            "rescue.answer.execute" => new RescueAnswerManager(_imageEngine, _restorePlanner).Execute(
+                RequiredString(request, "file"),
+                BoolValue(request, "verifyImage"),
+                BoolValue(request, "overwrite")),
             "logs.backup.list" => new BackupLogCatalog().List(new LogListOptions(
                 RequiredString(request, "directory"),
                 OptionalString(request, "pattern") ?? "*.json")),

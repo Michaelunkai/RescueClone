@@ -20,7 +20,8 @@ public sealed record RescueAnswerOptions(
     IReadOnlyList<string> NetworkShares,
     bool RepairBoot,
     bool RebootAfterRestore,
-    bool VerifyImage);
+    bool VerifyImage,
+    string? DirectoryRestoreTargetPath = null);
 
 public sealed record RescueAnswerFile(
     int Version,
@@ -37,7 +38,8 @@ public sealed record RescueAnswerFile(
     IReadOnlyList<string> DriverDirectories,
     IReadOnlyList<string> NetworkShares,
     bool RepairBoot,
-    bool RebootAfterRestore);
+    bool RebootAfterRestore,
+    string? DirectoryRestoreTargetPath = null);
 
 public sealed record RescueAnswerReport(
     string AnswerPath,
@@ -45,6 +47,15 @@ public sealed record RescueAnswerReport(
     IReadOnlyList<string> Blockers,
     RestorePlanReport? RestorePlan,
     bool ImageVerified);
+
+public sealed record RescueAnswerExecutionReport(
+    string AnswerPath,
+    bool Valid,
+    IReadOnlyList<string> Blockers,
+    bool ImageVerified,
+    bool DirectoryRestorePerformed,
+    RestoreReport? DirectoryRestore,
+    bool RebootRequested);
 
 public sealed class RescueAnswerManager
 {
@@ -71,9 +82,43 @@ public sealed class RescueAnswerManager
     {
         if (!File.Exists(path))
             throw new FileNotFoundException("Rescue answer file was not found.", path);
-        var answer = JsonSerializer.Deserialize<RescueAnswerFile>(File.ReadAllText(path), JsonOptions)
-            ?? throw new InvalidDataException("Rescue answer file is empty.");
-        return ValidateAnswer(path, answer, verifyImage);
+        return ValidateAnswer(path, LoadAnswer(path), verifyImage);
+    }
+
+    public RescueAnswerExecutionReport Execute(string path, bool verifyImage, bool overwrite)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException("Rescue answer file was not found.", path);
+        var answer = LoadAnswer(path);
+        var validation = ValidateAnswer(path, answer, verifyImage);
+        var blockers = validation.Blockers.ToList();
+        if (string.IsNullOrWhiteSpace(answer.DirectoryRestoreTargetPath))
+            blockers.Add("DirectoryRestoreTargetPath is required for rescue answer execution in this build.");
+        if (blockers.Count > 0)
+        {
+            return new RescueAnswerExecutionReport(
+                Path.GetFullPath(path),
+                Valid: false,
+                blockers,
+                validation.ImageVerified,
+                DirectoryRestorePerformed: false,
+                DirectoryRestore: null,
+                answer.RebootAfterRestore);
+        }
+
+        var restore = _imageEngine.Restore(new RestoreOptions(
+            answer.ImagePath,
+            answer.DirectoryRestoreTargetPath!,
+            answer.Password,
+            overwrite));
+        return new RescueAnswerExecutionReport(
+            Path.GetFullPath(path),
+            Valid: true,
+            Array.Empty<string>(),
+            validation.ImageVerified,
+            DirectoryRestorePerformed: true,
+            restore,
+            answer.RebootAfterRestore);
     }
 
     private RescueAnswerFile BuildAnswer(RescueAnswerOptions options)
@@ -102,7 +147,8 @@ public sealed class RescueAnswerManager
             options.DriverDirectories.Where(p => !string.IsNullOrWhiteSpace(p)).Select(Path.GetFullPath).ToArray(),
             options.NetworkShares.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()).ToArray(),
             options.RepairBoot,
-            options.RebootAfterRestore);
+            options.RebootAfterRestore,
+            string.IsNullOrWhiteSpace(options.DirectoryRestoreTargetPath) ? null : Path.GetFullPath(options.DirectoryRestoreTargetPath));
     }
 
     private RescueAnswerReport ValidateAnswer(string path, RescueAnswerFile answer, bool verifyImage)
@@ -162,6 +208,12 @@ public sealed class RescueAnswerManager
         return Path.IsPathFullyQualified(imagePath)
             ? Path.GetFullPath(imagePath)
             : Path.GetFullPath(Path.Combine(repositoryPath, imagePath));
+    }
+
+    private static RescueAnswerFile LoadAnswer(string path)
+    {
+        return JsonSerializer.Deserialize<RescueAnswerFile>(File.ReadAllText(path), JsonOptions)
+            ?? throw new InvalidDataException("Rescue answer file is empty.");
     }
 
     private static JsonSerializerOptions CreateJsonOptions()

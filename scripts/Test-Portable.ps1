@@ -20,6 +20,9 @@ if (-not (Test-Path -LiteralPath $Cli)) { throw "Missing CLI exe. Run .\scripts\
 $Image = Join-Path $Work 'backup.rcimg'
 $Restore = Join-Path $Work 'restore'
 $Clone = Join-Path $Work 'clone'
+$CliRescueAnswer = Join-Path $Work 'cli-rescue-answer.json'
+$CliRescueRestore = Join-Path $Work 'cli-rescue-restore'
+$BcdStore = Join-Path $Work 'BCD'
 $AdvancedJob = Join-Path $Work 'advanced-job.json'
 @{
     retryCount = 2
@@ -27,10 +30,13 @@ $AdvancedJob = Join-Path $Work 'advanced-job.json'
     applyRetentionAfterCreate = $true
     retentionKeepCount = 3
 } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $AdvancedJob -Encoding UTF8
+'fixture' | Set-Content -LiteralPath $BcdStore -Encoding ASCII
 & $Cli image create --source (Join-Path $Work 'source') --image $Image --compression High --password secret | Out-Null
 & $Cli image verify --image $Image --password secret | Out-Null
 & $Cli image restore --image $Image --target $Restore --password secret | Out-Null
 & $Cli clone directory --source (Join-Path $Work 'source') --target $Clone | Out-Null
+& $Cli rescue answer-create --output $CliRescueAnswer --repository $Work --image (Split-Path -Leaf $Image) --target-disk-id directory-fixture --password secret --boot-mode Bios --bcd-store $BcdStore --target-disk-size-bytes 1048576 --verify-image --directory-restore-target $CliRescueRestore | Out-Null
+$CliRescueExecution = & $Cli rescue answer-execute --file $CliRescueAnswer --verify-image | ConvertFrom-Json
 $CliJob = Join-Path $Work 'cli-job.json'
 $CliJobStatus = & $Cli job create --file $CliJob --job-id cli-job --name 'CLI Job' --source (Join-Path $Work 'source') --image (Join-Path $Work 'cli-job.rcimg') --advanced-json-file $AdvancedJob | ConvertFrom-Json
 $OperationRequest = Join-Path $Work 'native-status.operation.json'
@@ -49,6 +55,10 @@ $PowerShellOperationValidation = Test-RCOperation -RequestPath $OperationRequest
 if (-not $PowerShellOperationValidation.valid) { throw 'PowerShell operation validation failed for native.status fixture' }
 $PowerShellClone = Join-Path $Work 'clone-ps'
 Copy-RCDirectoryClone -SourcePath (Join-Path $Work 'source') -TargetPath $PowerShellClone -Confirm:$false | Out-Null
+$PowerShellRescueAnswer = Join-Path $Work 'ps-rescue-answer.json'
+$PowerShellRescueRestore = Join-Path $Work 'ps-rescue-restore'
+New-RCRescueAnswer -OutputPath $PowerShellRescueAnswer -RepositoryPath $Work -ImagePath (Split-Path -Leaf $Image) -TargetDiskId directory-fixture -Password secret -BootMode Bios -BcdStorePath $BcdStore -TargetDiskSizeBytes 1048576 -VerifyImage -DirectoryRestoreTargetPath $PowerShellRescueRestore -Confirm:$false | Out-Null
+$PowerShellRescueExecution = Start-RCRescueAnswer -Path $PowerShellRescueAnswer -VerifyImage -Confirm:$false
 $PowerShellJob = Join-Path $Work 'ps-job.json'
 $PowerShellJobStatus = New-RCBackupJob -Path $PowerShellJob -JobId ps-job -Name 'PowerShell Job' -SourcePath (Join-Path $Work 'source') -ImagePath (Join-Path $Work 'ps-job.rcimg') -AdvancedJsonFile $AdvancedJob -Confirm:$false
 
@@ -58,6 +68,8 @@ if ($alpha.Trim() -ne 'alpha') { throw 'alpha restore mismatch' }
 if ($beta.Trim() -ne 'beta') { throw 'beta restore mismatch' }
 if ((Get-Content -LiteralPath (Join-Path $Clone 'alpha.txt') -Raw).Trim() -ne 'alpha') { throw 'CLI clone alpha mismatch' }
 if ((Get-Content -LiteralPath (Join-Path $PowerShellClone 'nested\beta.txt') -Raw).Trim() -ne 'beta') { throw 'PowerShell clone beta mismatch' }
+if (-not $CliRescueExecution.directoryRestorePerformed -or (Get-Content -LiteralPath (Join-Path $CliRescueRestore 'alpha.txt') -Raw).Trim() -ne 'alpha') { throw 'CLI rescue answer execution mismatch' }
+if (-not $PowerShellRescueExecution.directoryRestorePerformed -or (Get-Content -LiteralPath (Join-Path $PowerShellRescueRestore 'nested\beta.txt') -Raw).Trim() -ne 'beta') { throw 'PowerShell rescue answer execution mismatch' }
 if ($CliJobStatus.retryCount -ne 2 -or -not $CliJobStatus.applyRetentionAfterCreate) { throw 'CLI advanced job options mismatch' }
 if ($PowerShellJobStatus.retryCount -ne 2 -or -not $PowerShellJobStatus.applyRetentionAfterCreate) { throw 'PowerShell advanced job options mismatch' }
 
@@ -71,6 +83,8 @@ if ($PowerShellJobStatus.retryCount -ne 2 -or -not $PowerShellJobStatus.applyRet
     PowerShellOperationValidation = $PowerShellOperationValidation.valid
     Clone = $Clone
     PowerShellClone = $PowerShellClone
+    CliRescueRestore = $CliRescueRestore
+    PowerShellRescueRestore = $PowerShellRescueRestore
     CliJob = $CliJob
     PowerShellJob = $PowerShellJob
     AdvancedJobRetryCount = $CliJobStatus.retryCount

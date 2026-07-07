@@ -69,7 +69,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc clone <directory>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <kinds|validate|run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc clone <directory>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate|answer-execute>, rc operation <kinds|validate|run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -323,12 +323,20 @@ static int RunRescue(string command, Dictionary<string, string> values)
                 SplitPaths(values.GetValueOrDefault("network-shares", string.Empty)),
                 ParseBool(values.GetValueOrDefault("repair-boot", "true"), "repair-boot"),
                 values.ContainsKey("reboot-after-restore"),
-                values.ContainsKey("verify-image"))));
+                values.ContainsKey("verify-image"),
+                values.GetValueOrDefault("directory-restore-target"))));
             return 0;
         case "answer-validate":
             var report = manager.Validate(Required(values, "file"), values.ContainsKey("verify-image"));
             WriteJson(report);
             return report.Valid ? 0 : 3;
+        case "answer-execute":
+            var execution = manager.Execute(
+                Required(values, "file"),
+                values.ContainsKey("verify-image"),
+                values.ContainsKey("overwrite"));
+            WriteJson(execution);
+            return execution.Valid ? 0 : 3;
         default:
             throw new ArgumentException($"Unknown rescue command: {command}");
     }
@@ -681,8 +689,9 @@ static void PrintHelp()
     rc schedule run --task-name <name>
     rc schedule unregister --task-name <name>
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
-    rc rescue answer-create --output <answer.json> --repository <dir> --image <file.rcimg> --target-disk-id <id> [--password <secret>] [--boot-mode Bios|Uefi|Unknown] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition] [--bcd-store <path>] [--driver-directories <paths>] [--network-shares <shares>] [--repair-boot true|false] [--reboot-after-restore] [--verify-image]
+    rc rescue answer-create --output <answer.json> --repository <dir> --image <file.rcimg> --target-disk-id <id> [--password <secret>] [--boot-mode Bios|Uefi|Unknown] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition] [--bcd-store <path>] [--driver-directories <paths>] [--network-shares <shares>] [--repair-boot true|false] [--reboot-after-restore] [--verify-image] [--directory-restore-target <dir>]
     rc rescue answer-validate --file <answer.json> [--verify-image]
+    rc rescue answer-execute --file <answer.json> [--verify-image] [--overwrite]
     rc operation kinds
     rc operation validate --request <operation.json>
     rc operation run --request <operation.json> [--log-directory <dir>]

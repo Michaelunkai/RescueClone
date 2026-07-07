@@ -173,11 +173,12 @@ PowerShell equivalents are `Get-RCSchedulePlan`, `Register-RCSchedule`, `Get-RCS
 ## Rescue Answer Files
 
 ```powershell
-.\RC.cmd rescue answer-create --output F:\Rescue\answer.json --repository F:\Backups --image daily.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --target-disk-size-bytes 1048576 --verify-image
+.\RC.cmd rescue answer-create --output F:\Rescue\answer.json --repository F:\Backups --image daily.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --target-disk-size-bytes 1048576 --verify-image --directory-restore-target F:\Rescue\Restored
 .\RC.cmd rescue answer-validate --file F:\Rescue\answer.json --verify-image
+.\RC.cmd rescue answer-execute --file F:\Rescue\answer.json --verify-image
 ```
 
-This creates and validates an unattended restore answer JSON. It does not build WinPE, ISO, USB, PXE, or boot media.
+This creates, validates, and can execute an unattended directory restore from an answer JSON when `directoryRestoreTargetPath` is present. It does not build WinPE, ISO, USB, PXE, or boot media, and it does not perform bare-metal disk restore.
 
 ## Operations And Service IPC
 

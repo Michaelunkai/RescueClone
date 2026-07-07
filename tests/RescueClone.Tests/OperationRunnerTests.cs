@@ -344,6 +344,7 @@ public sealed class OperationRunnerTests
         var driverDirectory = Path.Combine(root, "drivers");
         Directory.CreateDirectory(driverDirectory);
         var answer = Path.Combine(root, "answer.json");
+        var restoreTarget = Path.Combine(root, "answer-restore");
         var runner = new OperationRunner();
 
         var create = runner.Run(new OperationRequest(
@@ -361,7 +362,8 @@ public sealed class OperationRunnerTests
                 ["networkShares"] = Json("networkShares", new[] { @"\\server\share" }),
                 ["repairBoot"] = Json("repairBoot", true),
                 ["rebootAfterRestore"] = Json("rebootAfterRestore", true),
-                ["verifyImage"] = Json("verifyImage", true)
+                ["verifyImage"] = Json("verifyImage", true),
+                ["directoryRestoreTarget"] = Json("directoryRestoreTarget", restoreTarget)
             },
             "rescue-answer-create"), Path.Combine(root, "ops"));
         var validate = runner.Run(new OperationRequest(
@@ -372,6 +374,14 @@ public sealed class OperationRunnerTests
                 ["verifyImage"] = Json("verifyImage", true)
             },
             "rescue-answer-validate"), Path.Combine(root, "ops"));
+        var execute = runner.Run(new OperationRequest(
+            "rescue.answer.execute",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", answer),
+                ["verifyImage"] = Json("verifyImage", true)
+            },
+            "rescue-answer-execute"), Path.Combine(root, "ops"));
 
         Assert.AreEqual(OperationState.Succeeded, create.State);
         Assert.IsTrue(File.Exists(answer));
@@ -380,6 +390,9 @@ public sealed class OperationRunnerTests
         Assert.AreEqual(OperationState.Succeeded, validate.State);
         Assert.IsTrue(validate.Result!.Value.GetProperty("valid").GetBoolean());
         Assert.IsTrue(validate.Result.Value.GetProperty("imageVerified").GetBoolean());
+        Assert.AreEqual(OperationState.Succeeded, execute.State);
+        Assert.IsTrue(execute.Result!.Value.GetProperty("directoryRestorePerformed").GetBoolean());
+        Assert.AreEqual("alpha", File.ReadAllText(Path.Combine(restoreTarget, "alpha.txt")));
         Assert.IsTrue(File.Exists(validate.LogPath));
         Assert.IsTrue(File.Exists(validate.RecoveryStatePath));
     }
@@ -820,6 +833,7 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(kinds.Contains("job.backup.directory.run"));
         Assert.IsTrue(kinds.Contains("schedule.register"));
         Assert.IsTrue(kinds.Contains("rescue.answer.validate"));
+        Assert.IsTrue(kinds.Contains("rescue.answer.execute"));
         Assert.IsTrue(kinds.Contains("logs.backup.list"));
         Assert.IsTrue(kinds.Contains("storage.volume.list"));
         Assert.IsTrue(kinds.Contains("storage.disk.safety"));

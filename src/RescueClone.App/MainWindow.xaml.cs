@@ -273,13 +273,19 @@ public partial class MainWindow : Window
                 SplitPaths(RescueNetworkSharesBox.Text),
                 RescueRepairBootBox.IsChecked == true,
                 RescueRebootBox.IsChecked == true,
-                RescueVerifyImageBox.IsChecked == true));
+                RescueVerifyImageBox.IsChecked == true,
+                EmptyToNull(RescueDirectoryRestoreTargetBox.Text)));
         });
     }
 
     private void ValidateRescueAnswer_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _rescueAnswerManager.Validate(RescueAnswerPathBox.Text, RescueVerifyImageBox.IsChecked == true));
+    }
+
+    private void ExecuteRescueAnswer_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _rescueAnswerManager.Execute(RescueAnswerPathBox.Text, RescueVerifyImageBox.IsChecked == true, overwrite: true));
     }
 
     private void RunOperation_Click(object sender, RoutedEventArgs e)

@@ -24,6 +24,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBox x:Name="SourcePathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Source directory"/>
@@ -224,9 +225,11 @@
                         <CheckBox x:Name="RescueRebootBox" Content="Reboot after restore" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <CheckBox x:Name="RescueVerifyImageBox" Content="Verify image" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <WrapPanel Grid.Row="5">
+                    <TextBox x:Name="RescueDirectoryRestoreTargetBox" Grid.Row="5" Margin="0,0,0,8" ToolTip="Optional directory restore target for answer execution"/>
+                    <WrapPanel Grid.Row="6">
                         <Button Width="170" Height="34" Content="Create Answer" Click="CreateRescueAnswer_Click" Margin="0,0,8,0"/>
-                        <Button Width="170" Height="34" Content="Validate Answer" Click="ValidateRescueAnswer_Click"/>
+                        <Button Width="170" Height="34" Content="Validate Answer" Click="ValidateRescueAnswer_Click" Margin="0,0,8,0"/>
+                        <Button Width="170" Height="34" Content="Execute Answer" Click="ExecuteRescueAnswer_Click"/>
                     </WrapPanel>
                 </Grid>
             </TabItem>

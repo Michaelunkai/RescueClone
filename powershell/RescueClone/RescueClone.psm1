@@ -565,7 +565,8 @@ function New-RCRescueAnswer {
         [string[]]$NetworkShare,
         [bool]$RepairBoot = $true,
         [switch]$RebootAfterRestore,
-        [switch]$VerifyImage
+        [switch]$VerifyImage,
+        [string]$DirectoryRestoreTargetPath
     )
     if ($PSCmdlet.ShouldProcess($OutputPath, "Create unattended rescue answer file")) {
         $args = @('rescue','answer-create','--output',$OutputPath,'--repository',$RepositoryPath,'--image',$ImagePath,'--target-disk-id',$TargetDiskId,'--boot-mode',$BootMode,'--repair-boot',[string]$RepairBoot)
@@ -579,6 +580,7 @@ function New-RCRescueAnswer {
         if ($PSBoundParameters.ContainsKey('NetworkShare')) { $args += @('--network-shares',($NetworkShare -join ';')) }
         if ($RebootAfterRestore) { $args += '--reboot-after-restore' }
         if ($VerifyImage) { $args += '--verify-image' }
+        if ($PSBoundParameters.ContainsKey('DirectoryRestoreTargetPath')) { $args += @('--directory-restore-target',$DirectoryRestoreTargetPath) }
         Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
     }
 }
@@ -592,6 +594,21 @@ function Test-RCRescueAnswer {
     $args = @('rescue','answer-validate','--file',$Path)
     if ($VerifyImage) { $args += '--verify-image' }
     Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
+}
+
+function Start-RCRescueAnswer {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path,
+        [switch]$VerifyImage,
+        [switch]$Overwrite
+    )
+    if ($PSCmdlet.ShouldProcess($Path, "Execute unattended rescue answer directory restore")) {
+        $args = @('rescue','answer-execute','--file',$Path)
+        if ($VerifyImage) { $args += '--verify-image' }
+        if ($Overwrite) { $args += '--overwrite' }
+        Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
+    }
 }
 
 function Start-RCOperation {

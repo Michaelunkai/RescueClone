@@ -12,6 +12,7 @@ public sealed class RescueAnswerManagerTests
     {
         var context = NewContext();
         var output = Path.Combine(context.Root, "rescue-answer.json");
+        var target = Path.Combine(context.Root, "executed-restore");
 
         var created = new RescueAnswerManager().Create(new RescueAnswerOptions(
             output,
@@ -29,7 +30,8 @@ public sealed class RescueAnswerManagerTests
             new[] { @"\\backup\repository" },
             RepairBoot: true,
             RebootAfterRestore: true,
-            VerifyImage: true));
+            VerifyImage: true,
+            target));
 
         Assert.IsTrue(File.Exists(output));
         Assert.IsTrue(created.Valid, string.Join(Environment.NewLine, created.Blockers));
@@ -42,6 +44,12 @@ public sealed class RescueAnswerManagerTests
         Assert.IsTrue(validated.Valid, string.Join(Environment.NewLine, validated.Blockers));
         Assert.IsTrue(validated.ImageVerified);
         Assert.AreEqual(context.Image, validated.RestorePlan!.ImagePath);
+
+        var executed = new RescueAnswerManager().Execute(output, verifyImage: true, overwrite: false);
+
+        Assert.IsTrue(executed.Valid, string.Join(Environment.NewLine, executed.Blockers));
+        Assert.IsTrue(executed.DirectoryRestorePerformed);
+        Assert.AreEqual("alpha", File.ReadAllText(Path.Combine(target, "alpha.txt")));
     }
 
     [TestMethod]
@@ -79,6 +87,7 @@ public sealed class RescueAnswerManagerTests
     {
         var create = FeatureCatalog.All.Single(f => f.FeatureId == "rescue.answer.create");
         var validate = FeatureCatalog.All.Single(f => f.FeatureId == "rescue.answer.validate");
+        var execute = FeatureCatalog.All.Single(f => f.FeatureId == "rescue.answer.execute");
 
         Assert.AreEqual("Rescue", create.Gui);
         Assert.AreEqual("rc rescue answer-create", create.Cli);
@@ -88,6 +97,10 @@ public sealed class RescueAnswerManagerTests
         Assert.AreEqual("rc rescue answer-validate", validate.Cli);
         Assert.AreEqual("Test-RCRescueAnswer", validate.PowerShell);
         Assert.IsTrue(validate.Implemented);
+        Assert.AreEqual("Rescue", execute.Gui);
+        Assert.AreEqual("rc rescue answer-execute", execute.Cli);
+        Assert.AreEqual("Start-RCRescueAnswer", execute.PowerShell);
+        Assert.IsTrue(execute.Implemented);
     }
 
     private static TestContextData NewContext()
