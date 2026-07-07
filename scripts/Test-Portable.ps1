@@ -22,9 +22,20 @@ $Restore = Join-Path $Work 'restore'
 & $Cli image create --source (Join-Path $Work 'source') --image $Image --compression High --password secret | Out-Null
 & $Cli image verify --image $Image --password secret | Out-Null
 & $Cli image restore --image $Image --target $Restore --password secret | Out-Null
+$OperationRequest = Join-Path $Work 'native-status.operation.json'
+@{
+    kind = 'native.status'
+    operationId = 'portable-native-status'
+    parameters = @{}
+} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $OperationRequest -Encoding UTF8
+$OperationKinds = & $Cli operation kinds | ConvertFrom-Json
+$OperationValidation = & $Cli operation validate --request $OperationRequest | ConvertFrom-Json
+if (-not $OperationValidation.valid) { throw 'operation validation failed for native.status fixture' }
 
 Import-Module (Join-Path $Root 'powershell\RescueClone\RescueClone.psd1') -Force
 $features = Get-RCFeature
+$PowerShellOperationValidation = Test-RCOperation -RequestPath $OperationRequest
+if (-not $PowerShellOperationValidation.valid) { throw 'PowerShell operation validation failed for native.status fixture' }
 
 $alpha = Get-Content -LiteralPath (Join-Path $Restore 'alpha.txt') -Raw
 $beta = Get-Content -LiteralPath (Join-Path $Restore 'nested\beta.txt') -Raw
@@ -36,6 +47,9 @@ if ($beta.Trim() -ne 'beta') { throw 'beta restore mismatch' }
     Image = $Image
     Restore = $Restore
     FeatureCount = @($features).Count
+    OperationKindCount = @($OperationKinds).Count
+    OperationValidation = $OperationValidation.valid
+    PowerShellOperationValidation = $PowerShellOperationValidation.valid
     Alpha = $alpha.Trim()
     Beta = $beta.Trim()
 } | ConvertTo-Json
