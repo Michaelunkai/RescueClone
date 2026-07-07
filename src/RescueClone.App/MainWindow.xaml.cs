@@ -269,6 +269,11 @@ public partial class MainWindow : Window
         RunAndReport(() => OperationKindCatalog.All);
     }
 
+    private void ValidateOperation_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _operationRunner.Validate(_operationRunner.LoadRequest(OperationRequestPathBox.Text)));
+    }
+
     private void RunServiceOperation_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() =>

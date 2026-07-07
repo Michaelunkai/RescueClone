@@ -32,6 +32,8 @@ public sealed class OperationRunner
             ?? throw new InvalidDataException("Operation request is empty.");
     }
 
+    public OperationValidationReport Validate(OperationRequest request) => OperationKindCatalog.Validate(request);
+
     public OperationReport Run(OperationRequest request, string? logDirectory)
     {
         var operationId = string.IsNullOrWhiteSpace(request.OperationId) ? Guid.NewGuid().ToString("N") : request.OperationId;

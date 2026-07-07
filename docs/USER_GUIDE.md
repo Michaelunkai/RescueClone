@@ -154,6 +154,15 @@ Get-RCOperationKind
 
 The GUI has the matching Operations tab `List Kinds` action. The returned catalog lists each durable operation kind plus required and optional JSON parameters.
 
+Validate an operation request without executing it:
+
+```powershell
+.\RC.cmd operation validate --request F:\Ops\operation.json
+Test-RCOperation -RequestPath F:\Ops\operation.json
+```
+
+The GUI has the matching Operations tab `Validate Request` action.
+
 Create an operation request JSON and run it locally:
 
 ```powershell

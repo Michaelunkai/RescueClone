@@ -47,6 +47,13 @@ public sealed record OperationKindSurface(
     IReadOnlyList<string> RequiredParameters,
     IReadOnlyList<string> OptionalParameters);
 
+public sealed record OperationValidationReport(
+    string? Kind,
+    bool KnownKind,
+    bool Valid,
+    IReadOnlyList<string> MissingParameters,
+    IReadOnlyList<string> UnknownParameters);
+
 public static class OperationKindCatalog
 {
     public static IReadOnlyList<OperationKindSurface> All { get; } = new List<OperationKindSurface>
@@ -101,5 +108,32 @@ public static class OperationKindCatalog
             .ToArray();
         if (duplicates.Length > 0)
             throw new InvalidOperationException("Duplicate operation kind catalog entries: " + string.Join(", ", duplicates));
+    }
+
+    public static OperationKindSurface? Find(string? kind)
+    {
+        if (string.IsNullOrWhiteSpace(kind))
+            return null;
+        return All.FirstOrDefault(entry => string.Equals(entry.Kind, kind, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static OperationValidationReport Validate(OperationRequest request)
+    {
+        AssertUniqueKinds();
+        var kind = Find(request.Kind);
+        if (kind is null)
+            return new OperationValidationReport(request.Kind, KnownKind: false, Valid: false, Array.Empty<string>(), Array.Empty<string>());
+
+        var parameters = request.Parameters ?? new Dictionary<string, JsonElement>();
+        var missing = kind.RequiredParameters
+            .Where(required => !parameters.TryGetValue(required, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined || (value.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(value.GetString())))
+            .ToArray();
+        var allowed = kind.RequiredParameters.Concat(kind.OptionalParameters).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var unknown = parameters.Keys
+            .Where(parameter => !allowed.Contains(parameter))
+            .OrderBy(parameter => parameter, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new OperationValidationReport(request.Kind, KnownKind: true, Valid: missing.Length == 0 && unknown.Length == 0, missing, unknown);
     }
 }

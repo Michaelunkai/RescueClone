@@ -694,6 +694,39 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void ValidateOperationReportsMissingAndUnknownParameters()
+    {
+        var report = new OperationRunner().Validate(new OperationRequest(
+            "image.extract.directory",
+            new Dictionary<string, JsonElement>
+            {
+                ["image"] = Json("image", "sample.rcimg"),
+                ["extra"] = Json("extra", true)
+            },
+            "invalid-extract"));
+
+        Assert.IsTrue(report.KnownKind);
+        Assert.IsFalse(report.Valid);
+        CollectionAssert.Contains(report.MissingParameters.ToArray(), "target");
+        CollectionAssert.Contains(report.MissingParameters.ToArray(), "paths");
+        CollectionAssert.Contains(report.UnknownParameters.ToArray(), "extra");
+    }
+
+    [TestMethod]
+    public void ValidateOperationAcceptsKnownCompleteRequest()
+    {
+        var report = new OperationRunner().Validate(new OperationRequest(
+            "native.status",
+            new Dictionary<string, JsonElement>(),
+            "native-status"));
+
+        Assert.IsTrue(report.KnownKind);
+        Assert.IsTrue(report.Valid);
+        Assert.AreEqual(0, report.MissingParameters.Count);
+        Assert.AreEqual(0, report.UnknownParameters.Count);
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesOperationParity()
     {
         var feature = FeatureCatalog.All.Single(f => f.FeatureId == "operation.run.local");
@@ -736,6 +769,12 @@ public sealed class OperationRunnerTests
         Assert.AreEqual("rc operation kinds", feature.Cli);
         Assert.AreEqual("Get-RCOperationKind", feature.PowerShell);
         Assert.IsTrue(feature.Implemented);
+
+        var validation = FeatureCatalog.All.Single(f => f.FeatureId == "operation.request.validate");
+        Assert.AreEqual("Operations", validation.Gui);
+        Assert.AreEqual("rc operation validate", validation.Cli);
+        Assert.AreEqual("Test-RCOperation", validation.PowerShell);
+        Assert.IsTrue(validation.Implemented);
     }
 
     private static JsonElement Json<T>(string name, T value)

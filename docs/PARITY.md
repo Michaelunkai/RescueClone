@@ -40,6 +40,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Unattended rescue answer create | Rescue tab | `rc rescue answer-create` | `New-RCRescueAnswer` |
 | Unattended rescue answer validate | Rescue tab | `rc rescue answer-validate` | `Test-RCRescueAnswer` |
 | Operation kind listing | Operations tab | `rc operation kinds` | `Get-RCOperationKind` |
+| Operation request validation | Operations tab | `rc operation validate` | `Test-RCOperation` |
 | Durable local operation run | Operations tab | `rc operation run` | `Start-RCOperation` |
 | Service IPC operation run | Operations tab | `rc service run-operation` | `Start-RCServiceOperation` |
 | Windows Service install plan | Operations tab | `rc service plan-install` | `Get-RCServiceInstallPlan` |

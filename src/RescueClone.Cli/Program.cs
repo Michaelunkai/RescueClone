@@ -65,7 +65,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <kinds|run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <kinds|validate|run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -333,6 +333,14 @@ static int RunOperation(string command, Dictionary<string, string> values)
         OperationKindCatalog.AssertUniqueKinds();
         WriteJson(OperationKindCatalog.All);
         return 0;
+    }
+
+    if (command == "validate")
+    {
+        var validator = new OperationRunner();
+        var report = validator.Validate(validator.LoadRequest(Required(values, "request")));
+        WriteJson(report);
+        return report.Valid ? 0 : 3;
     }
 
     if (command != "run")
@@ -643,6 +651,7 @@ static void PrintHelp()
     rc rescue answer-create --output <answer.json> --repository <dir> --image <file.rcimg> --target-disk-id <id> [--password <secret>] [--boot-mode Bios|Uefi|Unknown] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition] [--bcd-store <path>] [--driver-directories <paths>] [--network-shares <shares>] [--repair-boot true|false] [--reboot-after-restore] [--verify-image]
     rc rescue answer-validate --file <answer.json> [--verify-image]
     rc operation kinds
+    rc operation validate --request <operation.json>
     rc operation run --request <operation.json> [--log-directory <dir>]
     rc service serve --pipe <name> [--log-directory <dir>]
     rc service host --pipe <name> [--log-directory <dir>]

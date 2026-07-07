@@ -595,6 +595,14 @@ function Get-RCOperationKind {
     Invoke-RCJson -ArgumentList @('operation','kinds')
 }
 
+function Test-RCOperation {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$RequestPath
+    )
+    Invoke-RCJson -ArgumentList @('operation','validate','--request',$RequestPath) -AllowNonZeroExit
+}
+
 function Start-RCServiceOperation {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(
