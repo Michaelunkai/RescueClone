@@ -34,19 +34,25 @@ public sealed class OperationRunner
         JsonElement? result = null;
         string? error = null;
         var state = OperationState.Succeeded;
+        var auditEvents = new List<OperationAuditEvent>
+        {
+            new("operation.started", started, $"Operation {operationId} started: {request.Kind}")
+        };
 
         try
         {
             result = ToJsonElement(Dispatch(request));
+            auditEvents.Add(new OperationAuditEvent("operation.succeeded", DateTimeOffset.UtcNow, $"Operation {operationId} succeeded: {request.Kind}"));
         }
         catch (Exception ex)
         {
             state = OperationState.Failed;
             error = ex.Message;
+            auditEvents.Add(new OperationAuditEvent("operation.failed", DateTimeOffset.UtcNow, $"Operation {operationId} failed: {ex.Message}"));
         }
 
         var finished = DateTimeOffset.UtcNow;
-        var report = new OperationReport(operationId, request.Kind, state, started, finished, null, result, error);
+        var report = new OperationReport(operationId, request.Kind, state, started, finished, null, result, error, AuditEvents: auditEvents);
         var logPath = WriteReport(report, logDirectory);
         var reportWithLog = report with { LogPath = logPath };
         var recoveryStatePath = WriteRecoveryState(request, reportWithLog, logDirectory);

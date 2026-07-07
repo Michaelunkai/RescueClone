@@ -34,11 +34,13 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(File.Exists(report.RecoveryStatePath));
         Assert.IsNotNull(report.Result);
         Assert.AreEqual(1, report.Result.Value.GetProperty("fileCount").GetInt32());
+        AssertAuditEvents(report, OperationState.Succeeded);
 
         var state = ReadRecoveryState(report.RecoveryStatePath!);
         Assert.IsNotNull(state);
         Assert.AreEqual("image.verify", state.Request.Kind);
         Assert.AreEqual(OperationState.Succeeded, state.Report.State);
+        AssertAuditEvents(state.Report, OperationState.Succeeded);
     }
 
     [TestMethod]
@@ -59,12 +61,14 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(File.Exists(report.LogPath));
         Assert.IsTrue(File.Exists(report.RecoveryStatePath));
         Assert.IsTrue(report.Error!.Contains("missing.rcimg", StringComparison.OrdinalIgnoreCase));
+        AssertAuditEvents(report, OperationState.Failed);
 
         var state = ReadRecoveryState(report.RecoveryStatePath!);
         Assert.IsNotNull(state);
         Assert.AreEqual("image.verify", state.Request.Kind);
         Assert.AreEqual(OperationState.Failed, state.Report.State);
         Assert.IsTrue(state.Report.Error!.Contains("missing.rcimg", StringComparison.OrdinalIgnoreCase));
+        AssertAuditEvents(state.Report, OperationState.Failed);
     }
 
     [TestMethod]
@@ -172,6 +176,16 @@ public sealed class OperationRunnerTests
         return JsonSerializer.Deserialize<OperationRecoveryState>(
             File.ReadAllText(path),
             options);
+    }
+
+    private static void AssertAuditEvents(OperationReport report, OperationState expectedState)
+    {
+        Assert.IsNotNull(report.AuditEvents);
+        Assert.IsTrue(report.AuditEvents.Count >= 2);
+        Assert.AreEqual("operation.started", report.AuditEvents[0].EventType);
+        Assert.AreEqual(
+            expectedState == OperationState.Succeeded ? "operation.succeeded" : "operation.failed",
+            report.AuditEvents[^1].EventType);
     }
 
     private static string NewTempDirectory()
