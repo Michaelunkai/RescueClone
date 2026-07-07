@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RescueClone.Core;
+using RescueClone.Core.Jobs;
 using RescueClone.Core.Operations;
 
 namespace RescueClone.Tests;
@@ -493,6 +494,57 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(File.Exists(answer));
         Assert.IsTrue(File.Exists(response.Report.LogPath));
         Assert.IsTrue(File.Exists(response.Report.RecoveryStatePath));
+    }
+
+    [TestMethod]
+    public void RunScheduleOperations()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var jobPath = Path.Combine(root, "jobs", "schedule.json");
+        var cliPath = Path.Combine(root, "rc.exe");
+        File.WriteAllText(cliPath, "fixture");
+        new BackupJobRunner().Save(jobPath, new BackupJobDefinition(
+            "schedule-job",
+            "Schedule Job",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "schedule.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs")));
+        var runner = new OperationRunner();
+
+        var plan = runner.Run(new OperationRequest(
+            "schedule.plan",
+            new Dictionary<string, JsonElement>
+            {
+                ["taskName"] = Json("taskName", "operation-schedule"),
+                ["jobFile"] = Json("jobFile", jobPath),
+                ["cliPath"] = Json("cliPath", cliPath),
+                ["frequency"] = Json("frequency", "Daily"),
+                ["time"] = Json("time", "03:15"),
+                ["runMissed"] = Json("runMissed", true)
+            },
+            "schedule-plan"), Path.Combine(root, "ops"));
+        var status = runner.Run(new OperationRequest(
+            "schedule.status",
+            new Dictionary<string, JsonElement>
+            {
+                ["taskName"] = Json("taskName", "operation-schedule-that-does-not-exist")
+            },
+            "schedule-status"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, plan.State);
+        Assert.AreEqual("operation-schedule", plan.Result!.Value.GetProperty("taskName").GetString());
+        Assert.AreEqual("Daily", plan.Result.Value.GetProperty("frequency").GetString());
+        StringAssert.Contains(plan.Result.Value.GetProperty("taskXml").GetString(), "StartWhenAvailable>true</StartWhenAvailable");
+        Assert.AreEqual(OperationState.Succeeded, status.State);
+        Assert.IsFalse(status.Result!.Value.GetProperty("succeeded").GetBoolean());
+        Assert.IsTrue(File.Exists(status.LogPath));
+        Assert.IsTrue(File.Exists(status.RecoveryStatePath));
     }
 
     [TestMethod]

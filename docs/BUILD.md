@@ -152,6 +152,7 @@ Supported local operation kinds currently include `image.create.directory`, `ima
 `job.backup.directory.delete`, `job.backup.directory.export`, `job.backup.directory.import`,
 `job.backup.directory.list`, `job.backup.directory.status`, `job.backup.directory.history`, `job.backup.directory.validate`, `job.backup.directory.run`,
 `retention.plan`, `retention.apply`, `retention.gfs.plan`, `retention.gfs.apply`,
+`schedule.plan`, `schedule.register`, `schedule.status`, `schedule.run`, `schedule.unregister`,
 `restore.plan.readonly`, `rescue.answer.create`, and `rescue.answer.validate`.
 
 When `rc operation run` or `Start-RCOperation` receives `--log-directory` / `-LogDirectory`,

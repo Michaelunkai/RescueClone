@@ -4,6 +4,7 @@ using RescueClone.Core.Jobs;
 using RescueClone.Core.Rescue;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
+using RescueClone.Core.Scheduling;
 
 namespace RescueClone.Core.Operations;
 
@@ -180,6 +181,11 @@ public sealed class OperationRunner
                 IntValue(request, "dailyKeep"),
                 IntValue(request, "weeklyKeep"),
                 IntValue(request, "monthlyKeep"))),
+            "schedule.plan" => new ScheduleManager().Plan(ReadScheduleDefinition(request)),
+            "schedule.register" => new ScheduleManager().Register(ReadScheduleDefinition(request)),
+            "schedule.status" => new ScheduleManager().Status(RequiredString(request, "taskName")),
+            "schedule.run" => new ScheduleManager().RunNow(RequiredString(request, "taskName")),
+            "schedule.unregister" => new ScheduleManager().Unregister(RequiredString(request, "taskName")),
             "restore.plan.readonly" => _restorePlanner.Plan(new RestorePlanOptions(
                 RequiredString(request, "image"),
                 OptionalString(request, "password"),
@@ -226,6 +232,20 @@ public sealed class OperationRunner
             OptionalString(request, "password"),
             BoolValue(request, "verifyAfterCreate", defaultValue: true),
             OptionalString(request, "logDirectory"));
+    }
+
+    private static ScheduleDefinition ReadScheduleDefinition(OperationRequest request)
+    {
+        return new ScheduleDefinition(
+            RequiredString(request, "taskName"),
+            RequiredString(request, "jobFile"),
+            RequiredString(request, "cliPath"),
+            EnumValue<ScheduleFrequency>(request, "frequency", ScheduleFrequency.Daily),
+            TimeValue(request, "time", new TimeOnly(2, 0)),
+            BoolValue(request, "runMissed"),
+            OptionalString(request, "eventLog"),
+            IntValue(request, "eventId"),
+            OptionalString(request, "eventSource"));
     }
 
     private static string? WriteReport(OperationReport report, string? logDirectory)
@@ -379,6 +399,14 @@ public sealed class OperationRunner
         if (string.IsNullOrWhiteSpace(value))
             return null;
         return Enum.Parse<T>(value, ignoreCase: true);
+    }
+
+    private static TimeOnly TimeValue(OperationRequest request, string name, TimeOnly defaultValue)
+    {
+        var value = OptionalString(request, name);
+        if (string.IsNullOrWhiteSpace(value))
+            return defaultValue;
+        return TimeOnly.Parse(value);
     }
 
     private static JsonSerializerOptions CreateJsonOptions()
