@@ -151,6 +151,9 @@ public sealed class OperationRunner
                 RequiredString(request, "directory"),
                 OptionalString(request, "pattern")),
             "job.backup.directory.status" => _jobRunner.Status(RequiredString(request, "file")),
+            "job.backup.directory.history" => _jobRunner.History(
+                RequiredString(request, "file"),
+                OptionalString(request, "pattern")),
             "job.backup.directory.validate" => _jobRunner.Validate(_jobRunner.Load(RequiredString(request, "file"))),
             "job.backup.directory.run" => _jobRunner.Run(_jobRunner.Load(RequiredString(request, "file")), BoolValue(request, "forceDisabled")),
             "retention.plan" => new RetentionManager().Plan(new RetentionOptions(

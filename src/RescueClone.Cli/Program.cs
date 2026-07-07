@@ -513,6 +513,9 @@ static int RunJob(string command, Dictionary<string, string> values)
         case "status":
             WriteJson(runner.Status(Required(values, "file")));
             return 0;
+        case "history":
+            WriteJson(runner.History(Required(values, "file"), values.GetValueOrDefault("pattern")));
+            return 0;
         case "validate":
             var job = runner.Load(Required(values, "file"));
             WriteJson(runner.Validate(job));
@@ -615,7 +618,9 @@ static void PrintHelp()
     rc job delete --file <job.json>
     rc job export --file <job.json> --output <exported-job.json>
     rc job import --file <exported-job.json> --target <job.json>
+    rc job list --directory <dir> [--pattern *.json]
     rc job status --file <job.json>
+    rc job history --file <job.json> [--pattern *.json]
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]
     rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]

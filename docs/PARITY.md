@@ -24,6 +24,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Directory backup job import | Backup Job tab | `rc job import` | `Import-RCBackupJob` |
 | Directory backup job list | Backup Job tab | `rc job list` | `Get-RCBackupJob` |
 | Directory backup job status | Backup Job tab | `rc job status` | `Get-RCBackupJobStatus` |
+| Directory backup job history | Backup Job tab | `rc job history` | `Get-RCBackupJobHistory` |
 | Directory backup job validate | Backup Job tab | `rc job validate` | `Test-RCBackupJob` |
 | Directory backup job run | Backup Job tab | `rc job run` | `Start-RCBackupJob` |
 | Retention plan | Retention tab | `rc retention plan` | `Get-RCRetentionPlan` |

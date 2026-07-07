@@ -26,6 +26,7 @@ public static class FeatureCatalog
         new("job.backup.directory.import", "Backup Job", "rc job import", "Import-RCBackupJob", true),
         new("job.backup.directory.list", "Backup Job", "rc job list", "Get-RCBackupJob", true),
         new("job.backup.directory.status", "Backup Job", "rc job status", "Get-RCBackupJobStatus", true),
+        new("job.backup.directory.history", "Backup Job", "rc job history", "Get-RCBackupJobHistory", true),
         new("job.backup.directory.validate", "Backup Job", "rc job validate", "Test-RCBackupJob", true),
         new("job.backup.directory.run", "Backup Job", "rc job run", "Start-RCBackupJob", true),
         new("retention.plan", "Retention", "rc retention plan", "Get-RCRetentionPlan", true),

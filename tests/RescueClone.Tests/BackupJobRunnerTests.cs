@@ -290,6 +290,41 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void HistoryReportsJobRunsAndParseErrors()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var logDirectory = Path.Combine(root, "logs");
+        var path = Path.Combine(root, "jobs", "history.json");
+        var job = new BackupJobDefinition(
+            "history-docs",
+            "History Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "history.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: logDirectory);
+        var runner = new BackupJobRunner();
+        runner.Save(path, job);
+        runner.Run(job);
+        File.WriteAllText(Path.Combine(logDirectory, "broken.json"), "{ invalid json");
+
+        var report = runner.History(path);
+
+        Assert.AreEqual(Path.GetFullPath(path), report.Path);
+        Assert.AreEqual("history-docs", report.JobId);
+        Assert.AreEqual(Path.GetFullPath(logDirectory), report.LogDirectory);
+        Assert.AreEqual(1, report.EntryCount);
+        Assert.AreEqual(1, report.ParseErrorCount);
+        Assert.AreEqual("history-docs", report.Entries[0].JobId);
+        Assert.IsFalse(report.ParseErrors[0].Parsed);
+    }
+
+    [TestMethod]
     public void RunCreatesVerifiesAndLogsBackupJob()
     {
         var root = NewTempDirectory();
@@ -929,6 +964,17 @@ public sealed class BackupJobRunnerTests
         Assert.AreEqual("Backup Job", feature.Gui);
         Assert.AreEqual("rc job status", feature.Cli);
         Assert.AreEqual("Get-RCBackupJobStatus", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesBackupJobHistoryParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "job.backup.directory.history");
+
+        Assert.AreEqual("Backup Job", feature.Gui);
+        Assert.AreEqual("rc job history", feature.Cli);
+        Assert.AreEqual("Get-RCBackupJobHistory", feature.PowerShell);
         Assert.IsTrue(feature.Implemented);
     }
 

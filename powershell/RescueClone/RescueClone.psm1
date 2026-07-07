@@ -333,6 +333,15 @@ function Get-RCBackupJobStatus {
     Invoke-RCJson -ArgumentList @('job','status','--file',$Path)
 }
 
+function Get-RCBackupJobHistory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path,
+        [string]$Pattern = '*.json'
+    )
+    Invoke-RCJson -ArgumentList @('job','history','--file',$Path,'--pattern',$Pattern)
+}
+
 function Get-RCBackupJob {
     [CmdletBinding()]
     param(

@@ -157,6 +157,41 @@ public sealed class BackupJobRunner
         return new BackupJobStatusReport(fullPath, job, validation, logDirectory, lastRun, repositoryAudit);
     }
 
+    public BackupJobHistoryReport History(string path, string? pattern = null)
+    {
+        var fullPath = RequireExistingJobPath(path);
+        var job = Load(fullPath);
+        var logDirectory = ResolveLogDirectory(job);
+        if (!Directory.Exists(logDirectory))
+        {
+            return new BackupJobHistoryReport(
+                fullPath,
+                job.JobId,
+                logDirectory,
+                EntryCount: 0,
+                ParseErrorCount: 0,
+                Entries: Array.Empty<BackupLogEntry>(),
+                ParseErrors: Array.Empty<BackupLogEntry>());
+        }
+
+        var entries = new BackupLogCatalog().List(new LogListOptions(logDirectory, string.IsNullOrWhiteSpace(pattern) ? "*.json" : pattern));
+        var matching = entries
+            .Where(entry => entry.Parsed && string.Equals(entry.JobId, job.JobId, StringComparison.Ordinal))
+            .ToArray();
+        var parseErrors = entries
+            .Where(entry => !entry.Parsed)
+            .ToArray();
+
+        return new BackupJobHistoryReport(
+            fullPath,
+            job.JobId,
+            logDirectory,
+            matching.Length,
+            parseErrors.Length,
+            matching,
+            parseErrors);
+    }
+
     public BackupJobValidationResult Validate(BackupJobDefinition job)
     {
         var errors = new List<string>();

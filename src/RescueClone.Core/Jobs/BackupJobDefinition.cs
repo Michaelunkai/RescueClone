@@ -99,6 +99,15 @@ public sealed record BackupJobStatusReport(
     BackupLogEntry? LastRun,
     ImageRepositoryAuditReport? RepositoryAudit = null);
 
+public sealed record BackupJobHistoryReport(
+    string Path,
+    string JobId,
+    string LogDirectory,
+    int EntryCount,
+    int ParseErrorCount,
+    IReadOnlyList<BackupLogEntry> Entries,
+    IReadOnlyList<BackupLogEntry> ParseErrors);
+
 public sealed record BackupJobRunResult(
     string JobId,
     string Name,

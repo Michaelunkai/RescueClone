@@ -193,6 +193,11 @@ public partial class MainWindow : Window
         RunAndReport(() => _jobRunner.Status(JobPathBox.Text));
     }
 
+    private void JobHistory_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.History(JobPathBox.Text));
+    }
+
     private void ListJobs_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _jobRunner.List(JobDirectoryBox.Text));

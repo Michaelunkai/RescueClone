@@ -58,6 +58,7 @@ CLI examples:
 .\RC.cmd job import --file .\backup-job.export.json --target .\backup-job.imported.json
 .\RC.cmd job list --directory . --pattern *.json
 .\RC.cmd job status --file .\backup-job.json
+.\RC.cmd job history --file .\backup-job.json --pattern *.json
 .\RC.cmd job validate --file .\backup-job.json
 .\RC.cmd job run --file .\backup-job.json
 .\RC.cmd job delete --file .\backup-job.json
@@ -149,7 +150,7 @@ Supported local operation kinds currently include `image.create.directory`, `ima
 `image.restore.directory`,
 `job.backup.directory.create`, `job.backup.directory.update`,
 `job.backup.directory.delete`, `job.backup.directory.export`, `job.backup.directory.import`,
-`job.backup.directory.list`, `job.backup.directory.status`, `job.backup.directory.validate`, `job.backup.directory.run`,
+`job.backup.directory.list`, `job.backup.directory.status`, `job.backup.directory.history`, `job.backup.directory.validate`, `job.backup.directory.run`,
 `retention.plan`, `retention.apply`, `retention.gfs.plan`, `retention.gfs.apply`,
 `restore.plan.readonly`, `rescue.answer.create`, and `rescue.answer.validate`.
 
@@ -184,6 +185,7 @@ Export-RCBackupJob -Path .\backup-job.json -OutputPath .\backup-job.export.json 
 Import-RCBackupJob -Path .\backup-job.export.json -TargetPath .\backup-job.imported.json -Confirm:$false
 Get-RCBackupJob -DirectoryPath . -Pattern *.json
 Get-RCBackupJobStatus -Path .\backup-job.json
+Get-RCBackupJobHistory -Path .\backup-job.json -Pattern *.json
 Test-RCBackupJob -Path .\backup-job.json
 Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Remove-RCBackupJob -Path .\backup-job.json -Confirm:$false

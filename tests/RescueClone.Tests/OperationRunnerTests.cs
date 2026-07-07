@@ -540,6 +540,13 @@ public sealed class OperationRunnerTests
                 ["file"] = Json("file", jobPath)
             },
             "job-status"), Path.Combine(root, "ops"));
+        var history = runner.Run(new OperationRequest(
+            "job.backup.directory.history",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", jobPath)
+            },
+            "job-history"), Path.Combine(root, "ops"));
         var export = runner.Run(new OperationRequest(
             "job.backup.directory.export",
             new Dictionary<string, JsonElement>
@@ -575,6 +582,9 @@ public sealed class OperationRunnerTests
         Assert.AreEqual(OperationState.Succeeded, update.State);
         Assert.AreEqual("Operation Job Updated", status.Result!.Value.GetProperty("job").GetProperty("name").GetString());
         Assert.AreEqual("High", status.Result!.Value.GetProperty("job").GetProperty("compression").GetString());
+        Assert.AreEqual(OperationState.Succeeded, history.State);
+        Assert.AreEqual(0, history.Result!.Value.GetProperty("entryCount").GetInt32());
+        Assert.AreEqual("operation-job", history.Result.Value.GetProperty("jobId").GetString());
         Assert.AreEqual(OperationState.Succeeded, export.State);
         Assert.IsTrue(File.Exists(exportPath));
         Assert.AreEqual(OperationState.Succeeded, import.State);
