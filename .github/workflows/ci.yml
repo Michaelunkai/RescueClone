@@ -36,6 +36,10 @@ jobs:
         shell: pwsh
         run: .\scripts\Test-Portable.ps1
 
+      - name: Portable operation service smoke test
+        shell: pwsh
+        run: .\scripts\Test-PortableOperationService.ps1
+
       - name: Portable install smoke test
         shell: pwsh
         run: .\scripts\Test-PortableInstall.ps1

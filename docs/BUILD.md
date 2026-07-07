@@ -6,6 +6,7 @@ From the repository root, the preferred portable build is:
 .\scripts\Install-FLocalDotNet.ps1
 .\scripts\Build-Portable.ps1
 .\scripts\Test-PortableDependencyBoundary.ps1
+.\scripts\Test-PortableOperationService.ps1
 .\scripts\New-PortablePackage.ps1 -OutputPath .\artifacts\RescueClone-portable.zip -Force
 .\scripts\Test-PortableInstall.ps1 -InstallRoot F:\Tools\RescueClone-Smoke
 .\scripts\Install-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart -Force
