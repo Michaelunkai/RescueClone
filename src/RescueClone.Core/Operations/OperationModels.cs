@@ -85,7 +85,12 @@ public static class OperationKindCatalog
         new("schedule.unregister", "Unregister a scheduled task.", new[] { "taskName" }, Array.Empty<string>()),
         new("restore.plan.readonly", "Create a read-only restore plan.", new[] { "image", "targetDiskId" }, new[] { "password", "targetDiskSizeBytes", "requiredBytes", "targetIsCurrentSystemDisk", "bootMode", "hasEfiSystemPartition", "bcdStore" }),
         new("rescue.answer.create", "Create an unattended rescue answer file.", new[] { "output", "repository", "image", "targetDiskId" }, new[] { "password", "bootMode", "targetDiskSizeBytes", "requiredBytes", "targetIsCurrentSystemDisk", "hasEfiSystemPartition", "bcdStore", "driverDirectories", "networkShares", "repairBoot", "rebootAfterRestore", "verifyImage" }),
-        new("rescue.answer.validate", "Validate an unattended rescue answer file.", new[] { "file" }, new[] { "verifyImage" })
+        new("rescue.answer.validate", "Validate an unattended rescue answer file.", new[] { "file" }, new[] { "verifyImage" }),
+        new("logs.backup.list", "List structured backup logs.", new[] { "directory" }, new[] { "pattern" }),
+        new("storage.volume.list", "List logical volumes in read-only mode.", Array.Empty<string>(), Array.Empty<string>()),
+        new("storage.disk.list", "List disks in read-only mode.", Array.Empty<string>(), Array.Empty<string>()),
+        new("storage.disk.safety", "Evaluate disk target safety in read-only mode.", new[] { "diskNumber" }, new[] { "expectedFingerprint", "allowBootSystem" }),
+        new("native.status", "Report native engine availability.", Array.Empty<string>(), Array.Empty<string>())
     };
 
     public static void AssertUniqueKinds()

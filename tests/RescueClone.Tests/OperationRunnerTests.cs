@@ -649,6 +649,51 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunLogListAndNativeStatusOperations()
+    {
+        var root = NewTempDirectory();
+        var logs = Path.Combine(root, "logs");
+        Directory.CreateDirectory(logs);
+        var logPath = Path.Combine(logs, "daily.json");
+        var backupReport = new BackupJobRunResult(
+            "daily",
+            "Daily",
+            Path.Combine(root, "daily.rcimg"),
+            Verified: true,
+            RootSha256: "abc123",
+            FileCount: 1,
+            OriginalBytes: 5,
+            StoredBytes: 5,
+            logPath,
+            Path.Combine(logs, "daily.html"),
+            DateTimeOffset.UtcNow.AddMinutes(-1),
+            DateTimeOffset.UtcNow);
+        File.WriteAllText(logPath, JsonSerializer.Serialize(backupReport, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+        var runner = new OperationRunner();
+
+        var list = runner.Run(new OperationRequest(
+            "logs.backup.list",
+            new Dictionary<string, JsonElement>
+            {
+                ["directory"] = Json("directory", logs)
+            },
+            "logs-list"), Path.Combine(root, "ops"));
+        var native = runner.Run(new OperationRequest(
+            "native.status",
+            new Dictionary<string, JsonElement>(),
+            "native-status"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, list.State);
+        Assert.AreEqual(1, list.Result!.Value.GetArrayLength());
+        Assert.AreEqual("daily", list.Result.Value[0].GetProperty("jobId").GetString());
+        Assert.AreEqual(OperationState.Succeeded, native.State);
+        Assert.IsTrue(native.Result!.Value.GetProperty("loaded").GetBoolean());
+        Assert.IsTrue(native.Result.Value.GetProperty("sampleBlockCount").GetInt32() > 0);
+        Assert.IsTrue(File.Exists(native.LogPath));
+        Assert.IsTrue(File.Exists(native.RecoveryStatePath));
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesOperationParity()
     {
         var feature = FeatureCatalog.All.Single(f => f.FeatureId == "operation.run.local");
@@ -680,6 +725,10 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(kinds.Contains("job.backup.directory.run"));
         Assert.IsTrue(kinds.Contains("schedule.register"));
         Assert.IsTrue(kinds.Contains("rescue.answer.validate"));
+        Assert.IsTrue(kinds.Contains("logs.backup.list"));
+        Assert.IsTrue(kinds.Contains("storage.volume.list"));
+        Assert.IsTrue(kinds.Contains("storage.disk.safety"));
+        Assert.IsTrue(kinds.Contains("native.status"));
         Assert.IsTrue(OperationKindCatalog.All.Single(kind => kind.Kind == "image.extract.directory").RequiredParameters.Contains("paths"));
 
         var feature = FeatureCatalog.All.Single(f => f.FeatureId == "operation.kind.list");

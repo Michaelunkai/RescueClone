@@ -1,10 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Logs;
+using RescueClone.Core.Native;
 using RescueClone.Core.Rescue;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Scheduling;
+using RescueClone.Core.Storage;
 
 namespace RescueClone.Core.Operations;
 
@@ -216,6 +219,18 @@ public sealed class OperationRunner
             "rescue.answer.validate" => new RescueAnswerManager(_imageEngine, _restorePlanner).Validate(
                 RequiredString(request, "file"),
                 BoolValue(request, "verifyImage")),
+            "logs.backup.list" => new BackupLogCatalog().List(new LogListOptions(
+                RequiredString(request, "directory"),
+                OptionalString(request, "pattern") ?? "*.json")),
+            "storage.volume.list" => new VolumeEnumerator().ListVolumes(),
+            "storage.disk.list" => new DiskEnumerator().ListDisks(),
+            "storage.disk.safety" => new DiskTargetSafetyEvaluator().Evaluate(
+                new DiskEnumerator().ListDisks(),
+                new DiskTargetSafetyOptions(
+                    IntValue(request, "diskNumber") ?? throw new ArgumentException("Operation parameter is required: diskNumber"),
+                    OptionalString(request, "expectedFingerprint"),
+                    BoolValue(request, "allowBootSystem"))),
+            "native.status" => NativeDiagnostics.GetStatus(),
             _ => throw new ArgumentException($"Unknown operation kind: {request.Kind}")
         };
     }

@@ -165,7 +165,8 @@ Supported local operation kinds currently include `image.create.directory`, `ima
 `job.backup.directory.list`, `job.backup.directory.status`, `job.backup.directory.history`, `job.backup.directory.validate`, `job.backup.directory.run`,
 `retention.plan`, `retention.apply`, `retention.gfs.plan`, `retention.gfs.apply`,
 `schedule.plan`, `schedule.register`, `schedule.status`, `schedule.run`, `schedule.unregister`,
-`restore.plan.readonly`, `rescue.answer.create`, and `rescue.answer.validate`.
+`restore.plan.readonly`, `rescue.answer.create`, `rescue.answer.validate`,
+`logs.backup.list`, `storage.volume.list`, `storage.disk.list`, `storage.disk.safety`, and `native.status`.
 Use `rc operation kinds` or `Get-RCOperationKind` to retrieve the current operation kind catalog with required and optional parameters.
 
 When `rc operation run` or `Start-RCOperation` receives `--log-directory` / `-LogDirectory`,
