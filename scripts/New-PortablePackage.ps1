@@ -44,8 +44,7 @@ Copy-Item -LiteralPath (Join-Path $Root 'README.md') -Destination $stage -Force
 Copy-Item -LiteralPath (Join-Path $Root 'RC.cmd') -Destination $stage -Force
 Copy-Item -LiteralPath (Join-Path $Root 'RUN-GUI.cmd') -Destination $stage -Force
 New-Item -ItemType Directory -Path (Join-Path $stage 'scripts') -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $Root 'scripts\Install-RescueClone.ps1') -Destination (Join-Path $stage 'scripts') -Force
-Copy-Item -LiteralPath (Join-Path $Root 'scripts\Uninstall-RescueClone.ps1') -Destination (Join-Path $stage 'scripts') -Force
+Copy-Item -Path (Join-Path $Root 'scripts\*.ps1') -Destination (Join-Path $stage 'scripts') -Force
 
 New-Item -ItemType Directory -Path (Split-Path -Parent $outputFull) -Force | Out-Null
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $outputFull -CompressionLevel Optimal -Force
@@ -64,7 +63,12 @@ $requiredEntries = @(
     'publish/gui/RescueClone.App.exe',
     'powershell/RescueClone/RescueClone.psd1',
     'scripts/Install-RescueClone.ps1',
-    'scripts/Uninstall-RescueClone.ps1'
+    'scripts/Uninstall-RescueClone.ps1',
+    'scripts/Test-Portable.ps1',
+    'scripts/Test-PortableInstall.ps1',
+    'scripts/Test-PortableOperationService.ps1',
+    'scripts/Test-PortableDependencyBoundary.ps1',
+    'scripts/Test-PortablePackage.ps1'
 )
 $missingEntries = @($requiredEntries | Where-Object { $entryNames -notcontains $_ })
 if ($missingEntries.Count -gt 0) {
@@ -87,4 +91,5 @@ Set-Content -LiteralPath $hashPath -Value "$($hash.Hash.ToLowerInvariant())  $($
     HasPowerShellModule = [bool]($entryNames -contains 'powershell/RescueClone/RescueClone.psd1')
     HasInstallScript = [bool]($entryNames -contains 'scripts/Install-RescueClone.ps1')
     HasUninstallScript = [bool]($entryNames -contains 'scripts/Uninstall-RescueClone.ps1')
+    HasSmokeScripts = [bool]($entryNames -contains 'scripts/Test-Portable.ps1' -and $entryNames -contains 'scripts/Test-PortableOperationService.ps1' -and $entryNames -contains 'scripts/Test-PortablePackage.ps1')
 } | ConvertTo-Json

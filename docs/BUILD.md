@@ -247,7 +247,7 @@ Service IPC note: `rc service serve --pipe <name>` hosts the current operation r
 
 Portable install note: `scripts\Install-RescueClone.ps1` copies the published self-contained CLI/GUI directories, PowerShell module, docs, and launcher scripts to `-InstallRoot` and supports unattended `-Quiet -NoRestart`. It is a portable script installer, not an MSI/EXE installer and it does not install a privileged Windows Service or drivers.
 
-Portable package note: `scripts\New-PortablePackage.ps1` creates a ZIP containing `publish`, `powershell`, `docs`, launchers, and portable install/uninstall scripts. It does not build an MSI/EXE.
+Portable package note: `scripts\New-PortablePackage.ps1` creates a ZIP containing `publish`, `powershell`, `docs`, launchers, portable install/uninstall scripts, and portable smoke/verification scripts. It does not build an MSI/EXE.
 
 Projection note: `rc image project`, `Mount-RCImage`, and the GUI Project Image button create a managed read-only directory projection by restoring verified image content, marking projected files read-only, and writing `.rescueclone-projection.json`. `rc image projections`, `Get-RCImageMount`, and the GUI List Projections button enumerate those manifests under a selected root. `rc image unproject`, `Dismount-RCImage`, and the GUI Remove Projection button only remove directories with that manifest. This is a safe user-mode projection layer, not a signed kernel image-mount driver.
 

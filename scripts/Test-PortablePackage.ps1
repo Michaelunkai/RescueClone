@@ -44,6 +44,11 @@ $requiredEntries = @(
     'docs/ARCHITECTURE.md',
     'scripts/Install-RescueClone.ps1',
     'scripts/Uninstall-RescueClone.ps1',
+    'scripts/Test-Portable.ps1',
+    'scripts/Test-PortableInstall.ps1',
+    'scripts/Test-PortableOperationService.ps1',
+    'scripts/Test-PortableDependencyBoundary.ps1',
+    'scripts/Test-PortablePackage.ps1',
     'README.md',
     'RC.cmd',
     'RUN-GUI.cmd'
