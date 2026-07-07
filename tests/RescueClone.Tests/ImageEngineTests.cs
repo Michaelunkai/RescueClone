@@ -76,6 +76,24 @@ public sealed class ImageEngineTests
     {
         FeatureCatalog.AssertImplementedParity();
         Assert.IsTrue(FeatureCatalog.All.All(f => f.Implemented));
+        Assert.AreEqual(FeatureCatalog.All.Count, FeatureCatalog.All.Select(f => f.FeatureId).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+
+        foreach (var feature in FeatureCatalog.All.Where(f => f.Implemented))
+        {
+            Assert.IsFalse(string.IsNullOrWhiteSpace(feature.Gui), feature.FeatureId);
+            Assert.IsTrue(feature.Cli.StartsWith("rc ", StringComparison.Ordinal), feature.FeatureId);
+            Assert.IsTrue(feature.PowerShell.StartsWith("Get-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("New-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Test-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Start-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Restore-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Invoke-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Register-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Unregister-RC", StringComparison.Ordinal), feature.FeatureId);
+        }
+
+        Assert.AreEqual(FeatureCatalog.All.Count, FeatureCatalog.All.Select(f => f.Cli).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.AreEqual(FeatureCatalog.All.Count, FeatureCatalog.All.Select(f => f.PowerShell).Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     private static string NewTempDirectory()
