@@ -94,6 +94,10 @@ public sealed class OperationRunner
                 RequiredString(request, "repository"),
                 OptionalString(request, "pattern") ?? "*.rcimg",
                 OptionalString(request, "password"))),
+            "image.compare.source" => new ImageComparer(_imageEngine).Compare(new ImageCompareOptions(
+                RequiredString(request, "image"),
+                RequiredString(request, "source"),
+                OptionalString(request, "password"))),
             "image.extract.directory" => _imageEngine.Extract(new ExtractOptions(
                 RequiredString(request, "image"),
                 RequiredString(request, "target"),

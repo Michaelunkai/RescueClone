@@ -50,7 +50,10 @@
                     </Grid.RowDefinitions>
                     <TextBox x:Name="VerifyImagePathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Image path"/>
                     <PasswordBox x:Name="VerifyPasswordBox" Grid.Row="1" Width="260" HorizontalAlignment="Left" Margin="0,0,0,8" ToolTip="Optional password"/>
-                    <Button Grid.Row="2" Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Verify Image" Click="VerifyImage_Click"/>
+                    <WrapPanel Grid.Row="2">
+                        <Button Width="140" Height="34" Content="Verify Image" Click="VerifyImage_Click" Margin="0,0,8,0"/>
+                        <Button Width="150" Height="34" Content="Compare Source" Click="CompareImage_Click"/>
+                    </WrapPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Restore Image">

@@ -158,6 +158,30 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunImageCompareOperation()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(root, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+
+        var report = new OperationRunner().Run(new OperationRequest(
+            "image.compare.source",
+            new Dictionary<string, JsonElement>
+            {
+                ["image"] = Json("image", image),
+                ["source"] = Json("source", source)
+            },
+            "compare-image"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, report.State);
+        Assert.IsTrue(report.Result!.Value.GetProperty("equivalent").GetBoolean());
+        Assert.AreEqual(1, report.Result.Value.GetProperty("matchedCount").GetInt32());
+    }
+
+    [TestMethod]
     public void RunProjectAndUnprojectImageOperations()
     {
         var root = NewTempDirectory();

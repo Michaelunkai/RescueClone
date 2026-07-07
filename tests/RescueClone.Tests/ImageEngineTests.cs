@@ -207,11 +207,37 @@ public sealed class ImageEngineTests
     }
 
     [TestMethod]
+    public void ImageComparerReportsEquivalentAndChangedSource()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(root, "backup.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var comparer = new ImageComparer();
+
+        var equivalent = comparer.Compare(new ImageCompareOptions(image, source, null));
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "changed");
+        File.WriteAllText(Path.Combine(source, "extra.txt"), "extra");
+        var changed = comparer.Compare(new ImageCompareOptions(image, source, null));
+
+        Assert.IsTrue(equivalent.Equivalent);
+        Assert.AreEqual(1, equivalent.MatchedCount);
+        Assert.IsFalse(changed.Equivalent);
+        Assert.AreEqual(1, changed.ChangedCount);
+        Assert.AreEqual(1, changed.ExtraCount);
+        Assert.IsTrue(changed.Differences.Any(d => d.DifferenceType == "changed" && d.RelativePath == "alpha.txt"));
+        Assert.IsTrue(changed.Differences.Any(d => d.DifferenceType == "extra" && d.RelativePath == "extra.txt"));
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesImageBrowseAndExtractParity()
     {
         var browse = FeatureCatalog.All.Single(f => f.FeatureId == "image.browse");
         var list = FeatureCatalog.All.Single(f => f.FeatureId == "image.list.repository");
         var audit = FeatureCatalog.All.Single(f => f.FeatureId == "image.audit.repository");
+        var compare = FeatureCatalog.All.Single(f => f.FeatureId == "image.compare.source");
         var extract = FeatureCatalog.All.Single(f => f.FeatureId == "image.extract.directory");
 
         Assert.AreEqual("Restore Image", browse.Gui);
@@ -223,6 +249,9 @@ public sealed class ImageEngineTests
         Assert.AreEqual("Verify Image", audit.Gui);
         Assert.AreEqual("rc image audit", audit.Cli);
         Assert.AreEqual("Test-RCImageRepository", audit.PowerShell);
+        Assert.AreEqual("Verify Image", compare.Gui);
+        Assert.AreEqual("rc image compare", compare.Cli);
+        Assert.AreEqual("Compare-RCImage", compare.PowerShell);
         Assert.AreEqual("Restore Image", extract.Gui);
         Assert.AreEqual("rc image extract", extract.Cli);
         Assert.AreEqual("Export-RCImageFile", extract.PowerShell);
@@ -262,6 +291,7 @@ public sealed class ImageEngineTests
                 feature.PowerShell.StartsWith("Test-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Start-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Set-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Compare-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Restore-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Mount-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Dismount-RC", StringComparison.Ordinal) ||

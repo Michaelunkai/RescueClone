@@ -100,6 +100,14 @@ static int Run(string[] args)
                 WriteJson(audit);
                 return audit.FailedCount == 0 ? 0 : 3;
 
+            case "compare":
+                var compare = new ImageComparer(engine).Compare(new ImageCompareOptions(
+                    Required(values, "image"),
+                    Required(values, "source"),
+                    values.GetValueOrDefault("password")));
+                WriteJson(compare);
+                return compare.Equivalent ? 0 : 4;
+
             case "extract":
                 var extract = new ExtractOptions(
                     Required(values, "image"),
@@ -446,6 +454,7 @@ static void PrintHelp()
     rc image browse --image <file.rcimg> [--password <secret>]
     rc image list --repository <dir> [--pattern *.rcimg] [--verify] [--password <secret>]
     rc image audit --repository <dir> [--pattern *.rcimg] [--password <secret>]
+    rc image compare --image <file.rcimg> --source <dir> [--password <secret>]
     rc image extract --image <file.rcimg> --target <dir> --paths <relative-paths> [--password <secret>] [--overwrite]
     rc image project --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc image projections --root <dir>

@@ -135,6 +135,18 @@ function Test-RCImageRepository {
     Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
 }
 
+function Compare-RCImage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$ImagePath,
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$SourcePath,
+        [string]$Password
+    )
+    $args = @('image','compare','--image',$ImagePath,'--source',$SourcePath)
+    if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+    Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
+}
+
 function Export-RCImageFile {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

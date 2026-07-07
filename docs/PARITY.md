@@ -7,6 +7,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Directory image create with v1/v2 format selection | Create Image tab | `rc image create` | `New-RCImage` |
 | Image verify | Verify Image tab | `rc image verify` | `Test-RCImage` |
 | Repository integrity audit | Verify Image tab | `rc image audit` | `Test-RCImageRepository` |
+| Image-to-source compare | Verify Image tab | `rc image compare` | `Compare-RCImage` |
 | Image content browse | Restore Image tab | `rc image browse` | `Get-RCImageContent` |
 | Repository image list | Restore Image tab | `rc image list` | `Get-RCImage` |
 | Selected file/folder extract | Restore Image tab | `rc image extract` | `Export-RCImageFile` |

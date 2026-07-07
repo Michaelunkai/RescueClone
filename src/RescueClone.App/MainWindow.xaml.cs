@@ -49,6 +49,14 @@ public partial class MainWindow : Window
         RunAndReport(() => _engine.Verify(VerifyImagePathBox.Text, EmptyToNull(VerifyPasswordBox.Password)));
     }
 
+    private void CompareImage_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageComparer(_engine).Compare(new ImageCompareOptions(
+            VerifyImagePathBox.Text,
+            SourcePathBox.Text,
+            EmptyToNull(VerifyPasswordBox.Password))));
+    }
+
     private void BrowseImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Browse(RestoreImagePathBox.Text, EmptyToNull(RestorePasswordBox.Password)));
