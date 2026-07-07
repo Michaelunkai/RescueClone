@@ -81,7 +81,8 @@ public sealed record BackupJobStatusReport(
     BackupJobDefinition Job,
     BackupJobValidationResult Validation,
     string LogDirectory,
-    BackupLogEntry? LastRun);
+    BackupLogEntry? LastRun,
+    ImageRepositoryAuditReport? RepositoryAudit = null);
 
 public sealed record BackupJobRunResult(
     string JobId,

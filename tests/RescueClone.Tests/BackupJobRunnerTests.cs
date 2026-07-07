@@ -246,9 +246,14 @@ public sealed class BackupJobRunnerTests
         Assert.IsTrue(beforeRun.Validation.Valid);
         Assert.AreEqual(Path.GetFullPath(logDirectory), beforeRun.LogDirectory);
         Assert.IsNull(beforeRun.LastRun);
+        Assert.IsNull(beforeRun.RepositoryAudit);
         Assert.IsNotNull(afterRun.LastRun);
         Assert.AreEqual("status-docs", afterRun.LastRun.JobId);
         Assert.IsTrue(afterRun.LastRun.Verified.GetValueOrDefault());
+        Assert.IsNotNull(afterRun.RepositoryAudit);
+        Assert.AreEqual(1, afterRun.RepositoryAudit.ImageCount);
+        Assert.AreEqual(1, afterRun.RepositoryAudit.VerifiedCount);
+        Assert.AreEqual(0, afterRun.RepositoryAudit.FailedCount);
     }
 
     [TestMethod]

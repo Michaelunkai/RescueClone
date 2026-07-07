@@ -16,7 +16,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for updating exposed fields in a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for deleting a backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for exporting and importing a validated backup job JSON definition.
-- GUI, CLI, and PowerShell surfaces for backup job status, including validation and the latest parsed run log when present.
+- GUI, CLI, and PowerShell surfaces for backup job status, including validation, destination repository audit, and the latest parsed run log when present.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for retention planning and retention enforcement on directory-image repositories.
 - GUI, CLI, and PowerShell surfaces for Windows Task Scheduler XML planning and schedule register/unregister.
@@ -37,6 +37,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify, browse, extract, and restore read both formats.
 - Repository image listing returns image paths, sizes, timestamps, and optional verified format/file-count/root-hash metadata; repository audit verifies all matching images and returns verified/failed counts.
+- Backup job status includes a repository audit for the configured image destination once that destination directory exists.
 - Managed user-mode image projection restores verified image content into a manifest-marked directory, marks projected files read-only, lists projection manifests under a selected root, and unprojects only manifest-listed files.
 - V2 directory images include block offsets, per-block SHA-256 hashes, file hashes, a root manifest hash, and a fixed footer that points to the manifest.
 - Completed directory image files are marked read-only after creation; managed retention can clear that bit only for files selected by its deletion plan.

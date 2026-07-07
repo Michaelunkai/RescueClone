@@ -110,7 +110,17 @@ public sealed class BackupJobRunner
                 .FirstOrDefault(entry => entry.Parsed && string.Equals(entry.JobId, job.JobId, StringComparison.Ordinal));
         }
 
-        return new BackupJobStatusReport(fullPath, job, validation, logDirectory, lastRun);
+        ImageRepositoryAuditReport? repositoryAudit = null;
+        var imageDirectory = Path.GetDirectoryName(Path.GetFullPath(job.ImagePath));
+        if (!string.IsNullOrWhiteSpace(imageDirectory) && Directory.Exists(imageDirectory))
+        {
+            repositoryAudit = new ImageRepositoryCatalog().Audit(new ImageRepositoryAuditOptions(
+                imageDirectory,
+                "*.rcimg",
+                job.Password));
+        }
+
+        return new BackupJobStatusReport(fullPath, job, validation, logDirectory, lastRun, repositoryAudit);
     }
 
     public BackupJobValidationResult Validate(BackupJobDefinition job)
