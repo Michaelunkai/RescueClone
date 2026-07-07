@@ -64,6 +64,8 @@ Portable dependency status:
 - Normal PowerShell module execution calls `publish\cli\rc.exe`.
 - `scripts\Install-FLocalDotNet.ps1` can seed a project-local `.dotnet-sdk`.
 - NuGet packages and .NET CLI home are redirected to project-local folders during `scripts\Build-Portable.ps1`.
+- `scripts\Build-Portable.ps1` requires `.dotnet-sdk\dotnet.exe` by default and only uses machine `dotnet` when `-AllowSystemDotNetFallback` is passed explicitly.
+- `scripts\Test-PortableDependencyBoundary.ps1` verifies the published CLI service loads no non-Windows modules from `C:\`.
 - Temporary files are redirected to `.tmp` during build and portable tests.
 - Native C++ output is built to `native\bin\RescueClone.Native.dll` by `scripts\Build-Native.ps1` using an F-local MinGW compiler when available.
 - Disk inventory calls built-in Windows PowerShell and `Get-Disk`; this is an operating-system dependency and does not install new C-drive tooling.

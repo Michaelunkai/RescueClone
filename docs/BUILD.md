@@ -5,6 +5,7 @@ From the repository root, the preferred portable build is:
 ```powershell
 .\scripts\Install-FLocalDotNet.ps1
 .\scripts\Build-Portable.ps1
+.\scripts\Test-PortableDependencyBoundary.ps1
 ```
 
 That command keeps NuGet packages and .NET CLI home under the project folder:
@@ -172,7 +173,7 @@ Get-RCDiskSafety -DiskNumber 1 -ExpectedFingerprint <sha256>
 Get-RCNativeStatus
 ```
 
-Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode.
+Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. `scripts\Build-Portable.ps1` now fails if that project-local SDK is missing unless `-AllowSystemDotNetFallback` is passed explicitly. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode. `scripts\Test-PortableDependencyBoundary.ps1` launches the published CLI service and fails if it loads non-Windows modules from `C:\` or any module outside the project root and `%WINDIR%`.
 
 Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current IPC foundation; it is not yet installed as a privileged Windows Service by the installer.
 

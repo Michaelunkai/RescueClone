@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [ValidateSet('Release','Debug')]
-    [string]$Configuration = 'Release'
+    [string]$Configuration = 'Release',
+    [switch]$AllowSystemDotNetFallback
 )
 
 Set-StrictMode -Version 2.0
@@ -18,6 +19,9 @@ $env:TMP = $env:TEMP
 New-Item -ItemType Directory -Path $env:NUGET_PACKAGES, $env:DOTNET_CLI_HOME, $env:TEMP, (Join-Path $Root 'publish') -Force | Out-Null
 $DotNet = Join-Path $Root '.dotnet-sdk\dotnet.exe'
 if (-not (Test-Path -LiteralPath $DotNet)) {
+    if (-not $AllowSystemDotNetFallback) {
+        throw "Project-local .NET SDK was not found at $DotNet. Run scripts\Install-FLocalDotNet.ps1 first, or pass -AllowSystemDotNetFallback to use machine dotnet explicitly."
+    }
     $DotNet = 'dotnet'
 }
 

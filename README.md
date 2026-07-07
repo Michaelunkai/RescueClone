@@ -30,3 +30,4 @@ The portable build writes dependency/cache material under this project folder in
 - `publish\gui`
 
 Build-time note: run `scripts\Install-FLocalDotNet.ps1` once to seed `.dotnet-sdk` from the complete Codex-local .NET 10 SDK cache. After that, `scripts\Build-Portable.ps1` uses `.dotnet-sdk\dotnet.exe` and avoids `C:\Program Files\dotnet` for builds too.
+The build fails if `.dotnet-sdk\dotnet.exe` is missing unless `-AllowSystemDotNetFallback` is passed explicitly. Use `scripts\Test-PortableDependencyBoundary.ps1` after publishing to prove the normal CLI service loads project-local RescueClone modules plus Windows system DLLs only.
