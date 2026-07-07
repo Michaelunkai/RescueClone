@@ -27,6 +27,8 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Retention apply | Retention tab | `rc retention apply` | `Invoke-RCRetention` |
 | Schedule plan | Scheduler tab | `rc schedule plan` | `Get-RCSchedulePlan` |
 | Schedule register | Scheduler tab | `rc schedule register` | `Register-RCSchedule` |
+| Schedule status | Scheduler tab | `rc schedule status` | `Get-RCScheduleStatus` |
+| Schedule run now | Scheduler tab | `rc schedule run` | `Start-RCSchedule` |
 | Schedule unregister | Scheduler tab | `rc schedule unregister` | `Unregister-RCSchedule` |
 | Read-only restore plan | Restore Plan tab | `rc restore plan` | `Get-RCRestorePlan` |
 | Unattended rescue answer create | Rescue tab | `rc rescue answer-create` | `New-RCRescueAnswer` |

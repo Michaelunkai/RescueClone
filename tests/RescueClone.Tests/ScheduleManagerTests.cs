@@ -95,6 +95,8 @@ public sealed class ScheduleManagerTests
     {
         var plan = FeatureCatalog.All.Single(f => f.FeatureId == "schedule.plan");
         var register = FeatureCatalog.All.Single(f => f.FeatureId == "schedule.register");
+        var status = FeatureCatalog.All.Single(f => f.FeatureId == "schedule.status");
+        var run = FeatureCatalog.All.Single(f => f.FeatureId == "schedule.run");
         var unregister = FeatureCatalog.All.Single(f => f.FeatureId == "schedule.unregister");
 
         Assert.AreEqual("Scheduler", plan.Gui);
@@ -103,9 +105,27 @@ public sealed class ScheduleManagerTests
         Assert.AreEqual("Scheduler", register.Gui);
         Assert.AreEqual("rc schedule register", register.Cli);
         Assert.AreEqual("Register-RCSchedule", register.PowerShell);
+        Assert.AreEqual("Scheduler", status.Gui);
+        Assert.AreEqual("rc schedule status", status.Cli);
+        Assert.AreEqual("Get-RCScheduleStatus", status.PowerShell);
+        Assert.AreEqual("Scheduler", run.Gui);
+        Assert.AreEqual("rc schedule run", run.Cli);
+        Assert.AreEqual("Start-RCSchedule", run.PowerShell);
         Assert.AreEqual("Scheduler", unregister.Gui);
         Assert.AreEqual("rc schedule unregister", unregister.Cli);
         Assert.AreEqual("Unregister-RCSchedule", unregister.PowerShell);
+    }
+
+    [TestMethod]
+    public void StatusReportsMissingTaskWithoutThrowing()
+    {
+        var taskName = "missing-" + Guid.NewGuid().ToString("N");
+
+        var report = new ScheduleManager().Status(taskName);
+
+        Assert.IsFalse(report.Succeeded);
+        Assert.AreEqual("\\RescueClone\\" + taskName, report.TaskName);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(report.Output));
     }
 
     private static string WriteFile(string root, string name)

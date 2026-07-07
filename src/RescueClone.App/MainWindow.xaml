@@ -283,6 +283,8 @@
                     <StackPanel Grid.Row="4" Orientation="Horizontal">
                         <Button Width="130" Height="34" Content="Plan Schedule" Click="PlanSchedule_Click" Margin="0,0,8,0"/>
                         <Button Width="150" Height="34" Content="Register Schedule" Click="RegisterSchedule_Click" Margin="0,0,8,0"/>
+                        <Button Width="150" Height="34" Content="Schedule Status" Click="ScheduleStatus_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Run Schedule" Click="RunSchedule_Click" Margin="0,0,8,0"/>
                         <Button Width="160" Height="34" Content="Unregister Schedule" Click="UnregisterSchedule_Click"/>
                     </StackPanel>
                 </Grid>

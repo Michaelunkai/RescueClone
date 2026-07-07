@@ -406,6 +406,24 @@ function Register-RCSchedule {
     }
 }
 
+function Get-RCScheduleStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$TaskName
+    )
+    Invoke-RCJson -ArgumentList @('schedule','status','--task-name',$TaskName) -AllowNonZeroExit
+}
+
+function Start-RCSchedule {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$TaskName
+    )
+    if ($PSCmdlet.ShouldProcess($TaskName, "Run RescueClone scheduled task now")) {
+        Invoke-RCJson -ArgumentList @('schedule','run','--task-name',$TaskName)
+    }
+}
+
 function Unregister-RCSchedule {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
     param(

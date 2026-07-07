@@ -29,6 +29,8 @@ public static class FeatureCatalog
         new("retention.apply", "Retention", "rc retention apply", "Invoke-RCRetention", true),
         new("schedule.plan", "Scheduler", "rc schedule plan", "Get-RCSchedulePlan", true),
         new("schedule.register", "Scheduler", "rc schedule register", "Register-RCSchedule", true),
+        new("schedule.status", "Scheduler", "rc schedule status", "Get-RCScheduleStatus", true),
+        new("schedule.run", "Scheduler", "rc schedule run", "Start-RCSchedule", true),
         new("schedule.unregister", "Scheduler", "rc schedule unregister", "Unregister-RCSchedule", true),
         new("restore.plan.readonly", "Restore Plan", "rc restore plan", "Get-RCRestorePlan", true),
         new("rescue.answer.create", "Rescue", "rc rescue answer-create", "New-RCRescueAnswer", true),

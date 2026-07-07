@@ -45,6 +45,20 @@ public sealed class ScheduleManager
         return RunSchTasks("/Delete", "/TN", NormalizeTaskName(taskName), "/F");
     }
 
+    public ScheduleRegistrationReport Status(string taskName)
+    {
+        if (string.IsNullOrWhiteSpace(taskName))
+            throw new ArgumentException("TaskName is required.");
+        return RunSchTasks("/Query", "/TN", NormalizeTaskName(taskName), "/FO", "LIST", "/V");
+    }
+
+    public ScheduleRegistrationReport RunNow(string taskName)
+    {
+        if (string.IsNullOrWhiteSpace(taskName))
+            throw new ArgumentException("TaskName is required.");
+        return RunSchTasks("/Run", "/TN", NormalizeTaskName(taskName));
+    }
+
     private static void Validate(ScheduleDefinition definition)
     {
         if (string.IsNullOrWhiteSpace(definition.TaskName))

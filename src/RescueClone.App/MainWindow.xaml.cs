@@ -330,6 +330,16 @@ public partial class MainWindow : Window
         RunAndReport(() => _scheduleManager.Register(ReadScheduleDefinition()));
     }
 
+    private void ScheduleStatus_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _scheduleManager.Status(ScheduleTaskNameBox.Text));
+    }
+
+    private void RunSchedule_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _scheduleManager.RunNow(ScheduleTaskNameBox.Text));
+    }
+
     private void UnregisterSchedule_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _scheduleManager.Unregister(ScheduleTaskNameBox.Text));

@@ -166,14 +166,26 @@ static int Run(string[] args)
 static int RunSchedule(string command, Dictionary<string, string> values)
 {
     var manager = new ScheduleManager();
-    if (command == "unregister")
-    {
-        var report = manager.Unregister(Required(values, "task-name"));
-        WriteJson(report);
-        return report.Succeeded ? 0 : 3;
-    }
+        if (command == "unregister")
+        {
+            var report = manager.Unregister(Required(values, "task-name"));
+            WriteJson(report);
+            return report.Succeeded ? 0 : 3;
+        }
+        if (command == "status")
+        {
+            var report = manager.Status(Required(values, "task-name"));
+            WriteJson(report);
+            return report.Succeeded ? 0 : 3;
+        }
+        if (command == "run")
+        {
+            var report = manager.RunNow(Required(values, "task-name"));
+            WriteJson(report);
+            return report.Succeeded ? 0 : 3;
+        }
 
-    var definition = new ScheduleDefinition(
+        var definition = new ScheduleDefinition(
         Required(values, "task-name"),
         Required(values, "job-file"),
         values.GetValueOrDefault("cli-path", Environment.ProcessPath ?? "rc.exe"),
@@ -576,6 +588,8 @@ static void PrintHelp()
     rc retention apply --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
     rc schedule plan --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly|Event] [--time HH:mm] [--run-missed] [--event-log <log>] [--event-id <id>] [--event-source <source>]
     rc schedule register --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly|Event] [--time HH:mm] [--run-missed] [--event-log <log>] [--event-id <id>] [--event-source <source>]
+    rc schedule status --task-name <name>
+    rc schedule run --task-name <name>
     rc schedule unregister --task-name <name>
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc rescue answer-create --output <answer.json> --repository <dir> --image <file.rcimg> --target-disk-id <id> [--password <secret>] [--boot-mode Bios|Uefi|Unknown] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition] [--bcd-store <path>] [--driver-directories <paths>] [--network-shares <shares>] [--repair-boot true|false] [--reboot-after-restore] [--verify-image]
