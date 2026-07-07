@@ -79,7 +79,9 @@ Backup job JSON example:
   "emailSmtpPort": 25,
   "emailEnableSsl": false,
   "emailUsername": null,
-  "emailPassword": null
+  "emailPassword": null,
+  "retryCount": 2,
+  "retryDelaySeconds": 5
 }
 ```
 

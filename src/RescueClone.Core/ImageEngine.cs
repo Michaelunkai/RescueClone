@@ -6,7 +6,7 @@ using RescueClone.Core.Native;
 
 namespace RescueClone.Core;
 
-public sealed class ImageEngine
+public sealed class ImageEngine : IImageEngine
 {
     private const int V2BlockSize = 1024 * 1024;
     private static readonly byte[] V1Magic = Encoding.ASCII.GetBytes("RCIMG1\n");

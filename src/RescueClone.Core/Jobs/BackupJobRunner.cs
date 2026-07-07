@@ -10,9 +10,9 @@ public sealed class BackupJobRunner
 {
     private const int DefaultScriptHookTimeoutSeconds = 300;
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
-    private readonly ImageEngine _engine;
+    private readonly IImageEngine _engine;
 
-    public BackupJobRunner(ImageEngine? engine = null)
+    public BackupJobRunner(IImageEngine? engine = null)
     {
         _engine = engine ?? new ImageEngine();
     }
@@ -53,6 +53,10 @@ public sealed class BackupJobRunner
             errors.Add("ScriptHookTimeoutSeconds must be greater than zero when set.");
         if (job.LogRetentionCount is <= 0)
             errors.Add("LogRetentionCount must be greater than zero when set.");
+        if (job.RetryCount is < 0)
+            errors.Add("RetryCount cannot be negative.");
+        if (job.RetryDelaySeconds is < 0)
+            errors.Add("RetryDelaySeconds cannot be negative.");
         if (job.NotifyEmail)
         {
             if (string.IsNullOrWhiteSpace(job.EmailFrom))
@@ -100,39 +104,66 @@ public sealed class BackupJobRunner
         if (!string.IsNullOrWhiteSpace(job.PreBackupScriptPath))
             hooks.Add(RunScriptHook("pre-backup", job.PreBackupScriptPath, job));
 
-        var created = _engine.Create(new ImageOptions(job.SourcePath, job.ImagePath, job.Compression, job.Password));
-        var verified = false;
-        var rootSha = created.RootSha256;
-        if (job.VerifyAfterCreate)
-        {
-            var verify = _engine.Verify(job.ImagePath, job.Password);
-            verified = true;
-            rootSha = verify.RootSha256;
-        }
+        var backup = RunBackupWithRetry(job);
 
         if (!string.IsNullOrWhiteSpace(job.PostBackupScriptPath))
             hooks.Add(RunScriptHook("post-backup", job.PostBackupScriptPath, job));
 
         var finished = DateTimeOffset.UtcNow;
         var notification = TryPublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
-        var email = TryPublishEmailNotification(job, success: true, $"Backup job {job.JobId} completed", $"Backup job {job.JobId} completed.{Environment.NewLine}Image: {job.ImagePath}{Environment.NewLine}Root SHA-256: {rootSha}");
-        var reports = WriteRunReports(job, started, finished, created, verified, rootSha, hooks, notification, email);
+        var email = TryPublishEmailNotification(job, success: true, $"Backup job {job.JobId} completed", $"Backup job {job.JobId} completed.{Environment.NewLine}Image: {job.ImagePath}{Environment.NewLine}Root SHA-256: {backup.RootSha256}");
+        var reports = WriteRunReports(job, started, finished, backup.Created, backup.Verified, backup.RootSha256, hooks, notification, email, backup.Attempts);
         return new BackupJobRunResult(
             job.JobId,
             job.Name,
             job.ImagePath,
-            verified,
-            rootSha,
-            created.FileCount,
-            created.OriginalBytes,
-            created.StoredBytes,
+            backup.Verified,
+            backup.RootSha256,
+            backup.Created.FileCount,
+            backup.Created.OriginalBytes,
+            backup.Created.StoredBytes,
             reports.JsonPath,
             reports.HtmlPath,
             started,
             finished,
             hooks,
             notification,
-            email);
+            email,
+            backup.Attempts);
+    }
+
+    private BackupRunAttemptResult RunBackupWithRetry(BackupJobDefinition job)
+    {
+        var maxAttempts = 1 + (job.RetryCount ?? 0);
+        var delay = TimeSpan.FromSeconds(job.RetryDelaySeconds ?? 0);
+        var attempts = new List<BackupRetryAttempt>();
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            var started = DateTimeOffset.UtcNow;
+            try
+            {
+                var created = _engine.Create(new ImageOptions(job.SourcePath, job.ImagePath, job.Compression, job.Password));
+                var verified = false;
+                var rootSha = created.RootSha256;
+                if (job.VerifyAfterCreate)
+                {
+                    var verify = _engine.Verify(job.ImagePath, job.Password);
+                    verified = true;
+                    rootSha = verify.RootSha256;
+                }
+
+                attempts.Add(new BackupRetryAttempt(attempt, Succeeded: true, Error: null, started, DateTimeOffset.UtcNow));
+                return new BackupRunAttemptResult(created, verified, rootSha, attempts);
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                attempts.Add(new BackupRetryAttempt(attempt, Succeeded: false, Error: ex.Message, started, DateTimeOffset.UtcNow));
+                if (delay > TimeSpan.Zero)
+                    Thread.Sleep(delay);
+            }
+        }
+
+        throw new InvalidOperationException("Retry loop exited without producing a result.");
     }
 
     private static BackupScriptHookResult RunScriptHook(string phase, string scriptPath, BackupJobDefinition job)
@@ -310,7 +341,7 @@ public sealed class BackupJobRunner
             .Where(static recipient => !string.IsNullOrWhiteSpace(recipient));
     }
 
-    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email)
+    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts)
     {
         var directory = string.IsNullOrWhiteSpace(job.LogDirectory)
             ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
@@ -335,7 +366,8 @@ public sealed class BackupJobRunner
             finished,
             hooks,
             notification,
-            email);
+            email,
+            retryAttempts);
         File.WriteAllText(logPath, JsonSerializer.Serialize(payload, JsonOptions));
         File.WriteAllText(htmlPath, BuildHtmlReport(payload));
         RotateReports(directory, safeId, job.LogRetentionCount);
@@ -347,6 +379,9 @@ public sealed class BackupJobRunner
         var hookRows = report.ScriptHooks is null
             ? string.Empty
             : string.Join(Environment.NewLine, report.ScriptHooks.Select(h => $"<tr><td>{WebUtility.HtmlEncode(h.Phase)}</td><td>{WebUtility.HtmlEncode(h.ScriptPath)}</td><td>{h.ExitCode}</td><td>{h.TimedOut}</td><td><pre>{WebUtility.HtmlEncode(h.Output)}</pre></td></tr>"));
+        var retryRows = report.RetryAttempts is null
+            ? string.Empty
+            : string.Join(Environment.NewLine, report.RetryAttempts.Select(a => $"<tr><td>{a.Attempt}</td><td>{a.Succeeded}</td><td><pre>{WebUtility.HtmlEncode(a.Error ?? string.Empty)}</pre></td><td>{a.StartedUtc:O}</td><td>{a.FinishedUtc:O}</td></tr>"));
 
         return $$"""
         <!doctype html>
@@ -379,6 +414,11 @@ public sealed class BackupJobRunner
           <table>
             <tr><th>Phase</th><th>Script</th><th>Exit Code</th><th>Timed Out</th><th>Output</th></tr>
             {{hookRows}}
+          </table>
+          <h2>Retry Attempts</h2>
+          <table>
+            <tr><th>Attempt</th><th>Succeeded</th><th>Error</th><th>Started UTC</th><th>Finished UTC</th></tr>
+            {{retryRows}}
           </table>
           <h2>Notifications</h2>
           <table>
@@ -415,4 +455,5 @@ public sealed class BackupJobRunner
     }
 
     private sealed record BackupJobReportPaths(string JsonPath, string HtmlPath);
+    private sealed record BackupRunAttemptResult(ImageReport Created, bool Verified, string RootSha256, IReadOnlyList<BackupRetryAttempt> Attempts);
 }

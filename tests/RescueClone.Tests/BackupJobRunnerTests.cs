@@ -63,6 +63,43 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void RunRetriesTransientCreateFailureAndRecordsAttempts()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var image = Path.Combine(root, "images", "retry.rcimg");
+        var engine = new FlakyImageEngine(image);
+        var job = new BackupJobDefinition(
+            "retry-docs",
+            "Retry Docs",
+            Enabled: true,
+            source,
+            image,
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            RetryCount: 1,
+            RetryDelaySeconds: 0);
+
+        var result = new BackupJobRunner(engine).Run(job);
+
+        Assert.AreEqual(2, engine.CreateCalls);
+        Assert.IsTrue(result.Verified);
+        Assert.IsNotNull(result.RetryAttempts);
+        Assert.AreEqual(2, result.RetryAttempts.Count);
+        Assert.IsFalse(result.RetryAttempts[0].Succeeded);
+        Assert.IsTrue(result.RetryAttempts[1].Succeeded);
+        StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "Retry Attempts");
+
+        var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.IsNotNull(log);
+        Assert.IsNotNull(log.RetryAttempts);
+        Assert.AreEqual(2, log.RetryAttempts.Count);
+    }
+
+    [TestMethod]
     public void RunExecutesPreAndPostBackupScriptHooks()
     {
         var root = NewTempDirectory();
@@ -370,6 +407,32 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void ValidateRejectsInvalidRetrySettings()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var job = new BackupJobDefinition(
+            "bad-retry",
+            "Bad Retry",
+            Enabled: true,
+            source,
+            Path.Combine(root, "out.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            RetryCount: -1,
+            RetryDelaySeconds: -1);
+
+        var result = new BackupJobRunner().Validate(job);
+
+        Assert.IsFalse(result.Valid);
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("RetryCount", StringComparison.Ordinal)));
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("RetryDelaySeconds", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
     public void ValidateRejectsIncompleteEmailConfiguration()
     {
         var root = NewTempDirectory();
@@ -436,5 +499,37 @@ public sealed class BackupJobRunnerTests
         echo %RESCUECLONE_JOB_ID%^|%RESCUECLONE_HOOK_PHASE%^|%RESCUECLONE_SOURCE_PATH%^|%RESCUECLONE_IMAGE_PATH%>>"{hookLog}"
         """);
         return path;
+    }
+
+    private sealed class FlakyImageEngine : IImageEngine
+    {
+        private readonly string _imagePath;
+
+        public FlakyImageEngine(string imagePath)
+        {
+            _imagePath = imagePath;
+        }
+
+        public int CreateCalls { get; private set; }
+
+        public ImageReport Create(ImageOptions options)
+        {
+            CreateCalls++;
+            if (CreateCalls == 1)
+                throw new IOException("Simulated transient create failure.");
+            Directory.CreateDirectory(Path.GetDirectoryName(_imagePath)!);
+            File.WriteAllText(_imagePath, "retry-image");
+            return new ImageReport(_imagePath, 1, 5, 5, "abc123", new[] { new ImageFileEntry("alpha.txt", 5, 5, "abc123") }, FormatVersion: 2);
+        }
+
+        public ImageReport Verify(string imagePath, string? password)
+        {
+            return new ImageReport(imagePath, 1, 5, 5, "verified123", new[] { new ImageFileEntry("alpha.txt", 5, 5, "verified123") }, FormatVersion: 2);
+        }
+
+        public RestoreReport Restore(RestoreOptions options)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

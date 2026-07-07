@@ -13,6 +13,13 @@ public enum ImageContainerFormat
     V2 = 2
 }
 
+public interface IImageEngine
+{
+    ImageReport Create(ImageOptions options);
+    ImageReport Verify(string imagePath, string? password);
+    RestoreReport Restore(RestoreOptions options);
+}
+
 public sealed record ImageOptions(
     string SourcePath,
     string ImagePath,
