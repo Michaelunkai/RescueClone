@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Rescue;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
 
@@ -155,6 +156,18 @@ public sealed class OperationRunner
                 IntValue(request, "keepCount"),
                 IntValue(request, "maxAgeDays"),
                 LongValue(request, "minFreeBytes"))),
+            "retention.gfs.plan" => new RetentionManager().PlanGfs(new GfsRetentionOptions(
+                RequiredString(request, "repository"),
+                OptionalString(request, "pattern") ?? "*.rcimg",
+                IntValue(request, "dailyKeep"),
+                IntValue(request, "weeklyKeep"),
+                IntValue(request, "monthlyKeep"))),
+            "retention.gfs.apply" => new RetentionManager().ApplyGfs(new GfsRetentionOptions(
+                RequiredString(request, "repository"),
+                OptionalString(request, "pattern") ?? "*.rcimg",
+                IntValue(request, "dailyKeep"),
+                IntValue(request, "weeklyKeep"),
+                IntValue(request, "monthlyKeep"))),
             "restore.plan.readonly" => _restorePlanner.Plan(new RestorePlanOptions(
                 RequiredString(request, "image"),
                 OptionalString(request, "password"),
@@ -165,6 +178,26 @@ public sealed class OperationRunner
                 EnumValue<RestoreBootMode>(request, "bootMode", RestoreBootMode.Unknown),
                 BoolValue(request, "hasEfiSystemPartition"),
                 OptionalString(request, "bcdStore"))),
+            "rescue.answer.create" => new RescueAnswerManager(_imageEngine, _restorePlanner).Create(new RescueAnswerOptions(
+                RequiredString(request, "output"),
+                RequiredString(request, "repository"),
+                RequiredString(request, "image"),
+                OptionalString(request, "password"),
+                RequiredString(request, "targetDiskId"),
+                EnumValue<RestoreBootMode>(request, "bootMode", RestoreBootMode.Unknown),
+                LongValue(request, "targetDiskSizeBytes"),
+                LongValue(request, "requiredBytes"),
+                BoolValue(request, "targetIsCurrentSystemDisk"),
+                BoolValue(request, "hasEfiSystemPartition"),
+                OptionalString(request, "bcdStore"),
+                OptionalStringListValue(request, "driverDirectories"),
+                OptionalStringListValue(request, "networkShares"),
+                BoolValue(request, "repairBoot", defaultValue: true),
+                BoolValue(request, "rebootAfterRestore"),
+                BoolValue(request, "verifyImage"))),
+            "rescue.answer.validate" => new RescueAnswerManager(_imageEngine, _restorePlanner).Validate(
+                RequiredString(request, "file"),
+                BoolValue(request, "verifyImage")),
             _ => throw new ArgumentException($"Unknown operation kind: {request.Kind}")
         };
     }
@@ -279,6 +312,14 @@ public sealed class OperationRunner
                 .ToArray(),
             _ => throw new ArgumentException($"Operation parameter must be a string or string array: {name}")
         };
+    }
+
+    private static IReadOnlyList<string> OptionalStringListValue(OperationRequest request, string name)
+    {
+        if (!request.Parameters.TryGetValue(name, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return Array.Empty<string>();
+
+        return StringListValue(request, name);
     }
 
     private static bool? NullableBoolValue(OperationRequest request, string name)

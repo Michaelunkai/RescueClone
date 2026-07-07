@@ -147,7 +147,8 @@ Supported local operation kinds currently include `image.create.directory`, `ima
 `job.backup.directory.create`, `job.backup.directory.update`,
 `job.backup.directory.delete`, `job.backup.directory.export`, `job.backup.directory.import`,
 `job.backup.directory.status`, `job.backup.directory.validate`, `job.backup.directory.run`,
-`retention.plan`, `retention.apply`, and `restore.plan.readonly`.
+`retention.plan`, `retention.apply`, `retention.gfs.plan`, `retention.gfs.apply`,
+`restore.plan.readonly`, `rescue.answer.create`, and `rescue.answer.validate`.
 
 When `rc operation run` or `Start-RCOperation` receives `--log-directory` / `-LogDirectory`,
 the runner writes `<operation-id>.json` plus `<operation-id>.state.json`. The state sidecar

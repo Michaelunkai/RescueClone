@@ -239,6 +239,103 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunGfsRetentionOperations()
+    {
+        var root = NewTempDirectory();
+        var repository = Path.Combine(root, "images");
+        Directory.CreateDirectory(repository);
+        for (var i = 0; i < 5; i++)
+        {
+            var path = Path.Combine(repository, $"image-{i}.rcimg");
+            File.WriteAllText(path, $"image {i}");
+            File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddDays(-i));
+        }
+
+        var runner = new OperationRunner();
+        var plan = runner.Run(new OperationRequest(
+            "retention.gfs.plan",
+            new Dictionary<string, JsonElement>
+            {
+                ["repository"] = Json("repository", repository),
+                ["dailyKeep"] = Json("dailyKeep", 2)
+            },
+            "gfs-plan"), Path.Combine(root, "ops"));
+        var apply = runner.Run(new OperationRequest(
+            "retention.gfs.apply",
+            new Dictionary<string, JsonElement>
+            {
+                ["repository"] = Json("repository", repository),
+                ["dailyKeep"] = Json("dailyKeep", 2)
+            },
+            "gfs-apply"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, plan.State);
+        Assert.AreEqual(2, plan.Result!.Value.GetProperty("keep").GetArrayLength());
+        Assert.AreEqual(3, plan.Result.Value.GetProperty("delete").GetArrayLength());
+        Assert.AreEqual(OperationState.Succeeded, apply.State);
+        Assert.AreEqual(3, apply.Result!.Value.GetProperty("deletedFileCount").GetInt32());
+        Assert.AreEqual(2, Directory.EnumerateFiles(repository, "*.rcimg").Count());
+        Assert.IsTrue(File.Exists(apply.LogPath));
+        Assert.IsTrue(File.Exists(apply.RecoveryStatePath));
+    }
+
+    [TestMethod]
+    public void RunRescueAnswerOperations()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var repository = Path.Combine(root, "images");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(repository);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(repository, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var bcdStore = Path.Combine(root, "BCD");
+        File.WriteAllText(bcdStore, "fixture");
+        var driverDirectory = Path.Combine(root, "drivers");
+        Directory.CreateDirectory(driverDirectory);
+        var answer = Path.Combine(root, "answer.json");
+        var runner = new OperationRunner();
+
+        var create = runner.Run(new OperationRequest(
+            "rescue.answer.create",
+            new Dictionary<string, JsonElement>
+            {
+                ["output"] = Json("output", answer),
+                ["repository"] = Json("repository", repository),
+                ["image"] = Json("image", "image.rcimg"),
+                ["targetDiskId"] = Json("targetDiskId", "disk-fixture-1"),
+                ["bootMode"] = Json("bootMode", "Bios"),
+                ["targetDiskSizeBytes"] = Json("targetDiskSizeBytes", 1048576),
+                ["bcdStore"] = Json("bcdStore", bcdStore),
+                ["driverDirectories"] = Json("driverDirectories", new[] { driverDirectory }),
+                ["networkShares"] = Json("networkShares", new[] { @"\\server\share" }),
+                ["repairBoot"] = Json("repairBoot", true),
+                ["rebootAfterRestore"] = Json("rebootAfterRestore", true),
+                ["verifyImage"] = Json("verifyImage", true)
+            },
+            "rescue-answer-create"), Path.Combine(root, "ops"));
+        var validate = runner.Run(new OperationRequest(
+            "rescue.answer.validate",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", answer),
+                ["verifyImage"] = Json("verifyImage", true)
+            },
+            "rescue-answer-validate"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, create.State);
+        Assert.IsTrue(File.Exists(answer));
+        Assert.IsTrue(create.Result!.Value.GetProperty("valid").GetBoolean());
+        Assert.IsTrue(create.Result.Value.GetProperty("imageVerified").GetBoolean());
+        Assert.AreEqual(OperationState.Succeeded, validate.State);
+        Assert.IsTrue(validate.Result!.Value.GetProperty("valid").GetBoolean());
+        Assert.IsTrue(validate.Result.Value.GetProperty("imageVerified").GetBoolean());
+        Assert.IsTrue(File.Exists(validate.LogPath));
+        Assert.IsTrue(File.Exists(validate.RecoveryStatePath));
+    }
+
+    [TestMethod]
     public async Task PipeServiceRunsOperationAndWritesRecoveryState()
     {
         var root = NewTempDirectory();
@@ -326,6 +423,56 @@ public sealed class OperationRunnerTests
         Assert.AreEqual(1, unproject.Report.Result!.Value.GetProperty("removedFileCount").GetInt32());
         Assert.IsFalse(File.Exists(Path.Combine(projection, "alpha.txt")));
         Assert.IsFalse(File.Exists(Path.Combine(projection, ".rescueclone-projection.json")));
+    }
+
+    [TestMethod]
+    public async Task PipeServiceRunsRescueAnswerOperation()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var repository = Path.Combine(root, "images");
+        var logs = Path.Combine(root, "ops");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(repository);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(repository, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var bcdStore = Path.Combine(root, "BCD");
+        File.WriteAllText(bcdStore, "fixture");
+        var answer = Path.Combine(root, "answer.json");
+        var pipeName = "rescueclone-test-" + Guid.NewGuid().ToString("N");
+        using var cancellation = new CancellationTokenSource();
+        var serverTask = new OperationPipeServer().RunAsync(pipeName, logs, cancellation.Token);
+
+        var response = await new OperationPipeClient().RunOperationAsync(
+            pipeName,
+            new OperationServiceRequest(new OperationRequest(
+                "rescue.answer.create",
+                new Dictionary<string, JsonElement>
+                {
+                    ["output"] = Json("output", answer),
+                    ["repository"] = Json("repository", repository),
+                    ["image"] = Json("image", "image.rcimg"),
+                    ["targetDiskId"] = Json("targetDiskId", "disk-fixture-1"),
+                    ["bootMode"] = Json("bootMode", "Bios"),
+                    ["targetDiskSizeBytes"] = Json("targetDiskSizeBytes", 1048576),
+                    ["bcdStore"] = Json("bcdStore", bcdStore),
+                    ["verifyImage"] = Json("verifyImage", true)
+                },
+                "pipe-rescue-answer")),
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None);
+        cancellation.Cancel();
+        await serverTask;
+
+        Assert.IsTrue(response.Succeeded);
+        Assert.IsNotNull(response.Report);
+        Assert.AreEqual(OperationState.Succeeded, response.Report.State);
+        Assert.IsTrue(response.Report.Result!.Value.GetProperty("valid").GetBoolean());
+        Assert.IsTrue(response.Report.Result.Value.GetProperty("imageVerified").GetBoolean());
+        Assert.IsTrue(File.Exists(answer));
+        Assert.IsTrue(File.Exists(response.Report.LogPath));
+        Assert.IsTrue(File.Exists(response.Report.RecoveryStatePath));
     }
 
     [TestMethod]

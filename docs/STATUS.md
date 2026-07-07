@@ -37,7 +37,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Local operation runs with a log directory also write a readable recovery-state JSON sidecar containing the original request and final report for both success and failure paths.
 - Local operation reports include structured audit events for operation start, success, and failure.
 - Failed local operation reports include structured `errorDetail` fields with a stable code, original message, and exception type.
-- Local operation runs can dispatch implemented image create/verify/repository-audit/source-compare/repository-list/browse/extract/project/list/unproject/restore operations, backup job create/update/delete/export/import/status/validate/run operations, retention plan/apply operations, and read-only restore planning.
+- Local operation runs can dispatch implemented image create/verify/repository-audit/source-compare/repository-list/browse/extract/project/list/unproject/restore operations, backup job create/update/delete/export/import/status/validate/run operations, count/age/free-space and GFS retention plan/apply operations, read-only restore planning, and rescue answer create/validate operations.
 - Named-pipe service IPC can host the operation runner and return structured operation reports to CLI, PowerShell, and GUI clients.
 - Windows Service registration installs `rc service host` as the same operation runner behind SCM start/stop/status/uninstall commands.
 - Windows Service recovery policy can configure and query SCM restart-on-failure actions for the operation host.
