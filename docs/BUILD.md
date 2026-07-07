@@ -22,6 +22,7 @@ It publishes normal-use self-contained directories here:
 
 - `publish\cli\rc.exe`
 - `publish\gui\RescueClone.App.exe`
+- `artifacts\RescueClone-portable.zip.sha256` after `scripts\New-PortablePackage.ps1` runs
 
 It also builds the native C++ engine boundary here:
 
@@ -42,6 +43,7 @@ CI:
 
 - `.github\workflows\ci.yml` runs on `windows-latest`.
 - It installs .NET SDK `10.0.301` from `global.json`, installs MSYS2 MinGW, runs `scripts\Build-Portable.ps1 -AllowSystemDotNetFallback -NativeCompilerPath C:\msys64\mingw64\bin\g++.exe`, runs `scripts\Test-Portable.ps1`, runs `scripts\Test-PortableInstall.ps1`, builds the portable ZIP, and uploads it as an artifact.
+- The portable package step writes both `RescueClone-portable.zip` and `RescueClone-portable.zip.sha256`; CI verifies both exist and uploads both.
 
 CLI examples:
 

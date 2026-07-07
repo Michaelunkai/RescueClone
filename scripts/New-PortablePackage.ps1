@@ -71,8 +71,14 @@ if ($missingEntries.Count -gt 0) {
     throw "Portable package is missing required entries: $($missingEntries -join ', ')"
 }
 
+$hash = Get-FileHash -LiteralPath $package.FullName -Algorithm SHA256
+$hashPath = "$($package.FullName).sha256"
+Set-Content -LiteralPath $hashPath -Value "$($hash.Hash.ToLowerInvariant())  $($package.Name)" -Encoding ASCII
+
 [pscustomobject]@{
     PackagePath = $package.FullName
+    Sha256Path = $hashPath
+    Sha256 = $hash.Hash.ToLowerInvariant()
     Length = $package.Length
     CreatedUtc = [DateTimeOffset]::UtcNow
     EntryCount = $entryNames.Count
