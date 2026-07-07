@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RescueClone.Core;
+using RescueClone.Core.Cloning;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Logs;
 using RescueClone.Core.Native;
@@ -37,6 +38,9 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "job")
             return RunJob(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "clone")
+            return RunClone(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length >= 2 && args[0] == "restore")
             return RunRestore(args[1], ParseOptions(args.Skip(2).ToArray()));
 
@@ -65,7 +69,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <kinds|validate|run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc clone <directory>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <kinds|validate|run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -220,6 +224,18 @@ static int RunSchedule(string command, Dictionary<string, string> values)
         default:
             throw new ArgumentException($"Unknown schedule command: {command}");
     }
+}
+
+static int RunClone(string command, Dictionary<string, string> values)
+{
+    if (command != "directory")
+        throw new ArgumentException($"Unknown clone command: {command}");
+
+    WriteJson(new DirectoryCloneManager().Clone(new DirectoryCloneOptions(
+        Required(values, "source"),
+        Required(values, "target"),
+        values.ContainsKey("overwrite"))));
+    return 0;
 }
 
 static int RunRetention(string command, Dictionary<string, string> values)
@@ -628,6 +644,7 @@ static void PrintHelp()
     rc image projections --root <dir>
     rc image unproject --target <dir>
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
+    rc clone directory --source <dir> --target <dir> [--overwrite]
     rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job update --file <job.json> [--job-id <id>] [--name <name>] [--enabled true|false] [--source <dir>] [--image <file.rcimg>] [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job delete --file <job.json>

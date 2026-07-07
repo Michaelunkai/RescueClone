@@ -65,6 +65,7 @@ CLI examples:
 .\RC.cmd image projections --root .
 .\RC.cmd image unproject --target .\sample-projection
 .\RC.cmd image restore --image .\sample.rcimg --target .\sample-restore --password secret
+.\RC.cmd clone directory --source .\sample-source --target .\sample-clone
 .\RC.cmd job create --file .\backup-job.json --job-id daily-docs --name "Daily Docs" --source .\sample-source --image .\images\daily-docs.rcimg --compression High --verify-after-create true --log-directory .\backup-logs
 .\RC.cmd job update --file .\backup-job.json --name "Daily Docs Updated" --enabled true --compression Medium
 .\RC.cmd job export --file .\backup-job.json --output .\backup-job.export.json
@@ -162,7 +163,7 @@ Operation request JSON example:
 
 Supported local operation kinds currently include `image.create.directory`, `image.verify`,
 `image.audit.repository`, `image.protect.audit`, `image.protect.apply`, `image.compare.source`, `image.list.repository`, `image.browse`, `image.extract.directory`, `image.project.readonly`, `image.project.list`, `image.project.remove`,
-`image.restore.directory`,
+`image.restore.directory`, `clone.directory`,
 `job.backup.directory.create`, `job.backup.directory.update`,
 `job.backup.directory.delete`, `job.backup.directory.export`, `job.backup.directory.import`,
 `job.backup.directory.list`, `job.backup.directory.status`, `job.backup.directory.history`, `job.backup.directory.validate`, `job.backup.directory.run`,
@@ -199,6 +200,7 @@ Mount-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-projection -Passwor
 Get-RCImageMount -RootPath .
 Dismount-RCImage -TargetPath .\sample-projection -Confirm:$false
 Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password secret -Confirm:$false
+Copy-RCDirectoryClone -SourcePath .\sample-source -TargetPath .\sample-clone -Confirm:$false
 New-RCBackupJob -Path .\backup-job.json -JobId daily-docs -Name 'Daily Docs' -SourcePath .\sample-source -ImagePath .\images\daily-docs.rcimg -Compression High -VerifyAfterCreate $true -LogDirectory .\backup-logs -Confirm:$false
 Set-RCBackupJob -Path .\backup-job.json -Name 'Daily Docs Updated' -Enabled $true -Compression Medium -Confirm:$false
 Export-RCBackupJob -Path .\backup-job.json -OutputPath .\backup-job.export.json -Confirm:$false

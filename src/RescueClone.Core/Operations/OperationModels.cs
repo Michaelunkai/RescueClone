@@ -71,6 +71,7 @@ public static class OperationKindCatalog
         new("image.project.list", "List managed image projections under a root.", new[] { "root" }, Array.Empty<string>()),
         new("image.project.remove", "Remove a managed image projection.", new[] { "target" }, Array.Empty<string>()),
         new("image.restore.directory", "Restore a directory image to a directory target.", new[] { "image", "target" }, new[] { "password", "overwrite" }),
+        new("clone.directory", "Clone a directory tree with per-file SHA-256 verification.", new[] { "source", "target" }, new[] { "overwrite" }),
         new("job.backup.directory.create", "Create a directory backup job JSON file.", new[] { "file", "jobId", "name", "source", "image" }, new[] { "enabled", "compression", "password", "verifyAfterCreate", "logDirectory" }),
         new("job.backup.directory.update", "Update a directory backup job JSON file.", new[] { "file" }, new[] { "jobId", "name", "enabled", "source", "image", "compression", "password", "verifyAfterCreate", "logDirectory" }),
         new("job.backup.directory.delete", "Delete a backup job JSON file.", new[] { "file" }, Array.Empty<string>()),

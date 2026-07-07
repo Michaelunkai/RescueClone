@@ -234,6 +234,20 @@ function Restore-RCImage {
     }
 }
 
+function Copy-RCDirectoryClone {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$SourcePath,
+        [Parameter(Mandatory=$true)][string]$TargetPath,
+        [switch]$Overwrite
+    )
+    if ($PSCmdlet.ShouldProcess($TargetPath, "Clone directory $SourcePath")) {
+        $args = @('clone','directory','--source',$SourcePath,'--target',$TargetPath)
+        if ($Overwrite) { $args += '--overwrite' }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
 function New-RCBackupJob {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

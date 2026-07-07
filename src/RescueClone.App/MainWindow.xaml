@@ -91,6 +91,22 @@
                     </WrapPanel>
                 </Grid>
             </TabItem>
+            <TabItem Header="Clone">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="CloneSourcePathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Clone source directory"/>
+                    <TextBox x:Name="CloneTargetPathBox" Grid.Row="1" Margin="0,0,0,8" ToolTip="Clone target directory"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                        <CheckBox x:Name="CloneOverwriteBox" Content="Overwrite matching files" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Width="150" Height="34" Content="Clone Directory" Click="CloneDirectory_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
             <TabItem Header="Backup Job">
                 <Grid Margin="12">
                     <Grid.RowDefinitions>

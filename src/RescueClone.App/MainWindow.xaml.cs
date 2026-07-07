@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Windows;
 using RescueClone.Core;
+using RescueClone.Core.Cloning;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Logs;
 using RescueClone.Core.Native;
@@ -25,6 +26,7 @@ public partial class MainWindow : Window
     private readonly BackupLogCatalog _logCatalog = new();
     private readonly RestorePlanner _restorePlanner = new();
     private readonly RescueAnswerManager _rescueAnswerManager = new();
+    private readonly DirectoryCloneManager _cloneManager = new();
     private readonly OperationRunner _operationRunner = new();
     private readonly WindowsServiceManager _serviceManager = new();
     private readonly RetentionManager _retentionManager = new();
@@ -129,6 +131,14 @@ public partial class MainWindow : Window
     private void RestoreImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Restore(new RestoreOptions(RestoreImagePathBox.Text, TargetPathBox.Text, EmptyToNull(RestorePasswordBox.Password), OverwriteBox.IsChecked == true)));
+    }
+
+    private void CloneDirectory_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _cloneManager.Clone(new DirectoryCloneOptions(
+            CloneSourcePathBox.Text,
+            CloneTargetPathBox.Text,
+            CloneOverwriteBox.IsChecked == true)));
     }
 
     private void CreateJob_Click(object sender, RoutedEventArgs e)

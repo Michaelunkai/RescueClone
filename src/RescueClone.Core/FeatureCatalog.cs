@@ -19,6 +19,7 @@ public static class FeatureCatalog
         new("image.project.list", "Restore Image", "rc image projections", "Get-RCImageMount", true),
         new("image.project.remove", "Restore Image", "rc image unproject", "Dismount-RCImage", true),
         new("image.restore.directory", "Restore Image", "rc image restore", "Restore-RCImage", true),
+        new("clone.directory", "Clone", "rc clone directory", "Copy-RCDirectoryClone", true),
         new("job.backup.directory.create", "Backup Job", "rc job create", "New-RCBackupJob", true),
         new("job.backup.directory.update", "Backup Job", "rc job update", "Set-RCBackupJob", true),
         new("job.backup.directory.delete", "Backup Job", "rc job delete", "Remove-RCBackupJob", true),

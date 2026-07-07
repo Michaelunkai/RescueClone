@@ -328,6 +328,7 @@ public sealed class ImageEngineTests
                 feature.PowerShell.StartsWith("Start-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Set-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Compare-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Copy-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Restore-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Mount-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Dismount-RC", StringComparison.Ordinal) ||

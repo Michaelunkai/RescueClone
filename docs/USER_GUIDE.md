@@ -56,6 +56,22 @@ Restore-RCImage -ImagePath F:\Backups\data.rcimg -TargetPath F:\Restore\full -Pa
 
 Projection is a managed read-only directory projection, not a kernel image mount driver.
 
+## Clone A Directory
+
+CLI:
+
+```powershell
+.\RC.cmd clone directory --source F:\Data --target F:\Clones\Data
+```
+
+PowerShell:
+
+```powershell
+Copy-RCDirectoryClone -SourcePath F:\Data -TargetPath F:\Clones\Data -Confirm:$false
+```
+
+The GUI has the matching Clone tab. Directory clone copies the tree and verifies each copied file with SHA-256. It blocks a target inside the source directory to avoid recursive self-copying. This is not disk or partition cloning.
+
 ## Repository Maintenance
 
 CLI:

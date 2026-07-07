@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RescueClone.Core.Cloning;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Logs;
 using RescueClone.Core.Native;
@@ -133,6 +134,10 @@ public sealed class OperationRunner
                 RequiredString(request, "image"),
                 RequiredString(request, "target"),
                 OptionalString(request, "password"),
+                BoolValue(request, "overwrite"))),
+            "clone.directory" => new DirectoryCloneManager().Clone(new DirectoryCloneOptions(
+                RequiredString(request, "source"),
+                RequiredString(request, "target"),
                 BoolValue(request, "overwrite"))),
             "job.backup.directory.create" => _jobRunner.Save(
                 RequiredString(request, "file"),

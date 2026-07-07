@@ -19,9 +19,11 @@ if (-not (Test-Path -LiteralPath $Cli)) { throw "Missing CLI exe. Run .\scripts\
 
 $Image = Join-Path $Work 'backup.rcimg'
 $Restore = Join-Path $Work 'restore'
+$Clone = Join-Path $Work 'clone'
 & $Cli image create --source (Join-Path $Work 'source') --image $Image --compression High --password secret | Out-Null
 & $Cli image verify --image $Image --password secret | Out-Null
 & $Cli image restore --image $Image --target $Restore --password secret | Out-Null
+& $Cli clone directory --source (Join-Path $Work 'source') --target $Clone | Out-Null
 $OperationRequest = Join-Path $Work 'native-status.operation.json'
 @{
     kind = 'native.status'
@@ -36,11 +38,15 @@ Import-Module (Join-Path $Root 'powershell\RescueClone\RescueClone.psd1') -Force
 $features = Get-RCFeature
 $PowerShellOperationValidation = Test-RCOperation -RequestPath $OperationRequest
 if (-not $PowerShellOperationValidation.valid) { throw 'PowerShell operation validation failed for native.status fixture' }
+$PowerShellClone = Join-Path $Work 'clone-ps'
+Copy-RCDirectoryClone -SourcePath (Join-Path $Work 'source') -TargetPath $PowerShellClone -Confirm:$false | Out-Null
 
 $alpha = Get-Content -LiteralPath (Join-Path $Restore 'alpha.txt') -Raw
 $beta = Get-Content -LiteralPath (Join-Path $Restore 'nested\beta.txt') -Raw
 if ($alpha.Trim() -ne 'alpha') { throw 'alpha restore mismatch' }
 if ($beta.Trim() -ne 'beta') { throw 'beta restore mismatch' }
+if ((Get-Content -LiteralPath (Join-Path $Clone 'alpha.txt') -Raw).Trim() -ne 'alpha') { throw 'CLI clone alpha mismatch' }
+if ((Get-Content -LiteralPath (Join-Path $PowerShellClone 'nested\beta.txt') -Raw).Trim() -ne 'beta') { throw 'PowerShell clone beta mismatch' }
 
 [pscustomobject]@{
     CliExe = $Cli
@@ -50,6 +56,8 @@ if ($beta.Trim() -ne 'beta') { throw 'beta restore mismatch' }
     OperationKindCount = @($OperationKinds).Count
     OperationValidation = $OperationValidation.valid
     PowerShellOperationValidation = $PowerShellOperationValidation.valid
+    Clone = $Clone
+    PowerShellClone = $PowerShellClone
     Alpha = $alpha.Trim()
     Beta = $beta.Trim()
 } | ConvertTo-Json

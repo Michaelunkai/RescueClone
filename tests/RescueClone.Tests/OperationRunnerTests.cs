@@ -118,6 +118,34 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunDirectoryCloneOperation()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var target = Path.Combine(root, "target");
+        Directory.CreateDirectory(Path.Combine(source, "nested"));
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        File.WriteAllText(Path.Combine(source, "nested", "beta.txt"), "beta");
+
+        var report = new OperationRunner().Run(new OperationRequest(
+            "clone.directory",
+            new Dictionary<string, JsonElement>
+            {
+                ["source"] = Json("source", source),
+                ["target"] = Json("target", target)
+            },
+            "clone-directory"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, report.State);
+        Assert.AreEqual(2, report.Result!.Value.GetProperty("fileCount").GetInt32());
+        Assert.IsTrue(report.Result.Value.GetProperty("verified").GetBoolean());
+        Assert.AreEqual("alpha", File.ReadAllText(Path.Combine(target, "alpha.txt")));
+        Assert.AreEqual("beta", File.ReadAllText(Path.Combine(target, "nested", "beta.txt")));
+        Assert.IsTrue(File.Exists(report.LogPath));
+        Assert.IsTrue(File.Exists(report.RecoveryStatePath));
+    }
+
+    [TestMethod]
     public void RunImageRepositoryListOperation()
     {
         var root = NewTempDirectory();
@@ -776,6 +804,7 @@ public sealed class OperationRunnerTests
         var kinds = OperationKindCatalog.All.Select(kind => kind.Kind).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Assert.IsTrue(kinds.Contains("image.verify"));
+        Assert.IsTrue(kinds.Contains("clone.directory"));
         Assert.IsTrue(kinds.Contains("job.backup.directory.run"));
         Assert.IsTrue(kinds.Contains("schedule.register"));
         Assert.IsTrue(kinds.Contains("rescue.answer.validate"));
