@@ -174,7 +174,8 @@ Use `rc operation validate` or `Test-RCOperation` to validate a request file bef
 When `rc operation run` or `Start-RCOperation` receives `--log-directory` / `-LogDirectory`,
 the runner writes `<operation-id>.json` plus `<operation-id>.state.json`. The state sidecar
 contains the original request and final report so a failed unattended operation leaves a readable
-recovery artifact. Operation reports include structured audit events named `operation.started`,
+recovery artifact. Requests are validated against the operation kind catalog before dispatch.
+Operation reports include structured audit events named `operation.started`,
 `operation.succeeded`, and `operation.failed`. Failed operation reports include `errorDetail`
 with one of the current codes: `not_found`, `invalid_request`, `operation_failed`,
 `invalid_data`, `access_denied`, `io_error`, or `unexpected_error`.

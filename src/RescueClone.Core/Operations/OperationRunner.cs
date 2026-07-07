@@ -49,6 +49,9 @@ public sealed class OperationRunner
 
         try
         {
+            var validation = Validate(request);
+            if (!validation.Valid)
+                throw new ArgumentException(FormatValidationError(validation));
             result = ToJsonElement(Dispatch(request));
             auditEvents.Add(new OperationAuditEvent("operation.succeeded", DateTimeOffset.UtcNow, $"Operation {operationId} succeeded: {request.Kind}"));
         }
@@ -329,6 +332,19 @@ public sealed class OperationRunner
     {
         var safeId = string.Join("_", value.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         return string.IsNullOrWhiteSpace(safeId) ? "operation" : safeId;
+    }
+
+    private static string FormatValidationError(OperationValidationReport validation)
+    {
+        if (!validation.KnownKind)
+            return $"Unknown operation kind: {validation.Kind}";
+
+        var parts = new List<string> { $"Invalid operation request: {validation.Kind}" };
+        if (validation.MissingParameters.Count > 0)
+            parts.Add("missing " + string.Join(", ", validation.MissingParameters));
+        if (validation.UnknownParameters.Count > 0)
+            parts.Add("unknown " + string.Join(", ", validation.UnknownParameters));
+        return string.Join("; ", parts);
     }
 
     private static bool BoolValue(OperationRequest request, string name, bool defaultValue = false)

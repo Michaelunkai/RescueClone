@@ -159,6 +159,7 @@ Validation reuses image verification and restore-planner blockers. The current a
 
 `OperationKindCatalog` lists the supported durable request kinds, descriptions, required parameters, and optional parameters. It is exposed through the GUI Operations tab, CLI `rc operation kinds`, and PowerShell `Get-RCOperationKind`.
 The same catalog validates operation request JSON before execution through the GUI `Validate Request` action, CLI `rc operation validate`, and PowerShell `Test-RCOperation`.
+`OperationRunner` also validates requests before dispatch and records malformed requests as structured failed operation reports.
 
 Operation reports include:
 

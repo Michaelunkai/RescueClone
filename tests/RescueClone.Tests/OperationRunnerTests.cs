@@ -727,6 +727,27 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunInvalidOperationReturnsFailedValidationReport()
+    {
+        var root = NewTempDirectory();
+        var report = new OperationRunner().Run(new OperationRequest(
+            "native.status",
+            new Dictionary<string, JsonElement>
+            {
+                ["extra"] = Json("extra", true)
+            },
+            "invalid-native"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Failed, report.State);
+        Assert.IsTrue(report.Error!.Contains("unknown extra", StringComparison.OrdinalIgnoreCase));
+        Assert.IsNotNull(report.ErrorDetail);
+        Assert.AreEqual("invalid_request", report.ErrorDetail.Code);
+        Assert.IsTrue(File.Exists(report.LogPath));
+        Assert.IsTrue(File.Exists(report.RecoveryStatePath));
+        AssertAuditEvents(report, OperationState.Failed);
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesOperationParity()
     {
         var feature = FeatureCatalog.All.Single(f => f.FeatureId == "operation.run.local");
