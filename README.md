@@ -6,6 +6,7 @@ This is not a Macrium Reflect clone. It does not currently implement VSS disk im
 
 The full remaining engineering contract is tracked in `docs\REMAINING_CONTRACT.md`.
 The operator guide for implemented features is `docs\USER_GUIDE.md`.
+The developer architecture guide is `docs\ARCHITECTURE.md`.
 
 ## Portable Build
 

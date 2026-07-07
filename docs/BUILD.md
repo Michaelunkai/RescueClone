@@ -12,6 +12,8 @@ From the repository root, the preferred portable build is:
 .\scripts\Uninstall-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart
 ```
 
+The module layout and developer-facing design rules are documented in `docs\ARCHITECTURE.md`.
+
 That command keeps NuGet packages and .NET CLI home under the project folder:
 
 - `.dotnet-sdk`
