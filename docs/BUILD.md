@@ -116,7 +116,8 @@ Operation request JSON example:
 ```
 
 Supported local operation kinds currently include `image.create.directory`, `image.verify`,
-`image.restore.directory`, `job.backup.directory.create`, `job.backup.directory.update`,
+`image.browse`, `image.extract.directory`, `image.restore.directory`,
+`job.backup.directory.create`, `job.backup.directory.update`,
 `job.backup.directory.delete`, `job.backup.directory.export`, `job.backup.directory.import`,
 `job.backup.directory.status`, `job.backup.directory.validate`, `job.backup.directory.run`,
 `retention.plan`, `retention.apply`, and `restore.plan.readonly`.

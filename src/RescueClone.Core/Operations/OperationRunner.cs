@@ -82,6 +82,15 @@ public sealed class OperationRunner
             "image.verify" => _imageEngine.Verify(
                 RequiredString(request, "image"),
                 OptionalString(request, "password")),
+            "image.browse" => _imageEngine.Browse(
+                RequiredString(request, "image"),
+                OptionalString(request, "password")),
+            "image.extract.directory" => _imageEngine.Extract(new ExtractOptions(
+                RequiredString(request, "image"),
+                RequiredString(request, "target"),
+                StringListValue(request, "paths"),
+                OptionalString(request, "password"),
+                BoolValue(request, "overwrite"))),
             "image.restore.directory" => _imageEngine.Restore(new RestoreOptions(
                 RequiredString(request, "image"),
                 RequiredString(request, "target"),
@@ -228,6 +237,25 @@ public sealed class OperationRunner
             JsonValueKind.False => false,
             JsonValueKind.String => bool.Parse(value.GetString() ?? "false"),
             _ => throw new ArgumentException($"Operation parameter must be a Boolean: {name}")
+        };
+    }
+
+    private static IReadOnlyList<string> StringListValue(OperationRequest request, string name)
+    {
+        if (!request.Parameters.TryGetValue(name, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            throw new ArgumentException($"Operation parameter is required: {name}");
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString()!
+                .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+            JsonValueKind.Array => value.EnumerateArray()
+                .Select(item => item.ValueKind == JsonValueKind.String
+                    ? item.GetString()!
+                    : throw new ArgumentException($"Operation parameter array must contain strings: {name}"))
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .ToArray(),
+            _ => throw new ArgumentException($"Operation parameter must be a string or string array: {name}")
         };
     }
 

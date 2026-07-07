@@ -77,6 +77,46 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunBrowseAndExtractImageOperations()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var target = Path.Combine(root, "extract");
+        Directory.CreateDirectory(Path.Combine(source, "nested"));
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        File.WriteAllText(Path.Combine(source, "nested", "beta.txt"), "beta");
+        var image = Path.Combine(root, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.High, null));
+        var runner = new OperationRunner();
+
+        var browse = runner.Run(new OperationRequest(
+            "image.browse",
+            new Dictionary<string, JsonElement>
+            {
+                ["image"] = Json("image", image)
+            },
+            "browse-image"), Path.Combine(root, "ops"));
+        var extract = runner.Run(new OperationRequest(
+            "image.extract.directory",
+            new Dictionary<string, JsonElement>
+            {
+                ["image"] = Json("image", image),
+                ["target"] = Json("target", target),
+                ["paths"] = Json("paths", new[] { "nested/beta.txt" })
+            },
+            "extract-image"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, browse.State);
+        Assert.AreEqual(2, browse.Result!.Value.GetProperty("fileCount").GetInt32());
+        Assert.AreEqual(OperationState.Succeeded, extract.State);
+        Assert.AreEqual(1, extract.Result!.Value.GetProperty("fileCount").GetInt32());
+        Assert.AreEqual("beta", File.ReadAllText(Path.Combine(target, "nested", "beta.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(target, "alpha.txt")));
+        Assert.IsTrue(File.Exists(extract.LogPath));
+        Assert.IsTrue(File.Exists(extract.RecoveryStatePath));
+    }
+
+    [TestMethod]
     public void RunJobManagementOperations()
     {
         var root = NewTempDirectory();
