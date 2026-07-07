@@ -25,6 +25,19 @@ public sealed class BackupJobRunner
             ?? throw new InvalidDataException("Backup job definition is empty.");
     }
 
+    public BackupJobDefinition Save(string path, BackupJobDefinition job)
+    {
+        var validation = Validate(job);
+        if (!validation.Valid)
+            throw new InvalidOperationException(string.Join(Environment.NewLine, validation.Errors));
+
+        var directory = Path.GetDirectoryName(Path.GetFullPath(path));
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+        File.WriteAllText(path, JsonSerializer.Serialize(job, JsonOptions));
+        return job;
+    }
+
     public BackupJobValidationResult Validate(BackupJobDefinition job)
     {
         var errors = new List<string>();

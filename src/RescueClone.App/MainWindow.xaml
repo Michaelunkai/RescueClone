@@ -74,11 +74,33 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBox x:Name="JobPathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Backup job JSON path"/>
-                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBox x:Name="JobIdBox" Width="180" ToolTip="Job ID" Margin="0,0,8,0"/>
+                        <TextBox x:Name="JobNameBox" Width="260" ToolTip="Job name" Margin="0,0,8,0"/>
+                        <CheckBox x:Name="JobEnabledBox" Content="Enabled" IsChecked="True" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBox x:Name="JobSourcePathBox" Grid.Row="2" Margin="0,0,0,8" ToolTip="Source directory"/>
+                    <TextBox x:Name="JobImagePathBox" Grid.Row="3" Margin="0,0,0,8" ToolTip="Image output path"/>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,8">
+                        <ComboBox x:Name="JobCompressionBox" Width="180" SelectedIndex="1" Margin="0,0,8,0">
+                            <ComboBoxItem Content="None"/>
+                            <ComboBoxItem Content="Medium"/>
+                            <ComboBoxItem Content="High"/>
+                        </ComboBox>
+                        <CheckBox x:Name="JobVerifyAfterCreateBox" Content="Verify after create" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <TextBox x:Name="JobLogDirectoryBox" Width="260" ToolTip="Optional log directory"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="5" Orientation="Horizontal">
                         <CheckBox x:Name="ForceDisabledJobBox" Content="Force disabled job" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Width="140" Height="34" Content="Create Job" Click="CreateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Validate Job" Click="ValidateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Run Job" Click="RunJob_Click"/>
                     </StackPanel>

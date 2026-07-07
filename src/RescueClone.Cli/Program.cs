@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Logs;
@@ -221,13 +222,27 @@ static int RunRestore(string command, Dictionary<string, string> values)
 static int RunJob(string command, Dictionary<string, string> values)
 {
     var runner = new BackupJobRunner();
-    var job = runner.Load(Required(values, "file"));
     switch (command)
     {
+        case "create":
+            var definition = new BackupJobDefinition(
+                Required(values, "job-id"),
+                Required(values, "name"),
+                ParseBool(values.GetValueOrDefault("enabled", "true"), "enabled"),
+                Required(values, "source"),
+                Required(values, "image"),
+                Enum.Parse<CompressionMode>(values.GetValueOrDefault("compression", "Medium"), ignoreCase: true),
+                values.GetValueOrDefault("password"),
+                ParseBool(values.GetValueOrDefault("verify-after-create", "true"), "verify-after-create"),
+                values.GetValueOrDefault("log-directory"));
+            WriteJson(runner.Save(Required(values, "file"), definition));
+            return 0;
         case "validate":
+            var job = runner.Load(Required(values, "file"));
             WriteJson(runner.Validate(job));
             return 0;
         case "run":
+            job = runner.Load(Required(values, "file"));
             WriteJson(runner.Run(job, values.ContainsKey("force-disabled")));
             return 0;
         default:
@@ -274,6 +289,13 @@ static int? TryParseInt(Dictionary<string, string> values, string key)
     return parsed;
 }
 
+static bool ParseBool(string value, string key)
+{
+    if (!bool.TryParse(value, out var parsed))
+        throw new ArgumentException($"Invalid --{key}: {value}");
+    return parsed;
+}
+
 static string Required(Dictionary<string, string> values, string key)
 {
     if (!values.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
@@ -283,7 +305,9 @@ static string Required(Dictionary<string, string> values, string key)
 
 static void WriteJson<T>(T value)
 {
-    Console.WriteLine(JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true }));
+    var options = new JsonSerializerOptions { WriteIndented = true };
+    options.Converters.Add(new JsonStringEnumConverter());
+    Console.WriteLine(JsonSerializer.Serialize(value, options));
 }
 
 static void PrintHelp()
@@ -295,6 +319,7 @@ static void PrintHelp()
     rc image create --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--format V1|V2]
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
+    rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]
     rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]

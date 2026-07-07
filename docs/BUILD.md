@@ -38,6 +38,7 @@ CLI examples:
 .\RC.cmd image create --source .\sample-source --image .\sample.rcimg --compression High --password secret --format V2
 .\RC.cmd image verify --image .\sample.rcimg --password secret
 .\RC.cmd image restore --image .\sample.rcimg --target .\sample-restore --password secret
+.\RC.cmd job create --file .\backup-job.json --job-id daily-docs --name "Daily Docs" --source .\sample-source --image .\images\daily-docs.rcimg --compression High --verify-after-create true --log-directory .\backup-logs
 .\RC.cmd job validate --file .\backup-job.json
 .\RC.cmd job run --file .\backup-job.json
 .\RC.cmd retention plan --repository .\images --pattern *.rcimg --keep-count 3 --max-age-days 30
@@ -113,6 +114,7 @@ Import-Module .\powershell\RescueClone\RescueClone.psd1 -Force
 New-RCImage -SourcePath .\sample-source -ImagePath .\sample.rcimg -Compression High -Format V2 -Password secret -Confirm:$false
 Test-RCImage -ImagePath .\sample.rcimg -Password secret
 Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password secret -Confirm:$false
+New-RCBackupJob -Path .\backup-job.json -JobId daily-docs -Name 'Daily Docs' -SourcePath .\sample-source -ImagePath .\images\daily-docs.rcimg -Compression High -VerifyAfterCreate $true -LogDirectory .\backup-logs -Confirm:$false
 Test-RCBackupJob -Path .\backup-job.json
 Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Get-RCRetentionPlan -RepositoryPath .\images -Pattern *.rcimg -KeepCount 3 -MaxAgeDays 30

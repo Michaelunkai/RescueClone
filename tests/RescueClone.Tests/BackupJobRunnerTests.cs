@@ -29,6 +29,33 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void SaveWritesValidatedBackupJobDefinition()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var path = Path.Combine(root, "jobs", "daily-docs.json");
+        var job = new BackupJobDefinition(
+            "daily-docs",
+            "Daily Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "daily.rcimg"),
+            CompressionMode.High,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"));
+
+        var saved = new BackupJobRunner().Save(path, job);
+        var loaded = new BackupJobRunner().Load(path);
+
+        Assert.AreEqual(job.JobId, saved.JobId);
+        Assert.AreEqual(job.JobId, loaded.JobId);
+        Assert.AreEqual(CompressionMode.High, loaded.Compression);
+        Assert.IsTrue(loaded.VerifyAfterCreate);
+    }
+
+    [TestMethod]
     public void RunCreatesVerifiesAndLogsBackupJob()
     {
         var root = NewTempDirectory();
@@ -586,6 +613,17 @@ public sealed class BackupJobRunnerTests
         Assert.IsFalse(result.Valid);
         Assert.IsTrue(result.Errors.Any(e => e.Contains("EmailTo", StringComparison.Ordinal)));
         Assert.IsTrue(result.Errors.Any(e => e.Contains("EmailPickupDirectory", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesBackupJobCreateParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "job.backup.directory.create");
+
+        Assert.AreEqual("Backup Job", feature.Gui);
+        Assert.AreEqual("rc job create", feature.Cli);
+        Assert.AreEqual("New-RCBackupJob", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
     }
 
     [TestMethod]

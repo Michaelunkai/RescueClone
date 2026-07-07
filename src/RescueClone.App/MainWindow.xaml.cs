@@ -51,6 +51,25 @@ public partial class MainWindow : Window
         RunAndReport(() => _engine.Restore(new RestoreOptions(RestoreImagePathBox.Text, TargetPathBox.Text, EmptyToNull(RestorePasswordBox.Password), OverwriteBox.IsChecked == true)));
     }
 
+    private void CreateJob_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() =>
+        {
+            var compression = Enum.Parse<CompressionMode>(((System.Windows.Controls.ComboBoxItem)JobCompressionBox.SelectedItem).Content.ToString()!);
+            var job = new BackupJobDefinition(
+                JobIdBox.Text,
+                JobNameBox.Text,
+                JobEnabledBox.IsChecked == true,
+                JobSourcePathBox.Text,
+                JobImagePathBox.Text,
+                compression,
+                Password: null,
+                JobVerifyAfterCreateBox.IsChecked == true,
+                EmptyToNull(JobLogDirectoryBox.Text));
+            return _jobRunner.Save(JobPathBox.Text, job);
+        });
+    }
+
     private void ValidateJob_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _jobRunner.Validate(_jobRunner.Load(JobPathBox.Text)));

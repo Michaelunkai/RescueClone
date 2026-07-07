@@ -100,6 +100,28 @@ function Restore-RCImage {
     }
 }
 
+function New-RCBackupJob {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter(Mandatory=$true)][string]$JobId,
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$SourcePath,
+        [Parameter(Mandatory=$true)][string]$ImagePath,
+        [ValidateSet('None','Medium','High')][string]$Compression = 'Medium',
+        [string]$Password,
+        [bool]$VerifyAfterCreate = $true,
+        [string]$LogDirectory,
+        [bool]$Enabled = $true
+    )
+    if ($PSCmdlet.ShouldProcess($Path, "Create backup job definition")) {
+        $args = @('job','create','--file',$Path,'--job-id',$JobId,'--name',$Name,'--source',$SourcePath,'--image',$ImagePath,'--compression',$Compression,'--verify-after-create',[string]$VerifyAfterCreate,'--enabled',[string]$Enabled)
+        if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+        if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
 function Test-RCBackupJob {
     [CmdletBinding()]
     param(
