@@ -296,6 +296,9 @@ public sealed class ImageEngineTests
                 feature.PowerShell.StartsWith("Mount-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Dismount-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Invoke-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Install-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Stop-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Uninstall-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Export-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Import-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Register-RC", StringComparison.Ordinal) ||

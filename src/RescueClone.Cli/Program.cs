@@ -8,7 +8,10 @@ using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Scheduling;
+using RescueClone.Core.Services;
 using RescueClone.Core.Storage;
+using System.Runtime.Versioning;
+using System.ServiceProcess;
 
 var exitCode = Run(args);
 return exitCode;
@@ -58,7 +61,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc service <serve|run-operation>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -258,6 +261,7 @@ static int RunOperation(string command, Dictionary<string, string> values)
 
 static int RunService(string command, Dictionary<string, string> values)
 {
+    var manager = new WindowsServiceManager();
     switch (command)
     {
         case "serve":
@@ -274,6 +278,25 @@ static int RunService(string command, Dictionary<string, string> values)
                     cancellation.Token).GetAwaiter().GetResult();
             }
             return 0;
+        case "host":
+            if (Environment.UserInteractive)
+            {
+                using var cancellation = new CancellationTokenSource();
+                Console.CancelKeyPress += (_, eventArgs) =>
+                {
+                    eventArgs.Cancel = true;
+                    cancellation.Cancel();
+                };
+                new OperationPipeServer().RunAsync(
+                    Required(values, "pipe"),
+                    values.GetValueOrDefault("log-directory"),
+                    cancellation.Token).GetAwaiter().GetResult();
+                return 0;
+            }
+            ServiceBase.Run(new OperationWindowsService(
+                Required(values, "pipe"),
+                values.GetValueOrDefault("log-directory")));
+            return 0;
         case "run-operation":
             var runner = new OperationRunner();
             var request = runner.LoadRequest(Required(values, "request"));
@@ -288,9 +311,42 @@ static int RunService(string command, Dictionary<string, string> values)
                 throw new InvalidDataException("Operation service returned no report.");
             WriteJson(response.Report);
             return response.Report.State == OperationState.Succeeded ? 0 : 3;
+        case "plan-install":
+            WriteJson(manager.Plan(ReadServiceInstallDefinition(values)));
+            return 0;
+        case "install":
+            var install = manager.Install(ReadServiceInstallDefinition(values));
+            WriteJson(install);
+            return install.Succeeded ? 0 : 3;
+        case "uninstall":
+            var uninstall = manager.Uninstall(Required(values, "name"));
+            WriteJson(uninstall);
+            return uninstall.Succeeded ? 0 : 3;
+        case "start":
+            var start = manager.Start(Required(values, "name"));
+            WriteJson(start);
+            return start.Succeeded ? 0 : 3;
+        case "stop":
+            var stop = manager.Stop(Required(values, "name"));
+            WriteJson(stop);
+            return stop.Succeeded ? 0 : 3;
+        case "status":
+            WriteJson(manager.Status(Required(values, "name")));
+            return 0;
         default:
             throw new ArgumentException($"Unknown service command: {command}");
     }
+}
+
+static WindowsServiceInstallDefinition ReadServiceInstallDefinition(Dictionary<string, string> values)
+{
+    return new WindowsServiceInstallDefinition(
+        Required(values, "name"),
+        values.GetValueOrDefault("cli-path", Environment.ProcessPath ?? "rc.exe"),
+        Required(values, "pipe"),
+        values.GetValueOrDefault("log-directory"),
+        values.GetValueOrDefault("display-name"),
+        values.GetValueOrDefault("start-mode", "auto"));
 }
 
 static int RunLogs(string command, Dictionary<string, string> values)
@@ -476,11 +532,62 @@ static void PrintHelp()
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]
     rc service serve --pipe <name> [--log-directory <dir>]
+    rc service host --pipe <name> [--log-directory <dir>]
     rc service run-operation --pipe <name> --request <operation.json> [--log-directory <dir>] [--timeout-ms <n>]
+    rc service plan-install --name <service> --pipe <pipe> [--cli-path <rc.exe>] [--log-directory <dir>] [--display-name <name>] [--start-mode auto|delayed-auto|demand|disabled]
+    rc service install --name <service> --pipe <pipe> [--cli-path <rc.exe>] [--log-directory <dir>] [--display-name <name>] [--start-mode auto|delayed-auto|demand|disabled]
+    rc service status --name <service>
+    rc service start --name <service>
+    rc service stop --name <service>
+    rc service uninstall --name <service>
     rc logs list --directory <dir> [--pattern *.json]
     rc storage volumes
     rc storage disks
     rc storage disk-safety --disk-number <n> [--expected-fingerprint <sha256>] [--allow-boot-system]
     rc native status
     """);
+}
+
+[SupportedOSPlatform("windows")]
+internal sealed class OperationWindowsService : ServiceBase
+{
+    private readonly string _pipeName;
+    private readonly string? _logDirectory;
+    private CancellationTokenSource? _cancellation;
+    private Task? _serverTask;
+
+    public OperationWindowsService(string pipeName, string? logDirectory)
+    {
+        ServiceName = "RescueClone";
+        _pipeName = pipeName;
+        _logDirectory = logDirectory;
+        CanStop = true;
+        CanShutdown = true;
+    }
+
+    protected override void OnStart(string[] args)
+    {
+        _cancellation = new CancellationTokenSource();
+        _serverTask = Task.Run(() => new OperationPipeServer().RunAsync(_pipeName, _logDirectory, _cancellation.Token));
+    }
+
+    protected override void OnStop()
+    {
+        _cancellation?.Cancel();
+        try
+        {
+            _serverTask?.Wait(TimeSpan.FromSeconds(20));
+        }
+        finally
+        {
+            _cancellation?.Dispose();
+            _cancellation = null;
+        }
+    }
+
+    protected override void OnShutdown()
+    {
+        OnStop();
+        base.OnShutdown();
+    }
 }

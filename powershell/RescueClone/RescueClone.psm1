@@ -467,6 +467,80 @@ function Start-RCServiceOperation {
     }
 }
 
+function Get-RCServiceInstallPlan {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$PipeName,
+        [string]$CliPath,
+        [string]$LogDirectory,
+        [string]$DisplayName,
+        [ValidateSet('auto','delayed-auto','demand','disabled')][string]$StartMode = 'auto'
+    )
+    $args = @('service','plan-install','--name',$Name,'--pipe',$PipeName,'--start-mode',$StartMode)
+    if ($PSBoundParameters.ContainsKey('CliPath')) { $args += @('--cli-path',$CliPath) }
+    if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+    if ($PSBoundParameters.ContainsKey('DisplayName')) { $args += @('--display-name',$DisplayName) }
+    Invoke-RCJson -ArgumentList $args
+}
+
+function Install-RCService {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$PipeName,
+        [string]$CliPath,
+        [string]$LogDirectory,
+        [string]$DisplayName,
+        [ValidateSet('auto','delayed-auto','demand','disabled')][string]$StartMode = 'auto'
+    )
+    if ($PSCmdlet.ShouldProcess($Name, "Install RescueClone Windows Service")) {
+        $args = @('service','install','--name',$Name,'--pipe',$PipeName,'--start-mode',$StartMode)
+        if ($PSBoundParameters.ContainsKey('CliPath')) { $args += @('--cli-path',$CliPath) }
+        if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+        if ($PSBoundParameters.ContainsKey('DisplayName')) { $args += @('--display-name',$DisplayName) }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
+function Get-RCServiceStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name
+    )
+    Invoke-RCJson -ArgumentList @('service','status','--name',$Name)
+}
+
+function Start-RCService {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name
+    )
+    if ($PSCmdlet.ShouldProcess($Name, "Start RescueClone Windows Service")) {
+        Invoke-RCJson -ArgumentList @('service','start','--name',$Name)
+    }
+}
+
+function Stop-RCService {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name
+    )
+    if ($PSCmdlet.ShouldProcess($Name, "Stop RescueClone Windows Service")) {
+        Invoke-RCJson -ArgumentList @('service','stop','--name',$Name) -AllowNonZeroExit
+    }
+}
+
+function Uninstall-RCService {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name
+    )
+    if ($PSCmdlet.ShouldProcess($Name, "Uninstall RescueClone Windows Service")) {
+        Invoke-RCJson -ArgumentList @('service','uninstall','--name',$Name)
+    }
+}
+
 function Get-RCLog {
     [CmdletBinding()]
     param(

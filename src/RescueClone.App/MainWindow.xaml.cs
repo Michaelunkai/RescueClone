@@ -12,6 +12,7 @@ using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Scheduling;
+using RescueClone.Core.Services;
 using RescueClone.Core.Storage;
 
 namespace RescueClone.App;
@@ -23,6 +24,7 @@ public partial class MainWindow : Window
     private readonly BackupLogCatalog _logCatalog = new();
     private readonly RestorePlanner _restorePlanner = new();
     private readonly OperationRunner _operationRunner = new();
+    private readonly WindowsServiceManager _serviceManager = new();
     private readonly RetentionManager _retentionManager = new();
     private readonly ScheduleManager _scheduleManager = new();
     private readonly VolumeEnumerator _volumeEnumerator = new();
@@ -222,6 +224,36 @@ public partial class MainWindow : Window
         });
     }
 
+    private void PlanService_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.Plan(ReadServiceInstallDefinition()));
+    }
+
+    private void InstallService_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.Install(ReadServiceInstallDefinition()));
+    }
+
+    private void ServiceStatus_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.Status(ServiceNameBox.Text));
+    }
+
+    private void StartService_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.Start(ServiceNameBox.Text));
+    }
+
+    private void StopService_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.Stop(ServiceNameBox.Text));
+    }
+
+    private void UninstallService_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.Uninstall(ServiceNameBox.Text));
+    }
+
     private void PlanRetention_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _retentionManager.Plan(new RetentionOptions(
@@ -325,5 +357,16 @@ public partial class MainWindow : Window
             EmptyToNull(ScheduleEventLogBox.Text),
             ParseNullableInt(ScheduleEventIdBox.Text),
             EmptyToNull(ScheduleEventSourceBox.Text));
+    }
+
+    private WindowsServiceInstallDefinition ReadServiceInstallDefinition()
+    {
+        return new WindowsServiceInstallDefinition(
+            ServiceNameBox.Text,
+            string.IsNullOrWhiteSpace(ServiceCliPathBox.Text) ? Environment.ProcessPath ?? "rc.exe" : ServiceCliPathBox.Text,
+            OperationPipeNameBox.Text,
+            EmptyToNull(OperationLogDirectoryBox.Text),
+            EmptyToNull(ServiceDisplayNameBox.Text),
+            "demand");
     }
 }

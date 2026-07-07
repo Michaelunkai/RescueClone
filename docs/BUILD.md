@@ -68,6 +68,12 @@ CLI examples:
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
 .\RC.cmd service serve --pipe rescueclone-local --log-directory .\operation-logs
 .\RC.cmd service run-operation --pipe rescueclone-local --request .\operation.json --log-directory .\operation-logs --timeout-ms 30000
+.\RC.cmd service plan-install --name RescueClone --pipe rescueclone-local --cli-path .\publish\cli\rc.exe --log-directory .\operation-logs --display-name "RescueClone Operation Service" --start-mode demand
+.\RC.cmd service install --name RescueClone --pipe rescueclone-local --cli-path .\publish\cli\rc.exe --log-directory .\operation-logs --display-name "RescueClone Operation Service" --start-mode demand
+.\RC.cmd service status --name RescueClone
+.\RC.cmd service start --name RescueClone
+.\RC.cmd service stop --name RescueClone
+.\RC.cmd service uninstall --name RescueClone
 .\RC.cmd logs list --directory .\backup-logs
 .\RC.cmd storage volumes
 .\RC.cmd storage disks
@@ -175,6 +181,12 @@ Unregister-RCSchedule -TaskName nightly-docs -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
 Start-RCServiceOperation -PipeName rescueclone-local -RequestPath .\operation.json -LogDirectory .\operation-logs -TimeoutMilliseconds 30000 -Confirm:$false
+Get-RCServiceInstallPlan -Name RescueClone -PipeName rescueclone-local -CliPath .\publish\cli\rc.exe -LogDirectory .\operation-logs -DisplayName 'RescueClone Operation Service' -StartMode demand
+Install-RCService -Name RescueClone -PipeName rescueclone-local -CliPath .\publish\cli\rc.exe -LogDirectory .\operation-logs -DisplayName 'RescueClone Operation Service' -StartMode demand -Confirm:$false
+Get-RCServiceStatus -Name RescueClone
+Start-RCService -Name RescueClone -Confirm:$false
+Stop-RCService -Name RescueClone -Confirm:$false
+Uninstall-RCService -Name RescueClone -Confirm:$false
 Get-RCLog -DirectoryPath .\backup-logs
 Get-RCVolume
 Get-RCDisk
@@ -184,7 +196,7 @@ Get-RCNativeStatus
 
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained directories in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. `scripts\Build-Portable.ps1` now fails if that project-local SDK is missing unless `-AllowSystemDotNetFallback` is passed explicitly. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode. `scripts\Test-PortableDependencyBoundary.ps1` launches the published CLI service and GUI, then fails if either loads non-Windows modules from `C:\` or any module outside the project root and `%WINDIR%`.
 
-Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current IPC foundation; it is not yet installed as a privileged Windows Service by the installer.
+Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe in the foreground. `rc service install` registers `rc service host --pipe <name>` with the Windows Service Control Manager, and `rc service start/status/stop/uninstall` manage that registration. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current service foundation; it is not an MSI-installed privileged driver service.
 
 Portable install note: `scripts\Install-RescueClone.ps1` copies the published self-contained CLI/GUI directories, PowerShell module, docs, and launcher scripts to `-InstallRoot` and supports unattended `-Quiet -NoRestart`. It is a portable script installer, not an MSI/EXE installer and it does not install a privileged Windows Service or drivers.
 
