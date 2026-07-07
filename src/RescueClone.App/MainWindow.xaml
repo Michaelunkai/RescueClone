@@ -101,6 +101,7 @@
                     <StackPanel Grid.Row="5" Orientation="Horizontal">
                         <CheckBox x:Name="ForceDisabledJobBox" Content="Force disabled job" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <Button Width="140" Height="34" Content="Create Job" Click="CreateJob_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Update Job" Click="UpdateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Delete Job" Click="DeleteJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Validate Job" Click="ValidateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Run Job" Click="RunJob_Click"/>

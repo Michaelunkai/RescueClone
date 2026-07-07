@@ -92,6 +92,72 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void UpdateEditsBackupJobDefinition()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var updatedSource = Path.Combine(root, "updated-source");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(updatedSource);
+        var path = Path.Combine(root, "jobs", "edit-me.json");
+        var job = new BackupJobDefinition(
+            "edit-me",
+            "Edit Me",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "original.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"));
+        var runner = new BackupJobRunner();
+        runner.Save(path, job);
+
+        var report = runner.Update(path, new BackupJobUpdateOptions(
+            JobId: "edited",
+            Name: "Edited",
+            Enabled: false,
+            SourcePath: updatedSource,
+            ImagePath: Path.Combine(root, "images", "edited.rcimg"),
+            Compression: CompressionMode.High,
+            Password: "secret",
+            VerifyAfterCreate: false,
+            LogDirectory: Path.Combine(root, "edited-logs")));
+
+        Assert.AreEqual(Path.GetFullPath(path), report.Path);
+        Assert.AreEqual("edit-me", report.Before.JobId);
+        Assert.AreEqual("edited", report.After.JobId);
+        Assert.IsFalse(report.After.Enabled);
+        Assert.AreEqual(updatedSource, report.After.SourcePath);
+        Assert.AreEqual(CompressionMode.High, report.After.Compression);
+        Assert.AreEqual("secret", report.After.Password);
+        Assert.IsFalse(report.After.VerifyAfterCreate);
+        Assert.AreEqual("edited", runner.Load(path).JobId);
+    }
+
+    [TestMethod]
+    public void UpdateRejectsInvalidEditedBackupJobDefinition()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var path = Path.Combine(root, "jobs", "bad-edit.json");
+        var runner = new BackupJobRunner();
+        runner.Save(path, new BackupJobDefinition(
+            "bad-edit",
+            "Bad Edit",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "bad-edit.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs")));
+
+        Assert.ThrowsException<InvalidOperationException>(() => runner.Update(path, new BackupJobUpdateOptions(SourcePath: Path.Combine(root, "missing"))));
+    }
+
+    [TestMethod]
     public void RunCreatesVerifiesAndLogsBackupJob()
     {
         var root = NewTempDirectory();
@@ -670,6 +736,17 @@ public sealed class BackupJobRunnerTests
         Assert.AreEqual("Backup Job", feature.Gui);
         Assert.AreEqual("rc job delete", feature.Cli);
         Assert.AreEqual("Remove-RCBackupJob", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesBackupJobUpdateParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "job.backup.directory.update");
+
+        Assert.AreEqual("Backup Job", feature.Gui);
+        Assert.AreEqual("rc job update", feature.Cli);
+        Assert.AreEqual("Set-RCBackupJob", feature.PowerShell);
         Assert.IsTrue(feature.Implemented);
     }
 

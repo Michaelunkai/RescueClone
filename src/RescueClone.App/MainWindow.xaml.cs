@@ -75,6 +75,24 @@ public partial class MainWindow : Window
         RunAndReport(() => _jobRunner.Validate(_jobRunner.Load(JobPathBox.Text)));
     }
 
+    private void UpdateJob_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() =>
+        {
+            var compression = Enum.Parse<CompressionMode>(((System.Windows.Controls.ComboBoxItem)JobCompressionBox.SelectedItem).Content.ToString()!);
+            return _jobRunner.Update(JobPathBox.Text, new BackupJobUpdateOptions(
+                EmptyToNull(JobIdBox.Text),
+                EmptyToNull(JobNameBox.Text),
+                JobEnabledBox.IsChecked == true,
+                EmptyToNull(JobSourcePathBox.Text),
+                EmptyToNull(JobImagePathBox.Text),
+                compression,
+                Password: null,
+                JobVerifyAfterCreateBox.IsChecked == true,
+                EmptyToNull(JobLogDirectoryBox.Text)));
+        });
+    }
+
     private void DeleteJob_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _jobRunner.Delete(JobPathBox.Text));

@@ -10,6 +10,7 @@ public static class FeatureCatalog
         new("image.verify", "Verify Image", "rc image verify", "Test-RCImage", true),
         new("image.restore.directory", "Restore Image", "rc image restore", "Restore-RCImage", true),
         new("job.backup.directory.create", "Backup Job", "rc job create", "New-RCBackupJob", true),
+        new("job.backup.directory.update", "Backup Job", "rc job update", "Set-RCBackupJob", true),
         new("job.backup.directory.delete", "Backup Job", "rc job delete", "Remove-RCBackupJob", true),
         new("job.backup.directory.validate", "Backup Job", "rc job validate", "Test-RCBackupJob", true),
         new("job.backup.directory.run", "Backup Job", "rc job run", "Start-RCBackupJob", true),

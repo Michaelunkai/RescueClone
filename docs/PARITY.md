@@ -8,6 +8,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Image verify | Verify Image tab | `rc image verify` | `Test-RCImage` |
 | Directory restore | Restore Image tab | `rc image restore` | `Restore-RCImage` |
 | Directory backup job create | Backup Job tab | `rc job create` | `New-RCBackupJob` |
+| Directory backup job update | Backup Job tab | `rc job update` | `Set-RCBackupJob` |
 | Directory backup job delete | Backup Job tab | `rc job delete` | `Remove-RCBackupJob` |
 | Directory backup job validate | Backup Job tab | `rc job validate` | `Test-RCBackupJob` |
 | Directory backup job run | Backup Job tab | `rc job run` | `Start-RCBackupJob` |

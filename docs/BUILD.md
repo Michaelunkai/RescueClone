@@ -39,6 +39,7 @@ CLI examples:
 .\RC.cmd image verify --image .\sample.rcimg --password secret
 .\RC.cmd image restore --image .\sample.rcimg --target .\sample-restore --password secret
 .\RC.cmd job create --file .\backup-job.json --job-id daily-docs --name "Daily Docs" --source .\sample-source --image .\images\daily-docs.rcimg --compression High --verify-after-create true --log-directory .\backup-logs
+.\RC.cmd job update --file .\backup-job.json --name "Daily Docs Updated" --enabled true --compression Medium
 .\RC.cmd job validate --file .\backup-job.json
 .\RC.cmd job run --file .\backup-job.json
 .\RC.cmd job delete --file .\backup-job.json
@@ -116,6 +117,7 @@ New-RCImage -SourcePath .\sample-source -ImagePath .\sample.rcimg -Compression H
 Test-RCImage -ImagePath .\sample.rcimg -Password secret
 Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password secret -Confirm:$false
 New-RCBackupJob -Path .\backup-job.json -JobId daily-docs -Name 'Daily Docs' -SourcePath .\sample-source -ImagePath .\images\daily-docs.rcimg -Compression High -VerifyAfterCreate $true -LogDirectory .\backup-logs -Confirm:$false
+Set-RCBackupJob -Path .\backup-job.json -Name 'Daily Docs Updated' -Enabled $true -Compression Medium -Confirm:$false
 Test-RCBackupJob -Path .\backup-job.json
 Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Remove-RCBackupJob -Path .\backup-job.json -Confirm:$false

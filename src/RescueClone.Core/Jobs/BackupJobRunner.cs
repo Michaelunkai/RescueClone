@@ -50,6 +50,33 @@ public sealed class BackupJobRunner
         return new BackupJobDeleteReport(fullPath, Deleted: true, DateTimeOffset.UtcNow);
     }
 
+    public BackupJobUpdateReport Update(string path, BackupJobUpdateOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Path is required.");
+
+        var fullPath = Path.GetFullPath(path);
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException("Backup job definition does not exist.", fullPath);
+
+        var before = Load(fullPath);
+        var after = before with
+        {
+            JobId = options.JobId ?? before.JobId,
+            Name = options.Name ?? before.Name,
+            Enabled = options.Enabled ?? before.Enabled,
+            SourcePath = options.SourcePath ?? before.SourcePath,
+            ImagePath = options.ImagePath ?? before.ImagePath,
+            Compression = options.Compression ?? before.Compression,
+            Password = options.Password ?? before.Password,
+            VerifyAfterCreate = options.VerifyAfterCreate ?? before.VerifyAfterCreate,
+            LogDirectory = options.LogDirectory ?? before.LogDirectory
+        };
+
+        Save(fullPath, after);
+        return new BackupJobUpdateReport(fullPath, before, after, DateTimeOffset.UtcNow);
+    }
+
     public BackupJobValidationResult Validate(BackupJobDefinition job)
     {
         var errors = new List<string>();

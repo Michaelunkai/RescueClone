@@ -240,6 +240,18 @@ static int RunJob(string command, Dictionary<string, string> values)
         case "delete":
             WriteJson(runner.Delete(Required(values, "file")));
             return 0;
+        case "update":
+            WriteJson(runner.Update(Required(values, "file"), new BackupJobUpdateOptions(
+                values.GetValueOrDefault("job-id"),
+                values.GetValueOrDefault("name"),
+                values.ContainsKey("enabled") ? ParseBool(values["enabled"], "enabled") : null,
+                values.GetValueOrDefault("source"),
+                values.GetValueOrDefault("image"),
+                values.ContainsKey("compression") ? Enum.Parse<CompressionMode>(values["compression"], ignoreCase: true) : null,
+                values.GetValueOrDefault("password"),
+                values.ContainsKey("verify-after-create") ? ParseBool(values["verify-after-create"], "verify-after-create") : null,
+                values.GetValueOrDefault("log-directory"))));
+            return 0;
         case "validate":
             var job = runner.Load(Required(values, "file"));
             WriteJson(runner.Validate(job));
@@ -323,6 +335,7 @@ static void PrintHelp()
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
+    rc job update --file <job.json> [--job-id <id>] [--name <name>] [--enabled true|false] [--source <dir>] [--image <file.rcimg>] [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job delete --file <job.json>
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]

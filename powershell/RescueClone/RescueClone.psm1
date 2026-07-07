@@ -130,6 +130,35 @@ function Test-RCBackupJob {
     Invoke-RCJson -ArgumentList @('job','validate','--file',$Path)
 }
 
+function Set-RCBackupJob {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path,
+        [string]$JobId,
+        [string]$Name,
+        [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$SourcePath,
+        [string]$ImagePath,
+        [ValidateSet('None','Medium','High')][string]$Compression,
+        [string]$Password,
+        [bool]$VerifyAfterCreate,
+        [string]$LogDirectory,
+        [bool]$Enabled
+    )
+    if ($PSCmdlet.ShouldProcess($Path, "Update backup job definition")) {
+        $args = @('job','update','--file',$Path)
+        if ($PSBoundParameters.ContainsKey('JobId')) { $args += @('--job-id',$JobId) }
+        if ($PSBoundParameters.ContainsKey('Name')) { $args += @('--name',$Name) }
+        if ($PSBoundParameters.ContainsKey('SourcePath')) { $args += @('--source',$SourcePath) }
+        if ($PSBoundParameters.ContainsKey('ImagePath')) { $args += @('--image',$ImagePath) }
+        if ($PSBoundParameters.ContainsKey('Compression')) { $args += @('--compression',$Compression) }
+        if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+        if ($PSBoundParameters.ContainsKey('VerifyAfterCreate')) { $args += @('--verify-after-create',[string]$VerifyAfterCreate) }
+        if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+        if ($PSBoundParameters.ContainsKey('Enabled')) { $args += @('--enabled',[string]$Enabled) }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
 function Remove-RCBackupJob {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
     param(

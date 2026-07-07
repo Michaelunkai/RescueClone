@@ -8,6 +8,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for image verification.
 - GUI, CLI, and PowerShell surfaces for directory restore.
 - GUI, CLI, and PowerShell surfaces for creating a validated basic directory backup job JSON definition.
+- GUI, CLI, and PowerShell surfaces for updating exposed fields in a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for deleting a backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for retention planning and retention enforcement on directory-image repositories.

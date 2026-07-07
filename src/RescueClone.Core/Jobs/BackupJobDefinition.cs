@@ -51,6 +51,23 @@ public sealed record BackupJobDeleteReport(
     bool Deleted,
     DateTimeOffset DeletedUtc);
 
+public sealed record BackupJobUpdateOptions(
+    string? JobId = null,
+    string? Name = null,
+    bool? Enabled = null,
+    string? SourcePath = null,
+    string? ImagePath = null,
+    CompressionMode? Compression = null,
+    string? Password = null,
+    bool? VerifyAfterCreate = null,
+    string? LogDirectory = null);
+
+public sealed record BackupJobUpdateReport(
+    string Path,
+    BackupJobDefinition Before,
+    BackupJobDefinition After,
+    DateTimeOffset UpdatedUtc);
+
 public sealed record BackupJobRunResult(
     string JobId,
     string Name,
