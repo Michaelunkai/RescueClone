@@ -12,6 +12,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for Windows Task Scheduler XML planning and schedule register/unregister.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
+- GUI, CLI, and PowerShell surfaces for centralized backup log listing from structured JSON reports.
 - GUI, CLI, and PowerShell surfaces for read-only volume and disk inventory.
 - GUI, CLI, and PowerShell surfaces for native engine status.
 - A shared engine so all three interfaces execute the same implementation.
@@ -26,6 +27,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Job runs can perform post-create verification and write a structured JSON run log.
 - Job runs can execute configured pre-backup and post-backup script hooks non-interactively, fail the job on nonzero hook exit or timeout, and include hook exit/output records in the structured JSON run log.
 - Job runs write paired machine-readable JSON and human-readable HTML reports and can rotate old reports by per-job keep count.
+- Backup log listing reads structured job report directories and returns parsed report metadata plus structured parse errors for malformed log files.
 - Job runs can publish Windows Application Event Log notifications for success and runtime failure through the built-in Windows event creation tool; success notification results are recorded in JSON and HTML reports.
 - Job runs can publish success and runtime-failure email notifications through SMTP or a configured pickup directory; success notification results are recorded in JSON and HTML reports.
 - Job runs can retry transient create/verify failures using per-job retry count and retry delay settings, and record retry attempts in JSON and HTML reports.

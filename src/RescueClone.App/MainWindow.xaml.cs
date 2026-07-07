@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Windows;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Logs;
 using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
@@ -16,6 +17,7 @@ public partial class MainWindow : Window
 {
     private readonly ImageEngine _engine = new();
     private readonly BackupJobRunner _jobRunner = new();
+    private readonly BackupLogCatalog _logCatalog = new();
     private readonly RestorePlanner _restorePlanner = new();
     private readonly OperationRunner _operationRunner = new();
     private readonly RetentionManager _retentionManager = new();
@@ -127,6 +129,13 @@ public partial class MainWindow : Window
     private void RefreshDisks_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _diskEnumerator.ListDisks());
+    }
+
+    private void ListLogs_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _logCatalog.List(new LogListOptions(
+            LogDirectoryBox.Text,
+            string.IsNullOrWhiteSpace(LogPatternBox.Text) ? "*.json" : LogPatternBox.Text)));
     }
 
     private void NativeStatus_Click(object sender, RoutedEventArgs e)

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
+using RescueClone.Core.Logs;
 using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
@@ -43,6 +44,9 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "operation")
             return RunOperation(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "logs")
+            return RunLogs(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length >= 2 && args[0] == "storage")
             return RunStorage(args[1]);
 
@@ -50,7 +54,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -184,6 +188,17 @@ static int RunOperation(string command, Dictionary<string, string> values)
     return 0;
 }
 
+static int RunLogs(string command, Dictionary<string, string> values)
+{
+    if (command != "list")
+        throw new ArgumentException($"Unknown logs command: {command}");
+
+    WriteJson(new BackupLogCatalog().List(new LogListOptions(
+        Required(values, "directory"),
+        values.GetValueOrDefault("pattern", "*.json"))));
+    return 0;
+}
+
 static int RunRestore(string command, Dictionary<string, string> values)
 {
     if (command != "plan")
@@ -289,6 +304,7 @@ static void PrintHelp()
     rc schedule unregister --task-name <name>
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]
+    rc logs list --directory <dir> [--pattern *.json]
     rc storage volumes
     rc storage disks
     rc native status

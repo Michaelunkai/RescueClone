@@ -48,6 +48,7 @@ CLI examples:
 .\RC.cmd schedule unregister --task-name nightly-docs
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
+.\RC.cmd logs list --directory .\backup-logs
 .\RC.cmd storage volumes
 .\RC.cmd storage disks
 .\RC.cmd native status
@@ -122,6 +123,7 @@ Get-RCSchedulePlan -TaskName event-docs -JobFilePath .\backup-job.json -CliPath 
 Unregister-RCSchedule -TaskName nightly-docs -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
+Get-RCLog -DirectoryPath .\backup-logs
 Get-RCVolume
 Get-RCDisk
 Get-RCNativeStatus

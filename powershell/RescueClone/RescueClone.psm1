@@ -246,3 +246,12 @@ function Start-RCOperation {
         Invoke-RCJson -ArgumentList $args
     }
 }
+
+function Get-RCLog {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$DirectoryPath,
+        [string]$Pattern = '*.json'
+    )
+    Invoke-RCJson -ArgumentList @('logs','list','--directory',$DirectoryPath,'--pattern',$Pattern)
+}

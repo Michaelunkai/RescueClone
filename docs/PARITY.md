@@ -16,6 +16,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Schedule unregister | Scheduler tab | `rc schedule unregister` | `Unregister-RCSchedule` |
 | Read-only restore plan | Restore Plan tab | `rc restore plan` | `Get-RCRestorePlan` |
 | Durable local operation run | Operations tab | `rc operation run` | `Start-RCOperation` |
+| Centralized backup log listing | Logs tab | `rc logs list` | `Get-RCLog` |
 | Read-only volume inventory | Volumes tab | `rc storage volumes` | `Get-RCVolume` |
 | Read-only disk inventory | Disks tab | `rc storage disks` | `Get-RCDisk` |
 | Native engine status | Native Engine tab | `rc native status` | `Get-RCNativeStatus` |

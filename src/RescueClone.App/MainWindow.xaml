@@ -190,6 +190,20 @@
                     <Button Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Refresh Disks" Click="RefreshDisks_Click"/>
                 </Grid>
             </TabItem>
+            <TabItem Header="Logs">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="LogDirectoryBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Backup job log directory"/>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <TextBox x:Name="LogPatternBox" Width="160" Text="*.json" ToolTip="Log file pattern" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="List Logs" Click="ListLogs_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
             <TabItem Header="Native Engine">
                 <Grid Margin="12">
                     <Button Width="160" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Native Status" Click="NativeStatus_Click"/>
