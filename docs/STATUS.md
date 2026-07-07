@@ -53,6 +53,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Job runs can publish Windows Application Event Log notifications for success and runtime failure through the built-in Windows event creation tool; success notification results are recorded in JSON and HTML reports.
 - Job runs can publish success and runtime-failure email notifications through SMTP or a configured pickup directory; success notification results are recorded in JSON and HTML reports.
 - Job runs can retry transient create/verify failures using per-job retry count and retry delay settings, and record retry attempts in JSON and HTML reports.
+- Job runs record an automatic image-to-source comparison in JSON and HTML reports after successful image creation.
 - Job runs can optionally restore-test the created image to a configured target directory and record the restore-test result in JSON and HTML reports.
 - Job runs can apply count, age, and free-space retention after a successful backup while excluding the image just created; retention results are recorded in JSON and HTML reports.
 - Retention can select and delete `*.rcimg` files by newest-file keep count, max age, and free-space threshold; it does not yet perform GFS chain consolidation.

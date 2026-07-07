@@ -29,9 +29,9 @@ public sealed record ImageCompareReport(
 
 public sealed class ImageComparer
 {
-    private readonly ImageEngine _engine;
+    private readonly IImageEngine _engine;
 
-    public ImageComparer(ImageEngine? engine = null)
+    public ImageComparer(IImageEngine? engine = null)
     {
         _engine = engine ?? new ImageEngine();
     }

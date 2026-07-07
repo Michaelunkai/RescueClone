@@ -222,7 +222,7 @@ public sealed class BackupJobRunner
         var finished = DateTimeOffset.UtcNow;
         var notification = TryPublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
         var email = TryPublishEmailNotification(job, success: true, $"Backup job {job.JobId} completed", $"Backup job {job.JobId} completed.{Environment.NewLine}Image: {job.ImagePath}{Environment.NewLine}Root SHA-256: {backup.RootSha256}");
-        var reports = WriteRunReports(job, started, finished, backup.Created, backup.Verified, backup.RootSha256, hooks, notification, email, backup.Attempts, backup.RestoreTest, retention);
+        var reports = WriteRunReports(job, started, finished, backup.Created, backup.Verified, backup.RootSha256, hooks, notification, email, backup.Attempts, backup.RestoreTest, retention, backup.SourceCompare);
         return new BackupJobRunResult(
             job.JobId,
             job.Name,
@@ -241,7 +241,8 @@ public sealed class BackupJobRunner
             email,
             backup.Attempts,
             backup.RestoreTest,
-            retention);
+            retention,
+            backup.SourceCompare);
     }
 
     private BackupRunAttemptResult RunBackupWithRetry(BackupJobDefinition job)
@@ -264,9 +265,10 @@ public sealed class BackupJobRunner
                     rootSha = verify.RootSha256;
                 }
 
+                var sourceCompare = new ImageComparer(_engine).Compare(new ImageCompareOptions(job.ImagePath, job.SourcePath, job.Password));
                 var restoreTest = RunRestoreTest(job);
                 attempts.Add(new BackupRetryAttempt(attempt, Succeeded: true, Error: null, started, DateTimeOffset.UtcNow));
-                return new BackupRunAttemptResult(created, verified, rootSha, attempts, restoreTest);
+                return new BackupRunAttemptResult(created, verified, rootSha, attempts, restoreTest, sourceCompare);
             }
             catch (Exception ex) when (attempt < maxAttempts)
             {
@@ -494,7 +496,7 @@ public sealed class BackupJobRunner
             .Where(static recipient => !string.IsNullOrWhiteSpace(recipient));
     }
 
-    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts, RestoreReport? restoreTest, RetentionApplyReport? retention)
+    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts, RestoreReport? restoreTest, RetentionApplyReport? retention, ImageCompareReport? sourceCompare)
     {
         var directory = ResolveLogDirectory(job);
         Directory.CreateDirectory(directory);
@@ -520,7 +522,8 @@ public sealed class BackupJobRunner
             email,
             retryAttempts,
             restoreTest,
-            retention);
+            retention,
+            sourceCompare);
         File.WriteAllText(logPath, JsonSerializer.Serialize(payload, JsonOptions));
         File.WriteAllText(htmlPath, BuildHtmlReport(payload));
         RotateReports(directory, safeId, job.LogRetentionCount);
@@ -541,6 +544,9 @@ public sealed class BackupJobRunner
         var retentionRows = report.Retention is null
             ? "<tr><td colspan=\"4\">Not requested</td></tr>"
             : $"<tr><td>{report.Retention.DeletedFileCount}</td><td>{report.Retention.DeletedBytes}</td><td>{report.Retention.Plan.Keep.Count}</td><td>{report.Retention.Plan.Delete.Count}</td></tr>";
+        var sourceCompareRows = report.SourceCompare is null
+            ? "<tr><td colspan=\"5\">Not recorded</td></tr>"
+            : $"<tr><td>{report.SourceCompare.Equivalent}</td><td>{report.SourceCompare.MatchedCount}</td><td>{report.SourceCompare.MissingCount}</td><td>{report.SourceCompare.ChangedCount}</td><td>{report.SourceCompare.ExtraCount}</td></tr>";
 
         return $$"""
         <!doctype html>
@@ -588,6 +594,11 @@ public sealed class BackupJobRunner
           <table>
             <tr><th>Deleted Files</th><th>Deleted Bytes</th><th>Kept Candidates</th><th>Delete Candidates</th></tr>
             {{retentionRows}}
+          </table>
+          <h2>Source Compare</h2>
+          <table>
+            <tr><th>Equivalent</th><th>Matched</th><th>Missing</th><th>Changed</th><th>Extra</th></tr>
+            {{sourceCompareRows}}
           </table>
           <h2>Notifications</h2>
           <table>
@@ -647,5 +658,5 @@ public sealed class BackupJobRunner
     }
 
     private sealed record BackupJobReportPaths(string JsonPath, string HtmlPath);
-    private sealed record BackupRunAttemptResult(ImageReport Created, bool Verified, string RootSha256, IReadOnlyList<BackupRetryAttempt> Attempts, RestoreReport? RestoreTest);
+    private sealed record BackupRunAttemptResult(ImageReport Created, bool Verified, string RootSha256, IReadOnlyList<BackupRetryAttempt> Attempts, RestoreReport? RestoreTest, ImageCompareReport SourceCompare);
 }

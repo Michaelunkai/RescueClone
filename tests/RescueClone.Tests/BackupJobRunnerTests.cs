@@ -282,12 +282,18 @@ public sealed class BackupJobRunnerTests
         Assert.IsTrue(File.Exists(result.ImagePath));
         Assert.IsTrue(File.Exists(result.LogPath));
         Assert.IsTrue(File.Exists(result.HtmlReportPath));
+        Assert.IsNotNull(result.SourceCompare);
+        Assert.IsTrue(result.SourceCompare.Equivalent);
+        Assert.AreEqual(1, result.SourceCompare.MatchedCount);
         StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "RescueClone Backup Report");
+        StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "Source Compare");
 
         var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.IsNotNull(log);
         Assert.AreEqual(result.RootSha256, log.RootSha256);
         Assert.AreEqual(result.HtmlReportPath, log.HtmlReportPath);
+        Assert.IsNotNull(log.SourceCompare);
+        Assert.IsTrue(log.SourceCompare.Equivalent);
     }
 
     [TestMethod]
@@ -953,7 +959,7 @@ public sealed class BackupJobRunnerTests
 
         public ImageBrowseReport Browse(string imagePath, string? password)
         {
-            throw new NotSupportedException();
+            return new ImageBrowseReport(imagePath, 0, 0, "verified123", Array.Empty<ImageFileEntry>(), FormatVersion: 2);
         }
 
         public RestoreReport Extract(ExtractOptions options)

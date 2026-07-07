@@ -102,7 +102,8 @@ public sealed record BackupJobRunResult(
     BackupNotificationResult? EmailNotification = null,
     IReadOnlyList<BackupRetryAttempt>? RetryAttempts = null,
     RestoreReport? RestoreTest = null,
-    RetentionApplyReport? Retention = null);
+    RetentionApplyReport? Retention = null,
+    ImageCompareReport? SourceCompare = null);
 
 public sealed record BackupScriptHookResult(
     string Phase,
