@@ -8,7 +8,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for image verification.
 - GUI, CLI, and PowerShell surfaces for verified image content browsing.
 - GUI, CLI, and PowerShell surfaces for selected file/folder extraction from verified images.
-- GUI, CLI, and PowerShell surfaces for managed read-only user-mode image projection and unprojection.
+- GUI, CLI, and PowerShell surfaces for managed read-only user-mode image projection, listing, and unprojection.
 - GUI, CLI, and PowerShell surfaces for directory restore.
 - GUI, CLI, and PowerShell surfaces for creating a validated basic directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for updating exposed fields in a directory backup job JSON definition.
@@ -30,11 +30,11 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Local operation runs with a log directory also write a readable recovery-state JSON sidecar containing the original request and final report for both success and failure paths.
 - Local operation reports include structured audit events for operation start, success, and failure.
 - Failed local operation reports include structured `errorDetail` fields with a stable code, original message, and exception type.
-- Local operation runs can dispatch implemented image create/verify/browse/extract/project/unproject/restore operations, backup job create/update/delete/export/import/status/validate/run operations, retention plan/apply operations, and read-only restore planning.
+- Local operation runs can dispatch implemented image create/verify/browse/extract/project/list/unproject/restore operations, backup job create/update/delete/export/import/status/validate/run operations, retention plan/apply operations, and read-only restore planning.
 - Named-pipe service IPC can host the operation runner and return structured operation reports to CLI, PowerShell, and GUI clients.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify, browse, extract, and restore read both formats.
-- Managed user-mode image projection restores verified image content into a manifest-marked directory, marks projected files read-only, and unprojects only manifest-listed files.
+- Managed user-mode image projection restores verified image content into a manifest-marked directory, marks projected files read-only, lists projection manifests under a selected root, and unprojects only manifest-listed files.
 - V2 directory images include block offsets, per-block SHA-256 hashes, file hashes, a root manifest hash, and a fixed footer that points to the manifest.
 - Completed directory image files are marked read-only after creation; managed retention can clear that bit only for files selected by its deletion plan.
 - Volume inventory reports drive root, readiness, drive type, file system, label, total/free bytes, and whether the root matches the running Windows system root.

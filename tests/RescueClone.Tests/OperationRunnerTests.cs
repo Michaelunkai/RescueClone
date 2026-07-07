@@ -144,6 +144,18 @@ public sealed class OperationRunnerTests
         Assert.IsTrue((File.GetAttributes(Path.Combine(target, "alpha.txt")) & FileAttributes.ReadOnly) != 0);
         Assert.IsTrue(File.Exists(Path.Combine(target, ".rescueclone-projection.json")));
 
+        var list = runner.Run(new OperationRequest(
+            "image.project.list",
+            new Dictionary<string, JsonElement>
+            {
+                ["root"] = Json("root", root)
+            },
+            "list-projections"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, list.State);
+        Assert.AreEqual(1, list.Result!.Value.GetProperty("projectionCount").GetInt32());
+        Assert.AreEqual(target, list.Result.Value.GetProperty("projections")[0].GetProperty("targetPath").GetString());
+
         var unproject = runner.Run(new OperationRequest(
             "image.project.remove",
             new Dictionary<string, JsonElement>

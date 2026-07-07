@@ -73,6 +73,11 @@ public partial class MainWindow : Window
             OverwriteBox.IsChecked == true)));
     }
 
+    private void ListProjections_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageProjectionManager(_engine).List(new ImageProjectionListOptions(TargetPathBox.Text)));
+    }
+
     private void UnprojectImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => new ImageProjectionManager(_engine).Unproject(new ImageUnprojectionOptions(TargetPathBox.Text)));

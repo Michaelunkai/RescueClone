@@ -25,6 +25,14 @@ public sealed record ImageUnprojectionReport(
     long RemovedBytes,
     string ManifestPath);
 
+public sealed record ImageProjectionListOptions(
+    string RootPath);
+
+public sealed record ImageProjectionListReport(
+    string RootPath,
+    int ProjectionCount,
+    IReadOnlyList<ImageProjectionReport> Projections);
+
 public sealed class ImageProjectionManager
 {
     public const string ManifestFileName = ".rescueclone-projection.json";
@@ -100,6 +108,26 @@ public sealed class ImageProjectionManager
         }
 
         return new ImageUnprojectionReport(options.TargetPath, removedCount, removedBytes, manifestPath);
+    }
+
+    public ImageProjectionListReport List(ImageProjectionListOptions options)
+    {
+        if (!Directory.Exists(options.RootPath))
+            throw new DirectoryNotFoundException($"Projection search root was not found: {options.RootPath}");
+
+        var root = Path.GetFullPath(options.RootPath);
+        var projections = Directory.EnumerateFiles(root, ManifestFileName, SearchOption.AllDirectories)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Select(path =>
+            {
+                var manifest = JsonSerializer.Deserialize<ProjectionManifest>(File.ReadAllText(path), JsonOptions)
+                    ?? throw new InvalidDataException($"Projection manifest is invalid: {path}");
+                return manifest.Report;
+            })
+            .OrderBy(report => report.TargetPath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new ImageProjectionListReport(root, projections.Length, projections);
     }
 
     private static IReadOnlyList<string> ToRelativePaths(string root, IReadOnlyList<string> files)

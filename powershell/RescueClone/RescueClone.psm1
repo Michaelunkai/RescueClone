@@ -141,6 +141,14 @@ function Mount-RCImage {
     }
 }
 
+function Get-RCImageMount {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RootPath
+    )
+    Invoke-RCJson -ArgumentList @('image','projections','--root',$RootPath)
+}
+
 function Dismount-RCImage {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
     param(

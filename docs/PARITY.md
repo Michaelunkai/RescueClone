@@ -9,6 +9,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Image content browse | Restore Image tab | `rc image browse` | `Get-RCImageContent` |
 | Selected file/folder extract | Restore Image tab | `rc image extract` | `Export-RCImageFile` |
 | Read-only image projection | Restore Image tab | `rc image project` | `Mount-RCImage` |
+| List image projections | Restore Image tab | `rc image projections` | `Get-RCImageMount` |
 | Remove image projection | Restore Image tab | `rc image unproject` | `Dismount-RCImage` |
 | Directory restore | Restore Image tab | `rc image restore` | `Restore-RCImage` |
 | Directory backup job create | Backup Job tab | `rc job create` | `New-RCBackupJob` |

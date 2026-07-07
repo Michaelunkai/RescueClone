@@ -152,6 +152,12 @@ public sealed class ImageEngineTests
         Assert.IsTrue((File.GetAttributes(Path.Combine(target, "alpha.txt")) & FileAttributes.ReadOnly) != 0);
         Assert.IsTrue((File.GetAttributes(Path.Combine(target, "nested", "beta.txt")) & FileAttributes.ReadOnly) != 0);
 
+        var listed = manager.List(new ImageProjectionListOptions(root));
+
+        Assert.AreEqual(1, listed.ProjectionCount);
+        Assert.AreEqual(target, listed.Projections[0].TargetPath);
+        Assert.AreEqual(image, listed.Projections[0].ImagePath);
+
         var removed = manager.Unproject(new ImageUnprojectionOptions(target));
 
         Assert.AreEqual(2, removed.RemovedFileCount);
@@ -187,11 +193,15 @@ public sealed class ImageEngineTests
     public void FeatureCatalogIncludesImageProjectionParity()
     {
         var project = FeatureCatalog.All.Single(f => f.FeatureId == "image.project.readonly");
+        var list = FeatureCatalog.All.Single(f => f.FeatureId == "image.project.list");
         var unproject = FeatureCatalog.All.Single(f => f.FeatureId == "image.project.remove");
 
         Assert.AreEqual("Restore Image", project.Gui);
         Assert.AreEqual("rc image project", project.Cli);
         Assert.AreEqual("Mount-RCImage", project.PowerShell);
+        Assert.AreEqual("Restore Image", list.Gui);
+        Assert.AreEqual("rc image projections", list.Cli);
+        Assert.AreEqual("Get-RCImageMount", list.PowerShell);
         Assert.AreEqual("Restore Image", unproject.Gui);
         Assert.AreEqual("rc image unproject", unproject.Cli);
         Assert.AreEqual("Dismount-RCImage", unproject.PowerShell);

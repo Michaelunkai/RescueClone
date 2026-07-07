@@ -96,6 +96,8 @@ public sealed class OperationRunner
                 RequiredString(request, "target"),
                 OptionalString(request, "password"),
                 BoolValue(request, "overwrite"))),
+            "image.project.list" => new ImageProjectionManager(_imageEngine).List(new ImageProjectionListOptions(
+                RequiredString(request, "root"))),
             "image.project.remove" => new ImageProjectionManager(_imageEngine).Unproject(new ImageUnprojectionOptions(
                 RequiredString(request, "target"))),
             "image.restore.directory" => _imageEngine.Restore(new RestoreOptions(

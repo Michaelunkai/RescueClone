@@ -102,6 +102,11 @@ static int Run(string[] args)
                     values.ContainsKey("overwrite"))));
                 return 0;
 
+            case "projections":
+                WriteJson(new ImageProjectionManager(engine).List(new ImageProjectionListOptions(
+                    Required(values, "root"))));
+                return 0;
+
             case "unproject":
                 WriteJson(new ImageProjectionManager(engine).Unproject(new ImageUnprojectionOptions(
                     Required(values, "target"))));
@@ -425,6 +430,7 @@ static void PrintHelp()
     rc image browse --image <file.rcimg> [--password <secret>]
     rc image extract --image <file.rcimg> --target <dir> --paths <relative-paths> [--password <secret>] [--overwrite]
     rc image project --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
+    rc image projections --root <dir>
     rc image unproject --target <dir>
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
