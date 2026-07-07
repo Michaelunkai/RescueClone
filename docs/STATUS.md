@@ -28,7 +28,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Local operation runs with a log directory also write a readable recovery-state JSON sidecar containing the original request and final report for both success and failure paths.
 - Local operation reports include structured audit events for operation start, success, and failure.
 - Failed local operation reports include structured `errorDetail` fields with a stable code, original message, and exception type.
-- Local operation runs can dispatch implemented image operations, backup job create/update/delete/export/import/status/validate/run operations, retention plan/apply operations, and read-only restore planning.
+- Local operation runs can dispatch implemented image create/verify/browse/extract/restore operations, backup job create/update/delete/export/import/status/validate/run operations, retention plan/apply operations, and read-only restore planning.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify, browse, extract, and restore read both formats.
 - V2 directory images include block offsets, per-block SHA-256 hashes, file hashes, a root manifest hash, and a fixed footer that points to the manifest.
