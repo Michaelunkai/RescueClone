@@ -54,6 +54,8 @@ public sealed class WindowsServiceManagerTests
         AssertServiceFeature("service.status", "rc service status", "Get-RCServiceStatus");
         AssertServiceFeature("service.start", "rc service start", "Start-RCService");
         AssertServiceFeature("service.stop", "rc service stop", "Stop-RCService");
+        AssertServiceFeature("service.recovery.configure", "rc service recovery", "Set-RCServiceRecovery");
+        AssertServiceFeature("service.recovery.status", "rc service recovery-status", "Get-RCServiceRecovery");
         AssertServiceFeature("service.uninstall", "rc service uninstall", "Uninstall-RCService");
     }
 

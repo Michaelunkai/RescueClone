@@ -40,6 +40,8 @@ public static class FeatureCatalog
         new("service.status", "Operations", "rc service status", "Get-RCServiceStatus", true),
         new("service.start", "Operations", "rc service start", "Start-RCService", true),
         new("service.stop", "Operations", "rc service stop", "Stop-RCService", true),
+        new("service.recovery.configure", "Operations", "rc service recovery", "Set-RCServiceRecovery", true),
+        new("service.recovery.status", "Operations", "rc service recovery-status", "Get-RCServiceRecovery", true),
         new("service.uninstall", "Operations", "rc service uninstall", "Uninstall-RCService", true),
         new("logs.backup.list", "Logs", "rc logs list", "Get-RCLog", true),
         new("storage.volume.list", "Volumes", "rc storage volumes", "Get-RCVolume", true),

@@ -228,6 +228,8 @@
                         <Button Width="150" Height="34" Content="Service Status" Click="ServiceStatus_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Start Service" Click="StartService_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Stop Service" Click="StopService_Click" Margin="0,0,8,0"/>
+                        <Button Width="170" Height="34" Content="Set Recovery" Click="SetServiceRecovery_Click" Margin="0,0,8,0"/>
+                        <Button Width="170" Height="34" Content="Recovery Status" Click="ServiceRecoveryStatus_Click" Margin="0,0,8,0"/>
                         <Button Width="160" Height="34" Content="Uninstall Service" Click="UninstallService_Click"/>
                     </WrapPanel>
                 </Grid>

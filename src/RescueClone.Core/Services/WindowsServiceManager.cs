@@ -36,6 +36,20 @@ public sealed record WindowsServiceStatusReport(
     string StandardOutput,
     string StandardError);
 
+public sealed record WindowsServiceRecoveryOptions(
+    string ServiceName,
+    int ResetPeriodSeconds,
+    int RestartDelayMilliseconds,
+    bool RestartOnFailure);
+
+public sealed record WindowsServiceRecoveryReport(
+    string ServiceName,
+    bool Succeeded,
+    int ExitCode,
+    string StandardOutput,
+    string StandardError,
+    bool FailureFlagConfigured);
+
 public sealed class WindowsServiceManager
 {
     public WindowsServiceInstallPlan Plan(WindowsServiceInstallDefinition definition)
@@ -106,6 +120,42 @@ public sealed class WindowsServiceManager
         return new WindowsServiceStatusReport(serviceName, exists, state, result.ExitCode, result.StandardOutput, result.StandardError);
     }
 
+    public WindowsServiceRecoveryReport ConfigureRecovery(WindowsServiceRecoveryOptions options)
+    {
+        var serviceName = RequiredServiceName(options.ServiceName);
+        if (options.ResetPeriodSeconds < 0)
+            throw new ArgumentException("ResetPeriodSeconds must be zero or greater.");
+        if (options.RestartDelayMilliseconds < 0)
+            throw new ArgumentException("RestartDelayMilliseconds must be zero or greater.");
+
+        var actions = options.RestartOnFailure
+            ? $"restart/{options.RestartDelayMilliseconds}/restart/{options.RestartDelayMilliseconds}/\"\"/{options.RestartDelayMilliseconds}"
+            : "\"\"/0/\"\"/0/\"\"/0";
+        var failure = RunSc("failure", serviceName, "reset=", options.ResetPeriodSeconds.ToString(), "actions=", actions);
+        var failureFlag = RunSc("failureflag", serviceName, options.RestartOnFailure ? "1" : "0");
+        return new WindowsServiceRecoveryReport(
+            serviceName,
+            failure.ExitCode == 0 && failureFlag.ExitCode == 0,
+            failure.ExitCode != 0 ? failure.ExitCode : failureFlag.ExitCode,
+            JoinOutput(failure.StandardOutput, failureFlag.StandardOutput),
+            JoinOutput(failure.StandardError, failureFlag.StandardError),
+            failureFlag.ExitCode == 0);
+    }
+
+    public WindowsServiceRecoveryReport GetRecovery(string serviceName)
+    {
+        serviceName = RequiredServiceName(serviceName);
+        var failure = RunSc("qfailure", serviceName);
+        var failureFlag = RunSc("qfailureflag", serviceName);
+        return new WindowsServiceRecoveryReport(
+            serviceName,
+            failure.ExitCode == 0 && failureFlag.ExitCode == 0,
+            failure.ExitCode != 0 ? failure.ExitCode : failureFlag.ExitCode,
+            JoinOutput(failure.StandardOutput, failureFlag.StandardOutput),
+            JoinOutput(failure.StandardError, failureFlag.StandardError),
+            failureFlag.ExitCode == 0 && failureFlag.StandardOutput.Contains("1", StringComparison.Ordinal));
+    }
+
     private static string RequiredServiceName(string serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
@@ -119,6 +169,15 @@ public sealed class WindowsServiceManager
     {
         var match = Regex.Match(output, @"STATE\s+:\s+\d+\s+([A-Z_]+)", RegexOptions.IgnoreCase);
         return match.Success ? match.Groups[1].Value.ToUpperInvariant() : null;
+    }
+
+    private static string JoinOutput(string first, string second)
+    {
+        if (string.IsNullOrWhiteSpace(first))
+            return second;
+        if (string.IsNullOrWhiteSpace(second))
+            return first;
+        return first + Environment.NewLine + second;
     }
 
     private static (int ExitCode, string StandardOutput, string StandardError) RunSc(params string[] args)

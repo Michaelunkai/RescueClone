@@ -281,6 +281,20 @@ public partial class MainWindow : Window
         RunAndReport(() => _serviceManager.Stop(ServiceNameBox.Text));
     }
 
+    private void SetServiceRecovery_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.ConfigureRecovery(new WindowsServiceRecoveryOptions(
+            ServiceNameBox.Text,
+            ResetPeriodSeconds: 86400,
+            RestartDelayMilliseconds: 60000,
+            RestartOnFailure: true)));
+    }
+
+    private void ServiceRecoveryStatus_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _serviceManager.GetRecovery(ServiceNameBox.Text));
+    }
+
     private void UninstallService_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _serviceManager.Uninstall(ServiceNameBox.Text));

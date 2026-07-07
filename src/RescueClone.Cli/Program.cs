@@ -65,7 +65,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -370,6 +370,17 @@ static int RunService(string command, Dictionary<string, string> values)
         case "status":
             WriteJson(manager.Status(Required(values, "name")));
             return 0;
+        case "recovery":
+            var recovery = manager.ConfigureRecovery(new WindowsServiceRecoveryOptions(
+                Required(values, "name"),
+                TryParseInt(values, "reset-period-seconds") ?? 86400,
+                TryParseInt(values, "restart-delay-ms") ?? 60000,
+                ParseBool(values.GetValueOrDefault("restart-on-failure", "true"), "restart-on-failure")));
+            WriteJson(recovery);
+            return recovery.Succeeded ? 0 : 3;
+        case "recovery-status":
+            WriteJson(manager.GetRecovery(Required(values, "name")));
+            return 0;
         default:
             throw new ArgumentException($"Unknown service command: {command}");
     }
@@ -578,6 +589,8 @@ static void PrintHelp()
     rc service status --name <service>
     rc service start --name <service>
     rc service stop --name <service>
+    rc service recovery --name <service> [--reset-period-seconds <n>] [--restart-delay-ms <n>] [--restart-on-failure true|false]
+    rc service recovery-status --name <service>
     rc service uninstall --name <service>
     rc logs list --directory <dir> [--pattern *.json]
     rc storage volumes

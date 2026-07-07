@@ -75,6 +75,8 @@ CLI examples:
 .\RC.cmd service status --name RescueClone
 .\RC.cmd service start --name RescueClone
 .\RC.cmd service stop --name RescueClone
+.\RC.cmd service recovery --name RescueClone --reset-period-seconds 86400 --restart-delay-ms 60000 --restart-on-failure true
+.\RC.cmd service recovery-status --name RescueClone
 .\RC.cmd service uninstall --name RescueClone
 .\RC.cmd logs list --directory .\backup-logs
 .\RC.cmd storage volumes
@@ -190,6 +192,8 @@ Install-RCService -Name RescueClone -PipeName rescueclone-local -CliPath .\publi
 Get-RCServiceStatus -Name RescueClone
 Start-RCService -Name RescueClone -Confirm:$false
 Stop-RCService -Name RescueClone -Confirm:$false
+Set-RCServiceRecovery -Name RescueClone -ResetPeriodSeconds 86400 -RestartDelayMilliseconds 60000 -RestartOnFailure $true -Confirm:$false
+Get-RCServiceRecovery -Name RescueClone
 Uninstall-RCService -Name RescueClone -Confirm:$false
 Get-RCLog -DirectoryPath .\backup-logs
 Get-RCVolume
@@ -200,7 +204,7 @@ Get-RCNativeStatus
 
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained directories in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. `scripts\Build-Portable.ps1` now fails if that project-local SDK is missing unless `-AllowSystemDotNetFallback` is passed explicitly. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode. `scripts\Test-PortableDependencyBoundary.ps1` launches the published CLI service and GUI, then fails if either loads non-Windows modules from `C:\` or any module outside the project root and `%WINDIR%`.
 
-Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe in the foreground. `rc service install` registers `rc service host --pipe <name>` with the Windows Service Control Manager, and `rc service start/status/stop/uninstall` manage that registration. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current service foundation; it is not an MSI-installed privileged driver service.
+Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe in the foreground. `rc service install` registers `rc service host --pipe <name>` with the Windows Service Control Manager, and `rc service start/status/stop/recovery/recovery-status/uninstall` manage that registration and restart-on-failure policy. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current service foundation; it is not an MSI-installed privileged driver service.
 
 Portable install note: `scripts\Install-RescueClone.ps1` copies the published self-contained CLI/GUI directories, PowerShell module, docs, and launcher scripts to `-InstallRoot` and supports unattended `-Quiet -NoRestart`. It is a portable script installer, not an MSI/EXE installer and it does not install a privileged Windows Service or drivers.
 

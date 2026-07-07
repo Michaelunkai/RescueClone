@@ -38,6 +38,8 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Windows Service status | Operations tab | `rc service status` | `Get-RCServiceStatus` |
 | Windows Service start | Operations tab | `rc service start` | `Start-RCService` |
 | Windows Service stop | Operations tab | `rc service stop` | `Stop-RCService` |
+| Windows Service recovery configure | Operations tab | `rc service recovery` | `Set-RCServiceRecovery` |
+| Windows Service recovery status | Operations tab | `rc service recovery-status` | `Get-RCServiceRecovery` |
 | Windows Service uninstall | Operations tab | `rc service uninstall` | `Uninstall-RCService` |
 | Centralized backup log listing | Logs tab | `rc logs list` | `Get-RCLog` |
 | Read-only volume inventory | Volumes tab | `rc storage volumes` | `Get-RCVolume` |

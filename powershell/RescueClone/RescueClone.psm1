@@ -578,6 +578,27 @@ function Stop-RCService {
     }
 }
 
+function Set-RCServiceRecovery {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [int]$ResetPeriodSeconds = 86400,
+        [int]$RestartDelayMilliseconds = 60000,
+        [bool]$RestartOnFailure = $true
+    )
+    if ($PSCmdlet.ShouldProcess($Name, "Configure RescueClone Windows Service recovery policy")) {
+        Invoke-RCJson -ArgumentList @('service','recovery','--name',$Name,'--reset-period-seconds',[string]$ResetPeriodSeconds,'--restart-delay-ms',[string]$RestartDelayMilliseconds,'--restart-on-failure',[string]$RestartOnFailure)
+    }
+}
+
+function Get-RCServiceRecovery {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name
+    )
+    Invoke-RCJson -ArgumentList @('service','recovery-status','--name',$Name)
+}
+
 function Uninstall-RCService {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
     param(
