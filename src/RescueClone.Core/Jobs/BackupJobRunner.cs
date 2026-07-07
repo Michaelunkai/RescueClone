@@ -96,6 +96,40 @@ public sealed class BackupJobRunner
         return new BackupJobTransferReport("import", sourcePath, destinationPath, job.JobId, DateTimeOffset.UtcNow);
     }
 
+    public BackupJobListReport List(string directoryPath, string? pattern = null)
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath))
+            throw new ArgumentException("DirectoryPath is required.");
+        var fullDirectoryPath = Path.GetFullPath(directoryPath);
+        if (!Directory.Exists(fullDirectoryPath))
+            throw new DirectoryNotFoundException(fullDirectoryPath);
+
+        var effectivePattern = string.IsNullOrWhiteSpace(pattern) ? "*.json" : pattern;
+        var entries = new List<BackupJobListEntry>();
+        foreach (var path in Directory.EnumerateFiles(fullDirectoryPath, effectivePattern, SearchOption.TopDirectoryOnly)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            var fullPath = Path.GetFullPath(path);
+            try
+            {
+                var job = Load(fullPath);
+                entries.Add(new BackupJobListEntry(fullPath, Loaded: true, job, Validate(job), Error: null));
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or InvalidDataException or ArgumentException or NotSupportedException)
+            {
+                entries.Add(new BackupJobListEntry(fullPath, Loaded: false, Job: null, Validation: null, Error: ex.Message));
+            }
+        }
+
+        return new BackupJobListReport(
+            fullDirectoryPath,
+            effectivePattern,
+            entries.Count,
+            entries.Count(entry => entry.Loaded),
+            entries.Count(entry => !entry.Loaded || entry.Validation?.Valid == false),
+            entries);
+    }
+
     public BackupJobStatusReport Status(string path)
     {
         var fullPath = RequireExistingJobPath(path);

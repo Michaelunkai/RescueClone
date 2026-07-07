@@ -179,6 +179,11 @@ public partial class MainWindow : Window
         RunAndReport(() => _jobRunner.Status(JobPathBox.Text));
     }
 
+    private void ListJobs_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.List(JobDirectoryBox.Text));
+    }
+
     private void RunJob_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _jobRunner.Run(_jobRunner.Load(JobPathBox.Text), ForceDisabledJobBox.IsChecked == true));

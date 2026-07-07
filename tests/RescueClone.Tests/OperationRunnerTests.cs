@@ -536,6 +536,13 @@ public sealed class OperationRunnerTests
                 ["target"] = Json("target", importPath)
             },
             "job-import"), Path.Combine(root, "ops"));
+        var list = runner.Run(new OperationRequest(
+            "job.backup.directory.list",
+            new Dictionary<string, JsonElement>
+            {
+                ["directory"] = Json("directory", Path.Combine(root, "jobs"))
+            },
+            "job-list"), Path.Combine(root, "ops"));
         var delete = runner.Run(new OperationRequest(
             "job.backup.directory.delete",
             new Dictionary<string, JsonElement>
@@ -552,6 +559,9 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(File.Exists(exportPath));
         Assert.AreEqual(OperationState.Succeeded, import.State);
         Assert.IsTrue(File.Exists(importPath));
+        Assert.AreEqual(OperationState.Succeeded, list.State);
+        Assert.AreEqual(1, list.Result!.Value.GetProperty("loadedCount").GetInt32());
+        Assert.AreEqual("Operation Job Updated", list.Result.Value.GetProperty("jobs")[0].GetProperty("job").GetProperty("name").GetString());
         Assert.AreEqual(OperationState.Succeeded, delete.State);
         Assert.IsFalse(File.Exists(jobPath));
     }

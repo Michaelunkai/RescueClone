@@ -76,6 +76,21 @@ public sealed record BackupJobTransferReport(
     string JobId,
     DateTimeOffset CompletedUtc);
 
+public sealed record BackupJobListEntry(
+    string Path,
+    bool Loaded,
+    BackupJobDefinition? Job,
+    BackupJobValidationResult? Validation,
+    string? Error);
+
+public sealed record BackupJobListReport(
+    string DirectoryPath,
+    string Pattern,
+    int FileCount,
+    int LoadedCount,
+    int InvalidCount,
+    IReadOnlyList<BackupJobListEntry> Jobs);
+
 public sealed record BackupJobStatusReport(
     string Path,
     BackupJobDefinition Job,

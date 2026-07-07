@@ -141,6 +141,9 @@ public sealed class OperationRunner
             "job.backup.directory.import" => _jobRunner.Import(
                 RequiredString(request, "file"),
                 RequiredString(request, "target")),
+            "job.backup.directory.list" => _jobRunner.List(
+                RequiredString(request, "directory"),
+                OptionalString(request, "pattern")),
             "job.backup.directory.status" => _jobRunner.Status(RequiredString(request, "file")),
             "job.backup.directory.validate" => _jobRunner.Validate(_jobRunner.Load(RequiredString(request, "file"))),
             "job.backup.directory.run" => _jobRunner.Run(_jobRunner.Load(RequiredString(request, "file")), BoolValue(request, "forceDisabled")),

@@ -495,6 +495,9 @@ static int RunJob(string command, Dictionary<string, string> values)
         case "import":
             WriteJson(runner.Import(Required(values, "file"), Required(values, "target")));
             return 0;
+        case "list":
+            WriteJson(runner.List(Required(values, "directory"), values.GetValueOrDefault("pattern")));
+            return 0;
         case "status":
             WriteJson(runner.Status(Required(values, "file")));
             return 0;

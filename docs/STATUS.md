@@ -17,6 +17,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for updating exposed fields in a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for deleting a backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for exporting and importing a validated backup job JSON definition.
+- GUI, CLI, and PowerShell surfaces for listing backup job JSON definitions in a directory, including malformed job files as structured invalid entries.
 - GUI, CLI, and PowerShell surfaces for backup job status, including validation, destination repository audit, and the latest parsed run log when present.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for count/age/free-space retention planning and enforcement on directory-image repositories.
@@ -37,7 +38,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Local operation runs with a log directory also write a readable recovery-state JSON sidecar containing the original request and final report for both success and failure paths.
 - Local operation reports include structured audit events for operation start, success, and failure.
 - Failed local operation reports include structured `errorDetail` fields with a stable code, original message, and exception type.
-- Local operation runs can dispatch implemented image create/verify/repository-audit/source-compare/repository-list/browse/extract/project/list/unproject/restore operations, backup job create/update/delete/export/import/status/validate/run operations, count/age/free-space and GFS retention plan/apply operations, read-only restore planning, and rescue answer create/validate operations.
+- Local operation runs can dispatch implemented image create/verify/repository-audit/source-compare/repository-list/browse/extract/project/list/unproject/restore operations, backup job create/update/delete/export/import/list/status/validate/run operations, count/age/free-space and GFS retention plan/apply operations, read-only restore planning, and rescue answer create/validate operations.
 - Named-pipe service IPC can host the operation runner and return structured operation reports to CLI, PowerShell, and GUI clients.
 - Windows Service registration installs `rc service host` as the same operation runner behind SCM start/stop/status/uninstall commands.
 - Windows Service recovery policy can configure and query SCM restart-on-failure actions for the operation host.

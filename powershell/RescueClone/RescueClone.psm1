@@ -313,6 +313,15 @@ function Get-RCBackupJobStatus {
     Invoke-RCJson -ArgumentList @('job','status','--file',$Path)
 }
 
+function Get-RCBackupJob {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$DirectoryPath,
+        [string]$Pattern = '*.json'
+    )
+    Invoke-RCJson -ArgumentList @('job','list','--directory',$DirectoryPath,'--pattern',$Pattern)
+}
+
 function Start-RCBackupJob {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

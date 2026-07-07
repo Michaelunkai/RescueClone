@@ -54,6 +54,7 @@ CLI examples:
 .\RC.cmd job update --file .\backup-job.json --name "Daily Docs Updated" --enabled true --compression Medium
 .\RC.cmd job export --file .\backup-job.json --output .\backup-job.export.json
 .\RC.cmd job import --file .\backup-job.export.json --target .\backup-job.imported.json
+.\RC.cmd job list --directory . --pattern *.json
 .\RC.cmd job status --file .\backup-job.json
 .\RC.cmd job validate --file .\backup-job.json
 .\RC.cmd job run --file .\backup-job.json
@@ -177,6 +178,7 @@ New-RCBackupJob -Path .\backup-job.json -JobId daily-docs -Name 'Daily Docs' -So
 Set-RCBackupJob -Path .\backup-job.json -Name 'Daily Docs Updated' -Enabled $true -Compression Medium -Confirm:$false
 Export-RCBackupJob -Path .\backup-job.json -OutputPath .\backup-job.export.json -Confirm:$false
 Import-RCBackupJob -Path .\backup-job.export.json -TargetPath .\backup-job.imported.json -Confirm:$false
+Get-RCBackupJob -DirectoryPath . -Pattern *.json
 Get-RCBackupJobStatus -Path .\backup-job.json
 Test-RCBackupJob -Path .\backup-job.json
 Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
