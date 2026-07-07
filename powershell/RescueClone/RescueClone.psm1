@@ -19,7 +19,8 @@ function Get-RCCommandPath {
 
 function Invoke-RCJson {
     param(
-        [Parameter(Mandatory=$true)][string[]]$ArgumentList
+        [Parameter(Mandatory=$true)][string[]]$ArgumentList,
+        [switch]$AllowNonZeroExit
     )
     $command = Get-RCCommandPath
     if ($command.Kind -eq 'Exe') {
@@ -27,7 +28,7 @@ function Invoke-RCJson {
     } else {
         $output = & dotnet $command.Path @ArgumentList 2>&1
     }
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0 -and -not $AllowNonZeroExit) {
         throw ($output -join [Environment]::NewLine)
     }
     return ($output -join [Environment]::NewLine) | ConvertFrom-Json
@@ -131,7 +132,7 @@ function Test-RCImageRepository {
     )
     $args = @('image','audit','--repository',$RepositoryPath,'--pattern',$Pattern)
     if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
-    Invoke-RCJson -ArgumentList $args
+    Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
 }
 
 function Export-RCImageFile {
