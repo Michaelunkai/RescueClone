@@ -65,5 +65,26 @@ public static class FeatureCatalog
         var missing = All.Where(f => string.IsNullOrWhiteSpace(f.Gui) || string.IsNullOrWhiteSpace(f.Cli) || string.IsNullOrWhiteSpace(f.PowerShell)).ToArray();
         if (missing.Length > 0)
             throw new InvalidOperationException("Feature parity catalog contains incomplete surfaces.");
+
+        var duplicateFeatureIds = Duplicates(All.Select(feature => feature.FeatureId));
+        if (duplicateFeatureIds.Length > 0)
+            throw new InvalidOperationException("Feature parity catalog contains duplicate feature IDs: " + string.Join(", ", duplicateFeatureIds));
+
+        var duplicateCliCommands = Duplicates(All.Select(feature => feature.Cli));
+        if (duplicateCliCommands.Length > 0)
+            throw new InvalidOperationException("Feature parity catalog contains duplicate CLI commands: " + string.Join(", ", duplicateCliCommands));
+
+        var duplicatePowerShellCommands = Duplicates(All.Select(feature => feature.PowerShell));
+        if (duplicatePowerShellCommands.Length > 0)
+            throw new InvalidOperationException("Feature parity catalog contains duplicate PowerShell commands: " + string.Join(", ", duplicatePowerShellCommands));
+    }
+
+    private static string[] Duplicates(IEnumerable<string> values)
+    {
+        return values
+            .GroupBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToArray();
     }
 }
