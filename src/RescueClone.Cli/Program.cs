@@ -84,6 +84,14 @@ static int Run(string[] args)
                 WriteJson(engine.Browse(Required(values, "image"), values.GetValueOrDefault("password")));
                 return 0;
 
+            case "list":
+                WriteJson(new ImageRepositoryCatalog(engine).List(new ImageRepositoryListOptions(
+                    Required(values, "repository"),
+                    values.GetValueOrDefault("pattern", "*.rcimg"),
+                    values.ContainsKey("verify"),
+                    values.GetValueOrDefault("password"))));
+                return 0;
+
             case "extract":
                 var extract = new ExtractOptions(
                     Required(values, "image"),
@@ -363,7 +371,7 @@ static Dictionary<string, string> ParseOptions(string[] args)
         if (!arg.StartsWith("--", StringComparison.Ordinal))
             throw new ArgumentException($"Unexpected argument: {arg}");
         var name = arg[2..];
-        if (name is "overwrite" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition" or "run-missed" or "allow-boot-system")
+        if (name is "overwrite" or "verify" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition" or "run-missed" or "allow-boot-system")
         {
             values[name] = "true";
             continue;
@@ -428,6 +436,7 @@ static void PrintHelp()
     rc image create --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--format V1|V2]
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image browse --image <file.rcimg> [--password <secret>]
+    rc image list --repository <dir> [--pattern *.rcimg] [--verify] [--password <secret>]
     rc image extract --image <file.rcimg> --target <dir> --paths <relative-paths> [--password <secret>] [--overwrite]
     rc image project --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc image projections --root <dir>

@@ -176,14 +176,45 @@ public sealed class ImageEngineTests
     }
 
     [TestMethod]
+    public void ImageRepositoryCatalogListsImagesWithOptionalVerification()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var repository = Path.Combine(root, "repo");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(repository);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(repository, "backup.rcimg");
+
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var catalog = new ImageRepositoryCatalog();
+        var metadataOnly = catalog.List(new ImageRepositoryListOptions(repository, "*.rcimg", Verify: false, Password: null));
+        var verified = catalog.List(new ImageRepositoryListOptions(repository, "*.rcimg", Verify: true, Password: null));
+
+        Assert.AreEqual(1, metadataOnly.ImageCount);
+        Assert.AreEqual(image, metadataOnly.Images[0].ImagePath);
+        Assert.IsFalse(metadataOnly.Images[0].Verified);
+        Assert.IsNull(metadataOnly.Images[0].FileCount);
+        Assert.AreEqual(1, verified.ImageCount);
+        Assert.IsTrue(verified.Images[0].Verified);
+        Assert.AreEqual(1, verified.Images[0].FileCount);
+        Assert.AreEqual(2, verified.Images[0].FormatVersion);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(verified.Images[0].RootSha256));
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesImageBrowseAndExtractParity()
     {
         var browse = FeatureCatalog.All.Single(f => f.FeatureId == "image.browse");
+        var list = FeatureCatalog.All.Single(f => f.FeatureId == "image.list.repository");
         var extract = FeatureCatalog.All.Single(f => f.FeatureId == "image.extract.directory");
 
         Assert.AreEqual("Restore Image", browse.Gui);
         Assert.AreEqual("rc image browse", browse.Cli);
         Assert.AreEqual("Get-RCImageContent", browse.PowerShell);
+        Assert.AreEqual("Restore Image", list.Gui);
+        Assert.AreEqual("rc image list", list.Cli);
+        Assert.AreEqual("Get-RCImage", list.PowerShell);
         Assert.AreEqual("Restore Image", extract.Gui);
         Assert.AreEqual("rc image extract", extract.Cli);
         Assert.AreEqual("Export-RCImageFile", extract.PowerShell);

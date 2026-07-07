@@ -117,6 +117,34 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunImageRepositoryListOperation()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var repository = Path.Combine(root, "repo");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(repository);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(repository, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+
+        var report = new OperationRunner().Run(new OperationRequest(
+            "image.list.repository",
+            new Dictionary<string, JsonElement>
+            {
+                ["repository"] = Json("repository", repository),
+                ["verify"] = Json("verify", true)
+            },
+            "list-images"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, report.State);
+        Assert.AreEqual(1, report.Result!.Value.GetProperty("imageCount").GetInt32());
+        Assert.AreEqual(image, report.Result.Value.GetProperty("images")[0].GetProperty("imagePath").GetString());
+        Assert.IsTrue(report.Result.Value.GetProperty("images")[0].GetProperty("verified").GetBoolean());
+        Assert.AreEqual(1, report.Result.Value.GetProperty("images")[0].GetProperty("fileCount").GetInt32());
+    }
+
+    [TestMethod]
     public void RunProjectAndUnprojectImageOperations()
     {
         var root = NewTempDirectory();

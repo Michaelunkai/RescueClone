@@ -108,6 +108,20 @@ function Get-RCImageContent {
     Invoke-RCJson -ArgumentList $args
 }
 
+function Get-RCImage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [string]$Pattern = '*.rcimg',
+        [switch]$Verify,
+        [string]$Password
+    )
+    $args = @('image','list','--repository',$RepositoryPath,'--pattern',$Pattern)
+    if ($Verify) { $args += '--verify' }
+    if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+    Invoke-RCJson -ArgumentList $args
+}
+
 function Export-RCImageFile {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

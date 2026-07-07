@@ -54,6 +54,15 @@ public partial class MainWindow : Window
         RunAndReport(() => _engine.Browse(RestoreImagePathBox.Text, EmptyToNull(RestorePasswordBox.Password)));
     }
 
+    private void ListImages_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageRepositoryCatalog(_engine).List(new ImageRepositoryListOptions(
+            RestoreImagePathBox.Text,
+            "*.rcimg",
+            VerifyListBox.IsChecked == true,
+            EmptyToNull(RestorePasswordBox.Password))));
+    }
+
     private void ExtractImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Extract(new ExtractOptions(

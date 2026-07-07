@@ -70,11 +70,13 @@
                     <TextBox x:Name="ExtractPathsBox" Grid.Row="4" Margin="0,0,0,8" ToolTip="Relative file or folder paths to extract; separate multiple paths with semicolons"/>
                     <WrapPanel Grid.Row="5">
                         <Button Width="140" Height="34" Content="Browse Image" Click="BrowseImage_Click" Margin="0,0,8,0"/>
+                        <Button Width="120" Height="34" Content="List Images" Click="ListImages_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Extract Paths" Click="ExtractImage_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Project Image" Click="ProjectImage_Click" Margin="0,0,8,0"/>
                         <Button Width="150" Height="34" Content="List Projections" Click="ListProjections_Click" Margin="0,0,8,0"/>
                         <Button Width="160" Height="34" Content="Remove Projection" Click="UnprojectImage_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Restore Image" Click="RestoreImage_Click"/>
+                        <CheckBox x:Name="VerifyListBox" Content="Verify list" VerticalAlignment="Center" Margin="10,0,0,0"/>
                     </WrapPanel>
                 </Grid>
             </TabItem>
