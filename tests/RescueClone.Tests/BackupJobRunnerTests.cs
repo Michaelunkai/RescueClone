@@ -164,6 +164,79 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void RunCanWriteEmailNotificationToPickupDirectory()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var pickup = Path.Combine(root, "pickup");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var job = new BackupJobDefinition(
+            "email-docs",
+            "Email Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "email.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            NotifyEmail: true,
+            EmailFrom: "rescueclone@example.invalid",
+            EmailTo: "operator@example.invalid",
+            EmailPickupDirectory: pickup);
+
+        var result = new BackupJobRunner().Run(job);
+
+        Assert.IsNotNull(result.EmailNotification);
+        Assert.IsTrue(result.EmailNotification.Succeeded, result.EmailNotification.Message);
+        Assert.AreEqual(1, Directory.GetFiles(pickup, "*.eml").Length);
+        StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "Email");
+
+        var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.IsNotNull(log);
+        Assert.IsNotNull(log.EmailNotification);
+        Assert.IsTrue(log.EmailNotification.Succeeded, log.EmailNotification.Message);
+    }
+
+    [TestMethod]
+    public void RunWritesFailureEmailBeforeRethrowingOriginalFailure()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var pickup = Path.Combine(root, "pickup");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var failingHook = Path.Combine(root, "fail.cmd");
+        File.WriteAllText(failingHook, """
+        @echo off
+        echo failing email hook
+        exit /b 17
+        """);
+        var job = new BackupJobDefinition(
+            "failure-email-docs",
+            "Failure Email Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "failure-email.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            PreBackupScriptPath: failingHook,
+            NotifyEmail: true,
+            EmailFrom: "rescueclone@example.invalid",
+            EmailTo: "operator@example.invalid",
+            EmailPickupDirectory: pickup);
+
+        var ex = Assert.ThrowsException<InvalidOperationException>(() => new BackupJobRunner().Run(job));
+
+        StringAssert.Contains(ex.Message, "pre-backup script failed with exit code 17");
+        Assert.AreEqual(1, Directory.GetFiles(pickup, "*.eml").Length);
+        StringAssert.Contains(File.ReadAllText(Directory.GetFiles(pickup, "*.eml").Single()), "failure-email-docs");
+    }
+
+    [TestMethod]
     public void RunRethrowsOriginalFailureWhenFailureNotificationIsEnabled()
     {
         var eventCreate = Path.Combine(Environment.SystemDirectory, "eventcreate.exe");
@@ -294,6 +367,32 @@ public sealed class BackupJobRunnerTests
 
         Assert.IsFalse(result.Valid);
         Assert.IsTrue(result.Errors.Any(e => e.Contains("LogRetentionCount", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void ValidateRejectsIncompleteEmailConfiguration()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var job = new BackupJobDefinition(
+            "bad-email",
+            "Bad Email",
+            Enabled: true,
+            source,
+            Path.Combine(root, "out.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            NotifyEmail: true,
+            EmailFrom: "rescueclone@example.invalid");
+
+        var result = new BackupJobRunner().Validate(job);
+
+        Assert.IsFalse(result.Valid);
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("EmailTo", StringComparison.Ordinal)));
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("EmailPickupDirectory", StringComparison.Ordinal)));
     }
 
     [TestMethod]

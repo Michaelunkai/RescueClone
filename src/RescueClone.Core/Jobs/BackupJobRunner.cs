@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Mail;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -52,6 +53,17 @@ public sealed class BackupJobRunner
             errors.Add("ScriptHookTimeoutSeconds must be greater than zero when set.");
         if (job.LogRetentionCount is <= 0)
             errors.Add("LogRetentionCount must be greater than zero when set.");
+        if (job.NotifyEmail)
+        {
+            if (string.IsNullOrWhiteSpace(job.EmailFrom))
+                errors.Add("EmailFrom is required when NotifyEmail is enabled.");
+            if (string.IsNullOrWhiteSpace(job.EmailTo))
+                errors.Add("EmailTo is required when NotifyEmail is enabled.");
+            if (string.IsNullOrWhiteSpace(job.EmailPickupDirectory) && string.IsNullOrWhiteSpace(job.EmailSmtpHost))
+                errors.Add("EmailPickupDirectory or EmailSmtpHost is required when NotifyEmail is enabled.");
+            if (job.EmailSmtpPort is <= 0)
+                errors.Add("EmailSmtpPort must be greater than zero when set.");
+        }
 
         return new BackupJobValidationResult(errors.Count == 0, errors, warnings);
     }
@@ -72,6 +84,7 @@ public sealed class BackupJobRunner
         catch (Exception ex)
         {
             _ = TryPublishWindowsEventLogNotification(job, success: false, $"Backup job {job.JobId} failed: {ex.Message}");
+            _ = TryPublishEmailNotification(job, success: false, $"Backup job {job.JobId} failed", $"Backup job {job.JobId} failed.{Environment.NewLine}{ex}");
             throw;
         }
     }
@@ -102,7 +115,8 @@ public sealed class BackupJobRunner
 
         var finished = DateTimeOffset.UtcNow;
         var notification = TryPublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
-        var reports = WriteRunReports(job, started, finished, created, verified, rootSha, hooks, notification);
+        var email = TryPublishEmailNotification(job, success: true, $"Backup job {job.JobId} completed", $"Backup job {job.JobId} completed.{Environment.NewLine}Image: {job.ImagePath}{Environment.NewLine}Root SHA-256: {rootSha}");
+        var reports = WriteRunReports(job, started, finished, created, verified, rootSha, hooks, notification, email);
         return new BackupJobRunResult(
             job.JobId,
             job.Name,
@@ -117,7 +131,8 @@ public sealed class BackupJobRunner
             started,
             finished,
             hooks,
-            notification);
+            notification,
+            email);
     }
 
     private static BackupScriptHookResult RunScriptHook(string phase, string scriptPath, BackupJobDefinition job)
@@ -238,7 +253,64 @@ public sealed class BackupJobRunner
         }
     }
 
-    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification)
+    private static BackupNotificationResult? TryPublishEmailNotification(BackupJobDefinition job, bool success, string subject, string body)
+    {
+        if (!job.NotifyEmail)
+            return null;
+
+        try
+        {
+            using var message = new MailMessage
+            {
+                From = new MailAddress(job.EmailFrom!),
+                Subject = subject,
+                Body = body
+            };
+            foreach (var recipient in SplitRecipients(job.EmailTo!))
+                message.To.Add(recipient);
+
+            using var client = new SmtpClient();
+            if (!string.IsNullOrWhiteSpace(job.EmailPickupDirectory))
+            {
+                Directory.CreateDirectory(job.EmailPickupDirectory);
+                client.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                client.PickupDirectoryLocation = job.EmailPickupDirectory;
+            }
+            else
+            {
+                client.DeliveryMethod = SmtpDeliveryMethod.Network;
+                client.Host = job.EmailSmtpHost!;
+                client.Port = job.EmailSmtpPort ?? 25;
+                client.EnableSsl = job.EmailEnableSsl;
+                if (!string.IsNullOrWhiteSpace(job.EmailUsername))
+                    client.Credentials = new NetworkCredential(job.EmailUsername, job.EmailPassword ?? string.Empty);
+            }
+
+            client.Send(message);
+            return new BackupNotificationResult(
+                "Email",
+                Requested: true,
+                Succeeded: true,
+                Message: success ? "Email notification sent." : "Failure email notification sent.");
+        }
+        catch (Exception ex)
+        {
+            return new BackupNotificationResult(
+                "Email",
+                Requested: true,
+                Succeeded: false,
+                Message: ex.Message);
+        }
+    }
+
+    private static IEnumerable<string> SplitRecipients(string recipients)
+    {
+        return recipients
+            .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(static recipient => !string.IsNullOrWhiteSpace(recipient));
+    }
+
+    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email)
     {
         var directory = string.IsNullOrWhiteSpace(job.LogDirectory)
             ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
@@ -262,7 +334,8 @@ public sealed class BackupJobRunner
             started,
             finished,
             hooks,
-            notification);
+            notification,
+            email);
         File.WriteAllText(logPath, JsonSerializer.Serialize(payload, JsonOptions));
         File.WriteAllText(htmlPath, BuildHtmlReport(payload));
         RotateReports(directory, safeId, job.LogRetentionCount);
@@ -309,10 +382,9 @@ public sealed class BackupJobRunner
           </table>
           <h2>Notifications</h2>
           <table>
-            <tr><th>Channel</th><td>{{WebUtility.HtmlEncode(report.WindowsEventLogNotification?.Channel ?? "WindowsEventLog")}}</td></tr>
-            <tr><th>Requested</th><td>{{report.WindowsEventLogNotification?.Requested ?? false}}</td></tr>
-            <tr><th>Succeeded</th><td>{{report.WindowsEventLogNotification?.Succeeded ?? false}}</td></tr>
-            <tr><th>Message</th><td><pre>{{WebUtility.HtmlEncode(report.WindowsEventLogNotification?.Message ?? string.Empty)}}</pre></td></tr>
+            <tr><th>Channel</th><th>Requested</th><th>Succeeded</th><th>Message</th></tr>
+            <tr><td>WindowsEventLog</td><td>{{report.WindowsEventLogNotification?.Requested ?? false}}</td><td>{{report.WindowsEventLogNotification?.Succeeded ?? false}}</td><td><pre>{{WebUtility.HtmlEncode(report.WindowsEventLogNotification?.Message ?? string.Empty)}}</pre></td></tr>
+            <tr><td>Email</td><td>{{report.EmailNotification?.Requested ?? false}}</td><td>{{report.EmailNotification?.Succeeded ?? false}}</td><td><pre>{{WebUtility.HtmlEncode(report.EmailNotification?.Message ?? string.Empty)}}</pre></td></tr>
           </table>
         </body>
         </html>

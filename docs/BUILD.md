@@ -70,7 +70,16 @@ Backup job JSON example:
   "postBackupScriptPath": "F:\\Backups\\Scripts\\after-backup.cmd",
   "scriptHookTimeoutSeconds": 300,
   "logRetentionCount": 20,
-  "notifyWindowsEventLog": true
+  "notifyWindowsEventLog": true,
+  "notifyEmail": true,
+  "emailFrom": "rescueclone@example.invalid",
+  "emailTo": "operator@example.invalid",
+  "emailPickupDirectory": "F:\\Backups\\EmailPickup",
+  "emailSmtpHost": null,
+  "emailSmtpPort": 25,
+  "emailEnableSsl": false,
+  "emailUsername": null,
+  "emailPassword": null
 }
 ```
 

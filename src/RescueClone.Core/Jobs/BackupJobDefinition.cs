@@ -16,7 +16,16 @@ public sealed record BackupJobDefinition(
     string? PostBackupScriptPath = null,
     int? ScriptHookTimeoutSeconds = null,
     int? LogRetentionCount = null,
-    bool NotifyWindowsEventLog = false)
+    bool NotifyWindowsEventLog = false,
+    bool NotifyEmail = false,
+    string? EmailFrom = null,
+    string? EmailTo = null,
+    string? EmailPickupDirectory = null,
+    string? EmailSmtpHost = null,
+    int? EmailSmtpPort = null,
+    bool EmailEnableSsl = false,
+    string? EmailUsername = null,
+    string? EmailPassword = null)
 {
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? JobId : Name;
@@ -41,7 +50,8 @@ public sealed record BackupJobRunResult(
     DateTimeOffset StartedUtc,
     DateTimeOffset FinishedUtc,
     IReadOnlyList<BackupScriptHookResult>? ScriptHooks = null,
-    BackupNotificationResult? WindowsEventLogNotification = null);
+    BackupNotificationResult? WindowsEventLogNotification = null,
+    BackupNotificationResult? EmailNotification = null);
 
 public sealed record BackupScriptHookResult(
     string Phase,
