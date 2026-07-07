@@ -49,6 +49,7 @@ $requiredEntries = @(
     'scripts/Test-PortableOperationService.ps1',
     'scripts/Test-PortableDependencyBoundary.ps1',
     'scripts/Test-PortablePackage.ps1',
+    'scripts/Test-All.ps1',
     'README.md',
     'RC.cmd',
     'RUN-GUI.cmd'

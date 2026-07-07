@@ -9,6 +9,7 @@ From the repository root, the preferred portable build is:
 .\scripts\Test-PortableOperationService.ps1
 .\scripts\New-PortablePackage.ps1 -OutputPath .\artifacts\RescueClone-portable.zip -Force
 .\scripts\Test-PortablePackage.ps1 -PackagePath .\artifacts\RescueClone-portable.zip
+.\scripts\Test-All.ps1
 .\scripts\Test-PortableInstall.ps1 -InstallRoot F:\Tools\RescueClone-Smoke
 .\scripts\Install-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart -Force
 .\scripts\Uninstall-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart
@@ -255,7 +256,7 @@ Service IPC note: `rc service serve --pipe <name>` hosts the current operation r
 
 Portable install note: `scripts\Install-RescueClone.ps1` copies the published self-contained CLI/GUI directories, PowerShell module, docs, and launcher scripts to `-InstallRoot` and supports unattended `-Quiet -NoRestart`. It is a portable script installer, not an MSI/EXE installer and it does not install a privileged Windows Service or drivers.
 
-Portable package note: `scripts\New-PortablePackage.ps1` creates a ZIP containing `publish`, `powershell`, `docs`, launchers, portable install/uninstall scripts, and portable smoke/verification scripts. `scripts\Test-PortablePackage.ps1` validates the SHA-256 sidecar, required entries, extracts the ZIP to `.tmp\package-smoke`, and runs the extracted CLI and PowerShell module feature catalogs. It does not build an MSI/EXE.
+Portable package note: `scripts\New-PortablePackage.ps1` creates a ZIP containing `publish`, `powershell`, `docs`, launchers, portable install/uninstall scripts, and portable smoke/verification scripts. `scripts\Test-PortablePackage.ps1` validates the SHA-256 sidecar, required entries, extracts the ZIP to `.tmp\package-smoke`, and runs the extracted CLI and PowerShell module feature catalogs. `scripts\Test-All.ps1` runs the full local verification chain in one command. It does not build an MSI/EXE.
 
 Projection note: `rc image project`, `Mount-RCImage`, and the GUI Project Image button create a managed read-only directory projection by restoring verified image content, marking projected files read-only, and writing `.rescueclone-projection.json`. `rc image projections`, `Get-RCImageMount`, and the GUI List Projections button enumerate those manifests under a selected root. `rc image unproject`, `Dismount-RCImage`, and the GUI Remove Projection button only remove directories with that manifest. This is a safe user-mode projection layer, not a signed kernel image-mount driver.
 
