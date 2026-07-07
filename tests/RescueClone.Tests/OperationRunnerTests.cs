@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using RescueClone.Core;
 using RescueClone.Core.Operations;
 
@@ -30,8 +31,14 @@ public sealed class OperationRunnerTests
 
         Assert.AreEqual(OperationState.Succeeded, report.State);
         Assert.IsTrue(File.Exists(report.LogPath));
+        Assert.IsTrue(File.Exists(report.RecoveryStatePath));
         Assert.IsNotNull(report.Result);
         Assert.AreEqual(1, report.Result.Value.GetProperty("fileCount").GetInt32());
+
+        var state = ReadRecoveryState(report.RecoveryStatePath!);
+        Assert.IsNotNull(state);
+        Assert.AreEqual("image.verify", state.Request.Kind);
+        Assert.AreEqual(OperationState.Succeeded, state.Report.State);
     }
 
     [TestMethod]
@@ -50,7 +57,14 @@ public sealed class OperationRunnerTests
 
         Assert.AreEqual(OperationState.Failed, report.State);
         Assert.IsTrue(File.Exists(report.LogPath));
+        Assert.IsTrue(File.Exists(report.RecoveryStatePath));
         Assert.IsTrue(report.Error!.Contains("missing.rcimg", StringComparison.OrdinalIgnoreCase));
+
+        var state = ReadRecoveryState(report.RecoveryStatePath!);
+        Assert.IsNotNull(state);
+        Assert.AreEqual("image.verify", state.Request.Kind);
+        Assert.AreEqual(OperationState.Failed, state.Report.State);
+        Assert.IsTrue(state.Report.Error!.Contains("missing.rcimg", StringComparison.OrdinalIgnoreCase));
     }
 
     [TestMethod]
@@ -149,6 +163,15 @@ public sealed class OperationRunnerTests
     {
         using var document = JsonDocument.Parse(JsonSerializer.Serialize(new Dictionary<string, T> { [name] = value }));
         return document.RootElement.GetProperty(name).Clone();
+    }
+
+    private static OperationRecoveryState? ReadRecoveryState(string path)
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter());
+        return JsonSerializer.Deserialize<OperationRecoveryState>(
+            File.ReadAllText(path),
+            options);
     }
 
     private static string NewTempDirectory()

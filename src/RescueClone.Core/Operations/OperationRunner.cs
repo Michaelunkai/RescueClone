@@ -48,7 +48,12 @@ public sealed class OperationRunner
         var finished = DateTimeOffset.UtcNow;
         var report = new OperationReport(operationId, request.Kind, state, started, finished, null, result, error);
         var logPath = WriteReport(report, logDirectory);
-        return report with { LogPath = logPath };
+        var reportWithLog = report with { LogPath = logPath };
+        var recoveryStatePath = WriteRecoveryState(request, reportWithLog, logDirectory);
+        var finalReport = reportWithLog with { RecoveryStatePath = recoveryStatePath };
+        if (!string.IsNullOrWhiteSpace(logPath))
+            File.WriteAllText(logPath, JsonSerializer.Serialize(finalReport, JsonOptions));
+        return finalReport;
     }
 
     private object Dispatch(OperationRequest request)
@@ -151,6 +156,18 @@ public sealed class OperationRunner
         return path;
     }
 
+    private static string? WriteRecoveryState(OperationRequest request, OperationReport report, string? logDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(logDirectory))
+            return null;
+
+        Directory.CreateDirectory(logDirectory);
+        var safeId = SafeFileName(report.OperationId);
+        var path = Path.Combine(logDirectory, $"{safeId}.state.json");
+        File.WriteAllText(path, JsonSerializer.Serialize(new OperationRecoveryState(request, report, DateTimeOffset.UtcNow), JsonOptions));
+        return path;
+    }
+
     private static JsonElement ToJsonElement(object value)
     {
         using var document = JsonDocument.Parse(JsonSerializer.Serialize(value, JsonOptions));
@@ -170,6 +187,12 @@ public sealed class OperationRunner
         if (!request.Parameters.TryGetValue(name, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
             return null;
         return value.GetString();
+    }
+
+    private static string SafeFileName(string value)
+    {
+        var safeId = string.Join("_", value.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        return string.IsNullOrWhiteSpace(safeId) ? "operation" : safeId;
     }
 
     private static bool BoolValue(OperationRequest request, string name, bool defaultValue = false)

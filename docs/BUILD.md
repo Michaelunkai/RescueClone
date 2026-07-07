@@ -118,6 +118,11 @@ Supported local operation kinds currently include `image.create.directory`, `ima
 `job.backup.directory.status`, `job.backup.directory.validate`, `job.backup.directory.run`,
 `retention.plan`, `retention.apply`, and `restore.plan.readonly`.
 
+When `rc operation run` or `Start-RCOperation` receives `--log-directory` / `-LogDirectory`,
+the runner writes `<operation-id>.json` plus `<operation-id>.state.json`. The state sidecar
+contains the original request and final report so a failed unattended operation leaves a readable
+recovery artifact.
+
 PowerShell examples:
 
 ```powershell

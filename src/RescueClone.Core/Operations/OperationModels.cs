@@ -21,4 +21,10 @@ public sealed record OperationReport(
     DateTimeOffset FinishedUtc,
     string? LogPath,
     JsonElement? Result,
-    string? Error);
+    string? Error,
+    string? RecoveryStatePath = null);
+
+public sealed record OperationRecoveryState(
+    OperationRequest Request,
+    OperationReport Report,
+    DateTimeOffset WrittenUtc);
