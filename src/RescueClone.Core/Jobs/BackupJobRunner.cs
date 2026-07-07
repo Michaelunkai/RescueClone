@@ -57,6 +57,8 @@ public sealed class BackupJobRunner
             errors.Add("RetryCount cannot be negative.");
         if (job.RetryDelaySeconds is < 0)
             errors.Add("RetryDelaySeconds cannot be negative.");
+        if (!job.RestoreTestAfterCreate && !string.IsNullOrWhiteSpace(job.RestoreTestTargetPath))
+            errors.Add("RestoreTestTargetPath requires RestoreTestAfterCreate.");
         if (job.NotifyEmail)
         {
             if (string.IsNullOrWhiteSpace(job.EmailFrom))
@@ -112,7 +114,7 @@ public sealed class BackupJobRunner
         var finished = DateTimeOffset.UtcNow;
         var notification = TryPublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
         var email = TryPublishEmailNotification(job, success: true, $"Backup job {job.JobId} completed", $"Backup job {job.JobId} completed.{Environment.NewLine}Image: {job.ImagePath}{Environment.NewLine}Root SHA-256: {backup.RootSha256}");
-        var reports = WriteRunReports(job, started, finished, backup.Created, backup.Verified, backup.RootSha256, hooks, notification, email, backup.Attempts);
+        var reports = WriteRunReports(job, started, finished, backup.Created, backup.Verified, backup.RootSha256, hooks, notification, email, backup.Attempts, backup.RestoreTest);
         return new BackupJobRunResult(
             job.JobId,
             job.Name,
@@ -129,7 +131,8 @@ public sealed class BackupJobRunner
             hooks,
             notification,
             email,
-            backup.Attempts);
+            backup.Attempts,
+            backup.RestoreTest);
     }
 
     private BackupRunAttemptResult RunBackupWithRetry(BackupJobDefinition job)
@@ -152,8 +155,9 @@ public sealed class BackupJobRunner
                     rootSha = verify.RootSha256;
                 }
 
+                var restoreTest = RunRestoreTest(job);
                 attempts.Add(new BackupRetryAttempt(attempt, Succeeded: true, Error: null, started, DateTimeOffset.UtcNow));
-                return new BackupRunAttemptResult(created, verified, rootSha, attempts);
+                return new BackupRunAttemptResult(created, verified, rootSha, attempts, restoreTest);
             }
             catch (Exception ex) when (attempt < maxAttempts)
             {
@@ -231,6 +235,23 @@ public sealed class BackupJobRunner
         if (process.ExitCode != 0)
             throw new InvalidOperationException($"{phase} script failed with exit code {process.ExitCode}: {scriptFullPath}{Environment.NewLine}{combined}");
         return result;
+    }
+
+    private RestoreReport? RunRestoreTest(BackupJobDefinition job)
+    {
+        if (!job.RestoreTestAfterCreate)
+            return null;
+
+        var targetPath = string.IsNullOrWhiteSpace(job.RestoreTestTargetPath)
+            ? Path.Combine(
+                string.IsNullOrWhiteSpace(job.LogDirectory)
+                    ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "restore-tests")
+                    : job.LogDirectory,
+                "restore-test",
+                $"{SafeFileName(job.JobId)}-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}")
+            : job.RestoreTestTargetPath;
+
+        return _engine.Restore(new RestoreOptions(job.ImagePath, targetPath, job.Password, Overwrite: false));
     }
 
     private static string CombineOutput(string output, string error)
@@ -341,13 +362,13 @@ public sealed class BackupJobRunner
             .Where(static recipient => !string.IsNullOrWhiteSpace(recipient));
     }
 
-    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts)
+    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts, RestoreReport? restoreTest)
     {
         var directory = string.IsNullOrWhiteSpace(job.LogDirectory)
             ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
             : job.LogDirectory;
         Directory.CreateDirectory(directory);
-        var safeId = string.Join("_", job.JobId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        var safeId = SafeFileName(job.JobId);
         var stamp = started.ToString("yyyyMMdd-HHmmss");
         var logPath = Path.Combine(directory, $"{safeId}-{stamp}.json");
         var htmlPath = Path.Combine(directory, $"{safeId}-{stamp}.html");
@@ -367,7 +388,8 @@ public sealed class BackupJobRunner
             hooks,
             notification,
             email,
-            retryAttempts);
+            retryAttempts,
+            restoreTest);
         File.WriteAllText(logPath, JsonSerializer.Serialize(payload, JsonOptions));
         File.WriteAllText(htmlPath, BuildHtmlReport(payload));
         RotateReports(directory, safeId, job.LogRetentionCount);
@@ -382,6 +404,9 @@ public sealed class BackupJobRunner
         var retryRows = report.RetryAttempts is null
             ? string.Empty
             : string.Join(Environment.NewLine, report.RetryAttempts.Select(a => $"<tr><td>{a.Attempt}</td><td>{a.Succeeded}</td><td><pre>{WebUtility.HtmlEncode(a.Error ?? string.Empty)}</pre></td><td>{a.StartedUtc:O}</td><td>{a.FinishedUtc:O}</td></tr>"));
+        var restoreTestRows = report.RestoreTest is null
+            ? "<tr><td colspan=\"4\">Not requested</td></tr>"
+            : $"<tr><td>{WebUtility.HtmlEncode(report.RestoreTest.TargetPath)}</td><td>{report.RestoreTest.FileCount}</td><td>{report.RestoreTest.RestoredBytes}</td><td>{WebUtility.HtmlEncode(report.RestoreTest.ImagePath)}</td></tr>";
 
         return $$"""
         <!doctype html>
@@ -420,6 +445,11 @@ public sealed class BackupJobRunner
             <tr><th>Attempt</th><th>Succeeded</th><th>Error</th><th>Started UTC</th><th>Finished UTC</th></tr>
             {{retryRows}}
           </table>
+          <h2>Restore Test</h2>
+          <table>
+            <tr><th>Target</th><th>Files</th><th>Bytes</th><th>Image</th></tr>
+            {{restoreTestRows}}
+          </table>
           <h2>Notifications</h2>
           <table>
             <tr><th>Channel</th><th>Requested</th><th>Succeeded</th><th>Message</th></tr>
@@ -454,6 +484,12 @@ public sealed class BackupJobRunner
         return options;
     }
 
+    private static string SafeFileName(string value)
+    {
+        var safe = string.Join("_", value.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        return string.IsNullOrWhiteSpace(safe) ? "backup-job" : safe;
+    }
+
     private sealed record BackupJobReportPaths(string JsonPath, string HtmlPath);
-    private sealed record BackupRunAttemptResult(ImageReport Created, bool Verified, string RootSha256, IReadOnlyList<BackupRetryAttempt> Attempts);
+    private sealed record BackupRunAttemptResult(ImageReport Created, bool Verified, string RootSha256, IReadOnlyList<BackupRetryAttempt> Attempts, RestoreReport? RestoreTest);
 }

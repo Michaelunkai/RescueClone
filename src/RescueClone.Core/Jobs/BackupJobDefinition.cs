@@ -27,7 +27,9 @@ public sealed record BackupJobDefinition(
     string? EmailUsername = null,
     string? EmailPassword = null,
     int? RetryCount = null,
-    int? RetryDelaySeconds = null)
+    int? RetryDelaySeconds = null,
+    bool RestoreTestAfterCreate = false,
+    string? RestoreTestTargetPath = null)
 {
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? JobId : Name;
@@ -54,7 +56,8 @@ public sealed record BackupJobRunResult(
     IReadOnlyList<BackupScriptHookResult>? ScriptHooks = null,
     BackupNotificationResult? WindowsEventLogNotification = null,
     BackupNotificationResult? EmailNotification = null,
-    IReadOnlyList<BackupRetryAttempt>? RetryAttempts = null);
+    IReadOnlyList<BackupRetryAttempt>? RetryAttempts = null,
+    RestoreReport? RestoreTest = null);
 
 public sealed record BackupScriptHookResult(
     string Phase,

@@ -81,7 +81,9 @@ Backup job JSON example:
   "emailUsername": null,
   "emailPassword": null,
   "retryCount": 2,
-  "retryDelaySeconds": 5
+  "retryDelaySeconds": 5,
+  "restoreTestAfterCreate": true,
+  "restoreTestTargetPath": "F:\\Backups\\RestoreTests\\daily-docs"
 }
 ```
 

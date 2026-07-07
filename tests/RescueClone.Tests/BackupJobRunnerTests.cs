@@ -100,6 +100,40 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void RunPerformsRestoreTestAndRecordsReport()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var restoreTarget = Path.Combine(root, "restore-test");
+        var job = new BackupJobDefinition(
+            "restore-test-docs",
+            "Restore Test Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "restore-test.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            RestoreTestAfterCreate: true,
+            RestoreTestTargetPath: restoreTarget);
+
+        var result = new BackupJobRunner().Run(job);
+
+        Assert.IsNotNull(result.RestoreTest);
+        Assert.AreEqual(restoreTarget, result.RestoreTest.TargetPath);
+        Assert.AreEqual("alpha", File.ReadAllText(Path.Combine(restoreTarget, "alpha.txt")));
+        StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "Restore Test");
+
+        var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.IsNotNull(log);
+        Assert.IsNotNull(log.RestoreTest);
+        Assert.AreEqual(1, log.RestoreTest.FileCount);
+    }
+
+    [TestMethod]
     public void RunExecutesPreAndPostBackupScriptHooks()
     {
         var root = NewTempDirectory();
@@ -430,6 +464,31 @@ public sealed class BackupJobRunnerTests
         Assert.IsFalse(result.Valid);
         Assert.IsTrue(result.Errors.Any(e => e.Contains("RetryCount", StringComparison.Ordinal)));
         Assert.IsTrue(result.Errors.Any(e => e.Contains("RetryDelaySeconds", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void ValidateRejectsRestoreTestTargetWithoutRestoreTest()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var job = new BackupJobDefinition(
+            "bad-restore-test",
+            "Bad Restore Test",
+            Enabled: true,
+            source,
+            Path.Combine(root, "out.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            RestoreTestAfterCreate: false,
+            RestoreTestTargetPath: Path.Combine(root, "restore-test"));
+
+        var result = new BackupJobRunner().Validate(job);
+
+        Assert.IsFalse(result.Valid);
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("RestoreTestTargetPath", StringComparison.Ordinal)));
     }
 
     [TestMethod]
