@@ -18,6 +18,8 @@ Published runtime entry points:
 - CLI: `.\RC.cmd`
 - GUI: `.\RUN-GUI.cmd`
 - PowerShell: `Import-Module .\powershell\RescueClone\RescueClone.psd1 -Force`
+- Quiet portable install: `.\scripts\Install-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart -Force`
+- Quiet portable uninstall: `.\scripts\Uninstall-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart`
 
 The portable build writes dependency/cache material under this project folder instead of the user profile:
 

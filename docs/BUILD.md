@@ -6,6 +6,8 @@ From the repository root, the preferred portable build is:
 .\scripts\Install-FLocalDotNet.ps1
 .\scripts\Build-Portable.ps1
 .\scripts\Test-PortableDependencyBoundary.ps1
+.\scripts\Install-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart -Force
+.\scripts\Uninstall-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart
 ```
 
 That command keeps NuGet packages and .NET CLI home under the project folder:
@@ -182,6 +184,8 @@ Get-RCNativeStatus
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained directories in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. `scripts\Build-Portable.ps1` now fails if that project-local SDK is missing unless `-AllowSystemDotNetFallback` is passed explicitly. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode. `scripts\Test-PortableDependencyBoundary.ps1` launches the published CLI service and GUI, then fails if either loads non-Windows modules from `C:\` or any module outside the project root and `%WINDIR%`.
 
 Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current IPC foundation; it is not yet installed as a privileged Windows Service by the installer.
+
+Portable install note: `scripts\Install-RescueClone.ps1` copies the published self-contained CLI/GUI directories, PowerShell module, docs, and launcher scripts to `-InstallRoot` and supports unattended `-Quiet -NoRestart`. It is a portable script installer, not an MSI/EXE installer and it does not install a privileged Windows Service or drivers.
 
 Projection note: `rc image project`, `Mount-RCImage`, and the GUI Project Image button create a managed read-only directory projection by restoring verified image content, marking projected files read-only, and writing `.rescueclone-projection.json`. `rc image projections`, `Get-RCImageMount`, and the GUI List Projections button enumerate those manifests under a selected root. `rc image unproject`, `Dismount-RCImage`, and the GUI Remove Projection button only remove directories with that manifest. This is a safe user-mode projection layer, not a signed kernel image-mount driver.
 

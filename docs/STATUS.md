@@ -60,7 +60,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Scheduler registration writes Windows Task Scheduler tasks that run `rc job run --file <job>`, supports daily, weekly, monthly calendar triggers, event-log triggers, and maps missed runs to Task Scheduler `StartWhenAvailable`.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 
-The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, signed kernel image mounting driver, installed privileged Windows service, scheduler service, GFS chain consolidation, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
+The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, signed kernel image mounting driver, installed privileged Windows service, scheduler service, GFS chain consolidation, tamper-protection driver, MSI/EXE installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
 
 The local machine has incomplete .NET SDK payloads under `C:\Program Files\dotnet`. This repo is retargeted to .NET 10 and seeds a project-local SDK from the complete Codex-local cache.
 
@@ -73,6 +73,7 @@ Portable dependency status:
 - NuGet packages and .NET CLI home are redirected to project-local folders during `scripts\Build-Portable.ps1`.
 - `scripts\Build-Portable.ps1` requires `.dotnet-sdk\dotnet.exe` by default and only uses machine `dotnet` when `-AllowSystemDotNetFallback` is passed explicitly.
 - `scripts\Test-PortableDependencyBoundary.ps1` verifies the published CLI service loads no non-Windows modules from `C:\`.
+- `scripts\Install-RescueClone.ps1` and `scripts\Uninstall-RescueClone.ps1` provide quiet/no-restart portable install and uninstall flows for the published CLI, GUI, PowerShell module, and docs.
 - Temporary files are redirected to `.tmp` during build and portable tests.
 - Native C++ output is built to `native\bin\RescueClone.Native.dll` by `scripts\Build-Native.ps1` using an F-local MinGW compiler when available.
 - Disk inventory calls built-in Windows PowerShell and `Get-Disk`; this is an operating-system dependency and does not install new C-drive tooling.
