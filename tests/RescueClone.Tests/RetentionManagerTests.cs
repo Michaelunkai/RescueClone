@@ -64,6 +64,41 @@ public sealed class RetentionManagerTests
     }
 
     [TestMethod]
+    public void PlanGfsKeepsNewestDailyWeeklyAndMonthlyBuckets()
+    {
+        var root = NewTempDirectory();
+        var newest = WriteImage(root, "newest.rcimg", 3, new DateTimeOffset(2026, 6, 20, 12, 0, 0, TimeSpan.Zero));
+        var yesterday = WriteImage(root, "yesterday.rcimg", 3, new DateTimeOffset(2026, 6, 19, 12, 0, 0, TimeSpan.Zero));
+        var lastWeek = WriteImage(root, "last-week.rcimg", 3, new DateTimeOffset(2026, 6, 12, 12, 0, 0, TimeSpan.Zero));
+        var lastMonth = WriteImage(root, "last-month.rcimg", 3, new DateTimeOffset(2026, 5, 15, 12, 0, 0, TimeSpan.Zero));
+        var older = WriteImage(root, "older.rcimg", 3, new DateTimeOffset(2026, 4, 10, 12, 0, 0, TimeSpan.Zero));
+
+        var plan = new RetentionManager().PlanGfs(new GfsRetentionOptions(root, "*.rcimg", DailyKeepCount: 2, WeeklyKeepCount: 2, MonthlyKeepCount: 2));
+
+        CollectionAssert.Contains(plan.Keep.Select(k => k.Path).ToArray(), newest);
+        CollectionAssert.Contains(plan.Keep.Select(k => k.Path).ToArray(), yesterday);
+        CollectionAssert.Contains(plan.Keep.Select(k => k.Path).ToArray(), lastWeek);
+        CollectionAssert.Contains(plan.Keep.Select(k => k.Path).ToArray(), lastMonth);
+        CollectionAssert.Contains(plan.Delete.Select(d => d.Path).ToArray(), older);
+        Assert.IsTrue(plan.Delete.Single(d => d.Path == older).Reasons.Single().Contains("GFS", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void ApplyGfsDeletesUnselectedReadOnlyImages()
+    {
+        var root = NewTempDirectory();
+        var keep = WriteImage(root, "keep.rcimg", 3, DateTimeOffset.UtcNow);
+        var delete = WriteImage(root, "delete.rcimg", 3, DateTimeOffset.UtcNow.AddDays(-10));
+        File.SetAttributes(delete, File.GetAttributes(delete) | FileAttributes.ReadOnly);
+
+        var report = new RetentionManager().ApplyGfs(new GfsRetentionOptions(root, "*.rcimg", DailyKeepCount: 1, WeeklyKeepCount: null, MonthlyKeepCount: null));
+
+        Assert.AreEqual(1, report.DeletedFileCount);
+        Assert.IsTrue(File.Exists(keep));
+        Assert.IsFalse(File.Exists(delete));
+    }
+
+    [TestMethod]
     public void PlanDoesNotDeleteExcludedPaths()
     {
         var root = NewTempDirectory();
@@ -81,6 +116,8 @@ public sealed class RetentionManagerTests
     {
         var plan = FeatureCatalog.All.Single(f => f.FeatureId == "retention.plan");
         var apply = FeatureCatalog.All.Single(f => f.FeatureId == "retention.apply");
+        var gfsPlan = FeatureCatalog.All.Single(f => f.FeatureId == "retention.gfs.plan");
+        var gfsApply = FeatureCatalog.All.Single(f => f.FeatureId == "retention.gfs.apply");
 
         Assert.AreEqual("Retention", plan.Gui);
         Assert.AreEqual("rc retention plan", plan.Cli);
@@ -88,6 +125,12 @@ public sealed class RetentionManagerTests
         Assert.AreEqual("Retention", apply.Gui);
         Assert.AreEqual("rc retention apply", apply.Cli);
         Assert.AreEqual("Invoke-RCRetention", apply.PowerShell);
+        Assert.AreEqual("Retention", gfsPlan.Gui);
+        Assert.AreEqual("rc retention gfs-plan", gfsPlan.Cli);
+        Assert.AreEqual("Get-RCGfsRetentionPlan", gfsPlan.PowerShell);
+        Assert.AreEqual("Retention", gfsApply.Gui);
+        Assert.AreEqual("rc retention gfs-apply", gfsApply.Cli);
+        Assert.AreEqual("Invoke-RCGfsRetention", gfsApply.PowerShell);
     }
 
     private static string WriteImage(string root, string name, int bytes, DateTimeOffset lastWriteUtc)

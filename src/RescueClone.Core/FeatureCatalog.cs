@@ -27,6 +27,8 @@ public static class FeatureCatalog
         new("job.backup.directory.run", "Backup Job", "rc job run", "Start-RCBackupJob", true),
         new("retention.plan", "Retention", "rc retention plan", "Get-RCRetentionPlan", true),
         new("retention.apply", "Retention", "rc retention apply", "Invoke-RCRetention", true),
+        new("retention.gfs.plan", "Retention", "rc retention gfs-plan", "Get-RCGfsRetentionPlan", true),
+        new("retention.gfs.apply", "Retention", "rc retention gfs-apply", "Invoke-RCGfsRetention", true),
         new("schedule.plan", "Scheduler", "rc schedule plan", "Get-RCSchedulePlan", true),
         new("schedule.register", "Scheduler", "rc schedule register", "Register-RCSchedule", true),
         new("schedule.status", "Scheduler", "rc schedule status", "Get-RCScheduleStatus", true),

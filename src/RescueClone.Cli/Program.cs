@@ -213,6 +213,23 @@ static int RunSchedule(string command, Dictionary<string, string> values)
 static int RunRetention(string command, Dictionary<string, string> values)
 {
     var manager = new RetentionManager();
+    if (command is "gfs-plan" or "gfs-apply")
+    {
+        var gfsOptions = new GfsRetentionOptions(
+            Required(values, "repository"),
+            values.GetValueOrDefault("pattern", "*.rcimg"),
+            TryParseInt(values, "daily-keep"),
+            TryParseInt(values, "weekly-keep"),
+            TryParseInt(values, "monthly-keep"));
+        if (command == "gfs-plan")
+        {
+            WriteJson(manager.PlanGfs(gfsOptions));
+            return 0;
+        }
+        WriteJson(manager.ApplyGfs(gfsOptions));
+        return 0;
+    }
+
     var options = new RetentionOptions(
         Required(values, "repository"),
         values.GetValueOrDefault("pattern", "*.rcimg"),
@@ -586,6 +603,8 @@ static void PrintHelp()
     rc job run --file <job.json> [--force-disabled]
     rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
     rc retention apply --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]
+    rc retention gfs-plan --repository <dir> [--pattern *.rcimg] [--daily-keep <n>] [--weekly-keep <n>] [--monthly-keep <n>]
+    rc retention gfs-apply --repository <dir> [--pattern *.rcimg] [--daily-keep <n>] [--weekly-keep <n>] [--monthly-keep <n>]
     rc schedule plan --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly|Event] [--time HH:mm] [--run-missed] [--event-log <log>] [--event-id <id>] [--event-source <source>]
     rc schedule register --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly|Event] [--time HH:mm] [--run-missed] [--event-log <log>] [--event-id <id>] [--event-source <source>]
     rc schedule status --task-name <name>

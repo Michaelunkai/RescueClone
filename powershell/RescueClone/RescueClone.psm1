@@ -360,6 +360,40 @@ function Invoke-RCRetention {
     }
 }
 
+function Get-RCGfsRetentionPlan {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [string]$Pattern = '*.rcimg',
+        [int]$DailyKeep,
+        [int]$WeeklyKeep,
+        [int]$MonthlyKeep
+    )
+    $args = @('retention','gfs-plan','--repository',$RepositoryPath,'--pattern',$Pattern)
+    if ($PSBoundParameters.ContainsKey('DailyKeep')) { $args += @('--daily-keep',[string]$DailyKeep) }
+    if ($PSBoundParameters.ContainsKey('WeeklyKeep')) { $args += @('--weekly-keep',[string]$WeeklyKeep) }
+    if ($PSBoundParameters.ContainsKey('MonthlyKeep')) { $args += @('--monthly-keep',[string]$MonthlyKeep) }
+    Invoke-RCJson -ArgumentList $args
+}
+
+function Invoke-RCGfsRetention {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [string]$Pattern = '*.rcimg',
+        [int]$DailyKeep,
+        [int]$WeeklyKeep,
+        [int]$MonthlyKeep
+    )
+    if ($PSCmdlet.ShouldProcess($RepositoryPath, "Apply RescueClone GFS retention policy")) {
+        $args = @('retention','gfs-apply','--repository',$RepositoryPath,'--pattern',$Pattern)
+        if ($PSBoundParameters.ContainsKey('DailyKeep')) { $args += @('--daily-keep',[string]$DailyKeep) }
+        if ($PSBoundParameters.ContainsKey('WeeklyKeep')) { $args += @('--weekly-keep',[string]$WeeklyKeep) }
+        if ($PSBoundParameters.ContainsKey('MonthlyKeep')) { $args += @('--monthly-keep',[string]$MonthlyKeep) }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
 function Get-RCSchedulePlan {
     [CmdletBinding()]
     param(

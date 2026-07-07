@@ -19,7 +19,8 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for exporting and importing a validated backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for backup job status, including validation, destination repository audit, and the latest parsed run log when present.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
-- GUI, CLI, and PowerShell surfaces for retention planning and retention enforcement on directory-image repositories.
+- GUI, CLI, and PowerShell surfaces for count/age/free-space retention planning and enforcement on directory-image repositories.
+- GUI, CLI, and PowerShell surfaces for GFS-style daily/weekly/monthly retention planning and enforcement on directory-image repositories.
 - GUI, CLI, and PowerShell surfaces for Windows Task Scheduler XML planning, register, status, run-now, and unregister.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
 - GUI, CLI, and PowerShell surfaces for unattended rescue answer-file creation and validation.
@@ -61,7 +62,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Job runs record an automatic image-to-source comparison in JSON and HTML reports after successful image creation.
 - Job runs can optionally restore-test the created image to a configured target directory and record the restore-test result in JSON and HTML reports.
 - Job runs can apply count, age, and free-space retention after a successful backup while excluding the image just created; retention results are recorded in JSON and HTML reports.
-- Retention can select and delete `*.rcimg` files by newest-file keep count, max age, and free-space threshold; it does not yet perform GFS chain consolidation.
+- Retention can select and delete `*.rcimg` files by newest-file keep count, max age, free-space threshold, and GFS-style newest daily/weekly/monthly buckets; it does not yet perform incremental-chain consolidation.
 - Scheduler registration writes Windows Task Scheduler tasks that run `rc job run --file <job>`, supports daily, weekly, monthly calendar triggers, event-log triggers, maps missed runs to Task Scheduler `StartWhenAvailable`, and supports status/run-now management.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 - Rescue answer files record repository, image, target disk, boot mode, BCD path, driver directories, network shares, boot repair, and reboot policy, then validate using the same restore planner. They are not bootable media.

@@ -320,6 +320,16 @@ public partial class MainWindow : Window
             ParseNullableLong(RetentionMinFreeBytesBox.Text))));
     }
 
+    private void PlanGfsRetention_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _retentionManager.PlanGfs(ReadGfsRetentionOptions()));
+    }
+
+    private void ApplyGfsRetention_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _retentionManager.ApplyGfs(ReadGfsRetentionOptions()));
+    }
+
     private void PlanSchedule_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _scheduleManager.Plan(ReadScheduleDefinition()));
@@ -413,6 +423,16 @@ public partial class MainWindow : Window
             EmptyToNull(ScheduleEventLogBox.Text),
             ParseNullableInt(ScheduleEventIdBox.Text),
             EmptyToNull(ScheduleEventSourceBox.Text));
+    }
+
+    private GfsRetentionOptions ReadGfsRetentionOptions()
+    {
+        return new GfsRetentionOptions(
+            RetentionRepositoryBox.Text,
+            string.IsNullOrWhiteSpace(RetentionPatternBox.Text) ? "*.rcimg" : RetentionPatternBox.Text,
+            ParseNullableInt(RetentionDailyKeepBox.Text),
+            ParseNullableInt(RetentionWeeklyKeepBox.Text),
+            ParseNullableInt(RetentionMonthlyKeepBox.Text));
     }
 
     private WindowsServiceInstallDefinition ReadServiceInstallDefinition()

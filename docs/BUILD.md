@@ -60,6 +60,8 @@ CLI examples:
 .\RC.cmd job delete --file .\backup-job.json
 .\RC.cmd retention plan --repository .\images --pattern *.rcimg --keep-count 3 --max-age-days 30
 .\RC.cmd retention apply --repository .\images --pattern *.rcimg --keep-count 3 --max-age-days 30
+.\RC.cmd retention gfs-plan --repository .\images --pattern *.rcimg --daily-keep 7 --weekly-keep 4 --monthly-keep 12
+.\RC.cmd retention gfs-apply --repository .\images --pattern *.rcimg --daily-keep 7 --weekly-keep 4 --monthly-keep 12
 .\RC.cmd schedule plan --task-name nightly-docs --job-file .\backup-job.json --cli-path .\publish\cli\rc.exe --frequency Daily --time 02:00 --run-missed
 .\RC.cmd schedule register --task-name nightly-docs --job-file .\backup-job.json --cli-path .\publish\cli\rc.exe --frequency Daily --time 02:00 --run-missed
 .\RC.cmd schedule plan --task-name event-docs --job-file .\backup-job.json --cli-path .\publish\cli\rc.exe --frequency Event --event-log Application --event-id 1000 --event-source RescueClone
@@ -180,6 +182,8 @@ Start-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Remove-RCBackupJob -Path .\backup-job.json -Confirm:$false
 Get-RCRetentionPlan -RepositoryPath .\images -Pattern *.rcimg -KeepCount 3 -MaxAgeDays 30
 Invoke-RCRetention -RepositoryPath .\images -Pattern *.rcimg -KeepCount 3 -MaxAgeDays 30 -Confirm:$false
+Get-RCGfsRetentionPlan -RepositoryPath .\images -Pattern *.rcimg -DailyKeep 7 -WeeklyKeep 4 -MonthlyKeep 12
+Invoke-RCGfsRetention -RepositoryPath .\images -Pattern *.rcimg -DailyKeep 7 -WeeklyKeep 4 -MonthlyKeep 12 -Confirm:$false
 Get-RCSchedulePlan -TaskName nightly-docs -JobFilePath .\backup-job.json -CliPath .\publish\cli\rc.exe -Frequency Daily -Time 02:00 -RunMissed
 Register-RCSchedule -TaskName nightly-docs -JobFilePath .\backup-job.json -CliPath .\publish\cli\rc.exe -Frequency Daily -Time 02:00 -RunMissed -Confirm:$false
 Get-RCSchedulePlan -TaskName event-docs -JobFilePath .\backup-job.json -CliPath .\publish\cli\rc.exe -Frequency Event -EventLog Application -EventId 1000 -EventSource RescueClone
@@ -217,5 +221,7 @@ Portable package note: `scripts\New-PortablePackage.ps1` creates a ZIP containin
 Projection note: `rc image project`, `Mount-RCImage`, and the GUI Project Image button create a managed read-only directory projection by restoring verified image content, marking projected files read-only, and writing `.rescueclone-projection.json`. `rc image projections`, `Get-RCImageMount`, and the GUI List Projections button enumerate those manifests under a selected root. `rc image unproject`, `Dismount-RCImage`, and the GUI Remove Projection button only remove directories with that manifest. This is a safe user-mode projection layer, not a signed kernel image-mount driver.
 
 Rescue answer note: `rc rescue answer-create`, `New-RCRescueAnswer`, and the GUI Rescue tab write a versioned unattended restore answer JSON with repository, image, target disk, boot mode, driver folders, network shares, boot repair, and reboot policy. Validation verifies the image when requested and reuses the restore planner blockers. This is not WinPE, ISO, USB, or PXE media creation.
+
+GFS retention note: `rc retention gfs-plan`, `Get-RCGfsRetentionPlan`, and the GUI Retention tab keep the newest selected daily, weekly, and monthly buckets from a flat image repository and delete unselected images only when the apply command is used. This is GFS-style pruning for standalone directory images; it is not incremental-chain consolidation.
 
 Disk safety checks are read-only. The evaluator fingerprints the selected disk from number, friendly name, serial number, partition style, bus type, and size, then blocks by default when the disk is missing, fingerprint-mismatched, boot/system, offline, or read-only.

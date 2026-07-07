@@ -247,11 +247,16 @@
                         <TextBox x:Name="RetentionPatternBox" Width="160" Text="*.rcimg" ToolTip="File pattern" Margin="0,0,8,0"/>
                         <TextBox x:Name="RetentionKeepCountBox" Width="120" ToolTip="Keep count" Margin="0,0,8,0"/>
                         <TextBox x:Name="RetentionMaxAgeDaysBox" Width="120" ToolTip="Max age days" Margin="0,0,8,0"/>
-                        <TextBox x:Name="RetentionMinFreeBytesBox" Width="180" ToolTip="Minimum free bytes"/>
+                        <TextBox x:Name="RetentionMinFreeBytesBox" Width="180" ToolTip="Minimum free bytes" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RetentionDailyKeepBox" Width="90" ToolTip="GFS daily keep" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RetentionWeeklyKeepBox" Width="90" ToolTip="GFS weekly keep" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RetentionMonthlyKeepBox" Width="90" ToolTip="GFS monthly keep"/>
                     </StackPanel>
                     <StackPanel Grid.Row="2" Orientation="Horizontal">
                         <Button Width="140" Height="34" Content="Plan Retention" Click="PlanRetention_Click" Margin="0,0,8,0"/>
-                        <Button Width="140" Height="34" Content="Apply Retention" Click="ApplyRetention_Click"/>
+                        <Button Width="140" Height="34" Content="Apply Retention" Click="ApplyRetention_Click" Margin="0,0,8,0"/>
+                        <Button Width="150" Height="34" Content="Plan GFS" Click="PlanGfsRetention_Click" Margin="0,0,8,0"/>
+                        <Button Width="150" Height="34" Content="Apply GFS" Click="ApplyGfsRetention_Click"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

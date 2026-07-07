@@ -8,6 +8,14 @@ public sealed record RetentionOptions(
     long? MinFreeBytes,
     IReadOnlyList<string>? ExcludedPaths = null);
 
+public sealed record GfsRetentionOptions(
+    string RepositoryPath,
+    string Pattern,
+    int? DailyKeepCount,
+    int? WeeklyKeepCount,
+    int? MonthlyKeepCount,
+    IReadOnlyList<string>? ExcludedPaths = null);
+
 public sealed record RetentionCandidate(
     string Path,
     long Bytes,

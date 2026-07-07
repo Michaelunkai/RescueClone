@@ -25,6 +25,8 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Directory backup job run | Backup Job tab | `rc job run` | `Start-RCBackupJob` |
 | Retention plan | Retention tab | `rc retention plan` | `Get-RCRetentionPlan` |
 | Retention apply | Retention tab | `rc retention apply` | `Invoke-RCRetention` |
+| GFS retention plan | Retention tab | `rc retention gfs-plan` | `Get-RCGfsRetentionPlan` |
+| GFS retention apply | Retention tab | `rc retention gfs-apply` | `Invoke-RCGfsRetention` |
 | Schedule plan | Scheduler tab | `rc schedule plan` | `Get-RCSchedulePlan` |
 | Schedule register | Scheduler tab | `rc schedule register` | `Register-RCSchedule` |
 | Schedule status | Scheduler tab | `rc schedule status` | `Get-RCScheduleStatus` |
