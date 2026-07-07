@@ -56,6 +56,52 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void ApplyAdvancedOptionsMergesAutomationSettings()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var preHook = WriteHook(root, "pre.cmd", Path.Combine(root, "hook.log"));
+        var advancedPath = Path.Combine(root, "advanced.json");
+        File.WriteAllText(advancedPath, $$"""
+        {
+          "preBackupScriptPath": "{{preHook.Replace("\\", "\\\\")}}",
+          "scriptHookTimeoutSeconds": 42,
+          "notifyEmail": true,
+          "emailFrom": "from@example.invalid",
+          "emailTo": "to@example.invalid",
+          "emailPickupDirectory": "{{Path.Combine(root, "pickup").Replace("\\", "\\\\")}}",
+          "retryCount": 3,
+          "retryDelaySeconds": 1,
+          "applyRetentionAfterCreate": true,
+          "retentionKeepCount": 2
+        }
+        """);
+        var job = new BackupJobDefinition(
+            "advanced-docs",
+            "Advanced Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "advanced.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"));
+        var runner = new BackupJobRunner();
+
+        var merged = runner.ApplyAdvancedOptions(job, runner.LoadAdvancedOptions(advancedPath));
+        var saved = runner.Save(Path.Combine(root, "job.json"), merged);
+
+        Assert.AreEqual(preHook, saved.PreBackupScriptPath);
+        Assert.AreEqual(42, saved.ScriptHookTimeoutSeconds);
+        Assert.IsTrue(saved.NotifyEmail);
+        Assert.AreEqual("to@example.invalid", saved.EmailTo);
+        Assert.AreEqual(3, saved.RetryCount);
+        Assert.IsTrue(saved.ApplyRetentionAfterCreate);
+        Assert.AreEqual(2, saved.RetentionKeepCount);
+    }
+
+    [TestMethod]
     public void DeleteRemovesBackupJobDefinition()
     {
         var root = NewTempDirectory();

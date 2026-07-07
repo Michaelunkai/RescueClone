@@ -586,6 +586,15 @@ public sealed class OperationRunnerTests
         var jobPath = Path.Combine(root, "jobs", "operation-job.json");
         var exportPath = Path.Combine(root, "exports", "operation-job.json");
         var importPath = Path.Combine(root, "imports", "operation-job.json");
+        var advancedPath = Path.Combine(root, "advanced.json");
+        File.WriteAllText(advancedPath, """
+        {
+          "retryCount": 2,
+          "retryDelaySeconds": 1,
+          "applyRetentionAfterCreate": true,
+          "retentionKeepCount": 3
+        }
+        """);
         var runner = new OperationRunner();
 
         var create = runner.Run(new OperationRequest(
@@ -599,7 +608,8 @@ public sealed class OperationRunnerTests
                 ["image"] = Json("image", Path.Combine(root, "images", "operation-job.rcimg")),
                 ["compression"] = Json("compression", "Medium"),
                 ["verifyAfterCreate"] = Json("verifyAfterCreate", true),
-                ["logDirectory"] = Json("logDirectory", Path.Combine(root, "logs"))
+                ["logDirectory"] = Json("logDirectory", Path.Combine(root, "logs")),
+                ["advancedJsonFile"] = Json("advancedJsonFile", advancedPath)
             },
             "job-create"), Path.Combine(root, "ops"));
         var update = runner.Run(new OperationRequest(
@@ -662,6 +672,8 @@ public sealed class OperationRunnerTests
         Assert.AreEqual(OperationState.Succeeded, update.State);
         Assert.AreEqual("Operation Job Updated", status.Result!.Value.GetProperty("job").GetProperty("name").GetString());
         Assert.AreEqual("High", status.Result!.Value.GetProperty("job").GetProperty("compression").GetString());
+        Assert.AreEqual(2, status.Result!.Value.GetProperty("job").GetProperty("retryCount").GetInt32());
+        Assert.IsTrue(status.Result.Value.GetProperty("job").GetProperty("applyRetentionAfterCreate").GetBoolean());
         Assert.AreEqual(OperationState.Succeeded, history.State);
         Assert.AreEqual(0, history.Result!.Value.GetProperty("entryCount").GetInt32());
         Assert.AreEqual("operation-job", history.Result.Value.GetProperty("jobId").GetString());

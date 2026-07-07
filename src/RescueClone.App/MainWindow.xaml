@@ -23,6 +23,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBox x:Name="SourcePathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Source directory"/>
@@ -136,9 +137,10 @@
                         <CheckBox x:Name="JobVerifyAfterCreateBox" Content="Verify after create" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <TextBox x:Name="JobLogDirectoryBox" Width="260" ToolTip="Optional log directory"/>
                     </StackPanel>
-                    <TextBox x:Name="JobTransferPathBox" Grid.Row="5" Margin="0,0,0,8" ToolTip="Export output path or import target path"/>
-                    <TextBox x:Name="JobDirectoryBox" Grid.Row="6" Margin="0,0,0,8" ToolTip="Backup job directory for listing"/>
-                    <WrapPanel Grid.Row="7">
+                    <TextBox x:Name="JobAdvancedJsonFileBox" Grid.Row="5" Margin="0,0,0,8" ToolTip="Optional advanced job JSON file for hooks, notifications, retry, restore-test, and retention settings"/>
+                    <TextBox x:Name="JobTransferPathBox" Grid.Row="6" Margin="0,0,0,8" ToolTip="Export output path or import target path"/>
+                    <TextBox x:Name="JobDirectoryBox" Grid.Row="7" Margin="0,0,0,8" ToolTip="Backup job directory for listing"/>
+                    <WrapPanel Grid.Row="8">
                         <CheckBox x:Name="ForceDisabledJobBox" Content="Force disabled job" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <Button Width="140" Height="34" Content="Create Job" Click="CreateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Update Job" Click="UpdateJob_Click" Margin="0,0,8,0"/>

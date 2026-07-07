@@ -515,13 +515,15 @@ static int RunJob(string command, Dictionary<string, string> values)
                 values.GetValueOrDefault("password"),
                 ParseBool(values.GetValueOrDefault("verify-after-create", "true"), "verify-after-create"),
                 values.GetValueOrDefault("log-directory"));
+            definition = ApplyAdvancedJobOptionsFromValues(runner, definition, values);
             WriteJson(runner.Save(Required(values, "file"), definition));
             return 0;
         case "delete":
             WriteJson(runner.Delete(Required(values, "file")));
             return 0;
         case "update":
-            WriteJson(runner.Update(Required(values, "file"), new BackupJobUpdateOptions(
+            var jobFile = Required(values, "file");
+            var updated = runner.Update(jobFile, new BackupJobUpdateOptions(
                 values.GetValueOrDefault("job-id"),
                 values.GetValueOrDefault("name"),
                 values.ContainsKey("enabled") ? ParseBool(values["enabled"], "enabled") : null,
@@ -530,7 +532,14 @@ static int RunJob(string command, Dictionary<string, string> values)
                 values.ContainsKey("compression") ? Enum.Parse<CompressionMode>(values["compression"], ignoreCase: true) : null,
                 values.GetValueOrDefault("password"),
                 values.ContainsKey("verify-after-create") ? ParseBool(values["verify-after-create"], "verify-after-create") : null,
-                values.GetValueOrDefault("log-directory"))));
+                values.GetValueOrDefault("log-directory")));
+            if (values.TryGetValue("advanced-json-file", out var advancedPath))
+            {
+                var after = runner.ApplyAdvancedOptions(updated.After, runner.LoadAdvancedOptions(advancedPath));
+                runner.Save(jobFile, after);
+                updated = new BackupJobUpdateReport(Path.GetFullPath(jobFile), updated.Before, after, DateTimeOffset.UtcNow);
+            }
+            WriteJson(updated);
             return 0;
         case "export":
             WriteJson(runner.Export(Required(values, "file"), Required(values, "output")));
@@ -558,6 +567,13 @@ static int RunJob(string command, Dictionary<string, string> values)
         default:
             throw new ArgumentException($"Unknown job command: {command}");
     }
+}
+
+static BackupJobDefinition ApplyAdvancedJobOptionsFromValues(BackupJobRunner runner, BackupJobDefinition definition, Dictionary<string, string> values)
+{
+    return values.TryGetValue("advanced-json-file", out var advancedPath)
+        ? runner.ApplyAdvancedOptions(definition, runner.LoadAdvancedOptions(advancedPath))
+        : definition;
 }
 
 static Dictionary<string, string> ParseOptions(string[] args)
@@ -645,8 +661,8 @@ static void PrintHelp()
     rc image unproject --target <dir>
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc clone directory --source <dir> --target <dir> [--overwrite]
-    rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
-    rc job update --file <job.json> [--job-id <id>] [--name <name>] [--enabled true|false] [--source <dir>] [--image <file.rcimg>] [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
+    rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>] [--advanced-json-file <advanced.json>]
+    rc job update --file <job.json> [--job-id <id>] [--name <name>] [--enabled true|false] [--source <dir>] [--image <file.rcimg>] [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>] [--advanced-json-file <advanced.json>]
     rc job delete --file <job.json>
     rc job export --file <job.json> --output <exported-job.json>
     rc job import --file <exported-job.json> --target <job.json>

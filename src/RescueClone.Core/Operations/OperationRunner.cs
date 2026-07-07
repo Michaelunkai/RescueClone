@@ -141,19 +141,8 @@ public sealed class OperationRunner
                 BoolValue(request, "overwrite"))),
             "job.backup.directory.create" => _jobRunner.Save(
                 RequiredString(request, "file"),
-                ReadBackupJobDefinition(request)),
-            "job.backup.directory.update" => _jobRunner.Update(
-                RequiredString(request, "file"),
-                new BackupJobUpdateOptions(
-                    OptionalString(request, "jobId"),
-                    OptionalString(request, "name"),
-                    NullableBoolValue(request, "enabled"),
-                    OptionalString(request, "source"),
-                    OptionalString(request, "image"),
-                    NullableEnumValue<CompressionMode>(request, "compression"),
-                    OptionalString(request, "password"),
-                    NullableBoolValue(request, "verifyAfterCreate"),
-                    OptionalString(request, "logDirectory"))),
+                ApplyAdvancedJobOptions(ReadBackupJobDefinition(request), request)),
+            "job.backup.directory.update" => UpdateBackupJob(request),
             "job.backup.directory.delete" => _jobRunner.Delete(RequiredString(request, "file")),
             "job.backup.directory.export" => _jobRunner.Export(
                 RequiredString(request, "file"),
@@ -243,6 +232,38 @@ public sealed class OperationRunner
             "native.status" => NativeDiagnostics.GetStatus(),
             _ => throw new ArgumentException($"Unknown operation kind: {request.Kind}")
         };
+    }
+
+    private BackupJobDefinition ApplyAdvancedJobOptions(BackupJobDefinition definition, OperationRequest request)
+    {
+        var advancedPath = OptionalString(request, "advancedJsonFile");
+        return string.IsNullOrWhiteSpace(advancedPath)
+            ? definition
+            : _jobRunner.ApplyAdvancedOptions(definition, _jobRunner.LoadAdvancedOptions(advancedPath));
+    }
+
+    private BackupJobUpdateReport UpdateBackupJob(OperationRequest request)
+    {
+        var file = RequiredString(request, "file");
+        var updated = _jobRunner.Update(
+            file,
+            new BackupJobUpdateOptions(
+                OptionalString(request, "jobId"),
+                OptionalString(request, "name"),
+                NullableBoolValue(request, "enabled"),
+                OptionalString(request, "source"),
+                OptionalString(request, "image"),
+                NullableEnumValue<CompressionMode>(request, "compression"),
+                OptionalString(request, "password"),
+                NullableBoolValue(request, "verifyAfterCreate"),
+                OptionalString(request, "logDirectory")));
+        var advancedPath = OptionalString(request, "advancedJsonFile");
+        if (string.IsNullOrWhiteSpace(advancedPath))
+            return updated;
+
+        var after = _jobRunner.ApplyAdvancedOptions(updated.After, _jobRunner.LoadAdvancedOptions(advancedPath));
+        _jobRunner.Save(file, after);
+        return new BackupJobUpdateReport(Path.GetFullPath(file), updated.Before, after, DateTimeOffset.UtcNow);
     }
 
     private static BackupJobDefinition ReadBackupJobDefinition(OperationRequest request)

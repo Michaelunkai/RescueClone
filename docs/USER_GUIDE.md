@@ -116,6 +116,26 @@ Get-RCBackupJobHistory -Path F:\Jobs\daily.json
 Get-RCBackupJob -DirectoryPath F:\Jobs -Pattern *.json
 ```
 
+Advanced automation settings can be supplied during create/update with a JSON file. The same file works from the GUI Backup Job tab, CLI `--advanced-json-file`, and PowerShell `-AdvancedJsonFile`.
+
+```json
+{
+  "preBackupScriptPath": "F:\\Scripts\\before.cmd",
+  "postBackupScriptPath": "F:\\Scripts\\after.cmd",
+  "scriptHookTimeoutSeconds": 300,
+  "notifyWindowsEventLog": true,
+  "retryCount": 2,
+  "retryDelaySeconds": 5,
+  "applyRetentionAfterCreate": true,
+  "retentionKeepCount": 7
+}
+```
+
+```powershell
+.\RC.cmd job create --file F:\Jobs\daily.json --job-id daily --name "Daily Data" --source F:\Data --image F:\Backups\daily.rcimg --advanced-json-file F:\Jobs\daily-advanced.json
+New-RCBackupJob -Path F:\Jobs\daily.json -JobId daily -Name "Daily Data" -SourcePath F:\Data -ImagePath F:\Backups\daily.rcimg -AdvancedJsonFile F:\Jobs\daily-advanced.json -Confirm:$false
+```
+
 Job runs create JSON and HTML reports. History reports entries for the selected job and keeps malformed log files visible as parse errors.
 
 ## Retention

@@ -260,12 +260,14 @@ function New-RCBackupJob {
         [string]$Password,
         [bool]$VerifyAfterCreate = $true,
         [string]$LogDirectory,
+        [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$AdvancedJsonFile,
         [bool]$Enabled = $true
     )
     if ($PSCmdlet.ShouldProcess($Path, "Create backup job definition")) {
         $args = @('job','create','--file',$Path,'--job-id',$JobId,'--name',$Name,'--source',$SourcePath,'--image',$ImagePath,'--compression',$Compression,'--verify-after-create',[string]$VerifyAfterCreate,'--enabled',[string]$Enabled)
         if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
         if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+        if ($PSBoundParameters.ContainsKey('AdvancedJsonFile')) { $args += @('--advanced-json-file',$AdvancedJsonFile) }
         Invoke-RCJson -ArgumentList $args
     }
 }
@@ -290,6 +292,7 @@ function Set-RCBackupJob {
         [string]$Password,
         [bool]$VerifyAfterCreate,
         [string]$LogDirectory,
+        [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$AdvancedJsonFile,
         [bool]$Enabled
     )
     if ($PSCmdlet.ShouldProcess($Path, "Update backup job definition")) {
@@ -302,6 +305,7 @@ function Set-RCBackupJob {
         if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
         if ($PSBoundParameters.ContainsKey('VerifyAfterCreate')) { $args += @('--verify-after-create',[string]$VerifyAfterCreate) }
         if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+        if ($PSBoundParameters.ContainsKey('AdvancedJsonFile')) { $args += @('--advanced-json-file',$AdvancedJsonFile) }
         if ($PSBoundParameters.ContainsKey('Enabled')) { $args += @('--enabled',[string]$Enabled) }
         Invoke-RCJson -ArgumentList $args
     }

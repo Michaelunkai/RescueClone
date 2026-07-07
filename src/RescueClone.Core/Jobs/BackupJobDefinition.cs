@@ -63,6 +63,31 @@ public sealed record BackupJobUpdateOptions(
     bool? VerifyAfterCreate = null,
     string? LogDirectory = null);
 
+public sealed record BackupJobAdvancedOptions(
+    string? PreBackupScriptPath = null,
+    string? PostBackupScriptPath = null,
+    int? ScriptHookTimeoutSeconds = null,
+    int? LogRetentionCount = null,
+    bool? NotifyWindowsEventLog = null,
+    bool? NotifyEmail = null,
+    string? EmailFrom = null,
+    string? EmailTo = null,
+    string? EmailPickupDirectory = null,
+    string? EmailSmtpHost = null,
+    int? EmailSmtpPort = null,
+    bool? EmailEnableSsl = null,
+    string? EmailUsername = null,
+    string? EmailPassword = null,
+    int? RetryCount = null,
+    int? RetryDelaySeconds = null,
+    bool? RestoreTestAfterCreate = null,
+    string? RestoreTestTargetPath = null,
+    bool? ApplyRetentionAfterCreate = null,
+    string? RetentionPattern = null,
+    int? RetentionKeepCount = null,
+    int? RetentionMaxAgeDays = null,
+    long? RetentionMinFreeBytes = null);
+
 public sealed record BackupJobUpdateReport(
     string Path,
     BackupJobDefinition Before,

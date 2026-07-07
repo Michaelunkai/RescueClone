@@ -26,6 +26,43 @@ public sealed class BackupJobRunner
             ?? throw new InvalidDataException("Backup job definition is empty.");
     }
 
+    public BackupJobAdvancedOptions LoadAdvancedOptions(string path)
+    {
+        using var input = File.OpenRead(path);
+        return JsonSerializer.Deserialize<BackupJobAdvancedOptions>(input, JsonOptions)
+            ?? throw new InvalidDataException("Backup job advanced options are empty.");
+    }
+
+    public BackupJobDefinition ApplyAdvancedOptions(BackupJobDefinition job, BackupJobAdvancedOptions options)
+    {
+        return job with
+        {
+            PreBackupScriptPath = options.PreBackupScriptPath ?? job.PreBackupScriptPath,
+            PostBackupScriptPath = options.PostBackupScriptPath ?? job.PostBackupScriptPath,
+            ScriptHookTimeoutSeconds = options.ScriptHookTimeoutSeconds ?? job.ScriptHookTimeoutSeconds,
+            LogRetentionCount = options.LogRetentionCount ?? job.LogRetentionCount,
+            NotifyWindowsEventLog = options.NotifyWindowsEventLog ?? job.NotifyWindowsEventLog,
+            NotifyEmail = options.NotifyEmail ?? job.NotifyEmail,
+            EmailFrom = options.EmailFrom ?? job.EmailFrom,
+            EmailTo = options.EmailTo ?? job.EmailTo,
+            EmailPickupDirectory = options.EmailPickupDirectory ?? job.EmailPickupDirectory,
+            EmailSmtpHost = options.EmailSmtpHost ?? job.EmailSmtpHost,
+            EmailSmtpPort = options.EmailSmtpPort ?? job.EmailSmtpPort,
+            EmailEnableSsl = options.EmailEnableSsl ?? job.EmailEnableSsl,
+            EmailUsername = options.EmailUsername ?? job.EmailUsername,
+            EmailPassword = options.EmailPassword ?? job.EmailPassword,
+            RetryCount = options.RetryCount ?? job.RetryCount,
+            RetryDelaySeconds = options.RetryDelaySeconds ?? job.RetryDelaySeconds,
+            RestoreTestAfterCreate = options.RestoreTestAfterCreate ?? job.RestoreTestAfterCreate,
+            RestoreTestTargetPath = options.RestoreTestTargetPath ?? job.RestoreTestTargetPath,
+            ApplyRetentionAfterCreate = options.ApplyRetentionAfterCreate ?? job.ApplyRetentionAfterCreate,
+            RetentionPattern = options.RetentionPattern ?? job.RetentionPattern,
+            RetentionKeepCount = options.RetentionKeepCount ?? job.RetentionKeepCount,
+            RetentionMaxAgeDays = options.RetentionMaxAgeDays ?? job.RetentionMaxAgeDays,
+            RetentionMinFreeBytes = options.RetentionMinFreeBytes ?? job.RetentionMinFreeBytes
+        };
+    }
+
     public BackupJobDefinition Save(string path, BackupJobDefinition job)
     {
         var validation = Validate(job);

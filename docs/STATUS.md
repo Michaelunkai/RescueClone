@@ -57,6 +57,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Disk inventory reports disk number, friendly name, serial number, partition style, bus type, size, boot/system flags, offline state, and read-only state using built-in Windows storage cmdlets in read-only mode.
 - Disk target safety checks fingerprint selected disks and block missing, fingerprint-mismatched, boot/system, offline, and read-only targets before destructive restore work is enabled.
 - Job runs can perform post-create verification and write a structured JSON run log.
+- Job create/update surfaces accept an advanced options JSON file from GUI, CLI, PowerShell, and operation dispatch for script hooks, notifications, retry, restore-test, and retention policy fields.
 - Job runs can execute configured pre-backup and post-backup script hooks non-interactively, fail the job on nonzero hook exit or timeout, and include hook exit/output records in the structured JSON run log.
 - Job runs write paired machine-readable JSON and human-readable HTML reports and can rotate old reports by per-job keep count.
 - Backup log listing reads structured job report directories and returns parsed report metadata plus structured parse errors for malformed log files.

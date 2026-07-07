@@ -68,6 +68,7 @@ CLI examples:
 .\RC.cmd clone directory --source .\sample-source --target .\sample-clone
 .\RC.cmd job create --file .\backup-job.json --job-id daily-docs --name "Daily Docs" --source .\sample-source --image .\images\daily-docs.rcimg --compression High --verify-after-create true --log-directory .\backup-logs
 .\RC.cmd job update --file .\backup-job.json --name "Daily Docs Updated" --enabled true --compression Medium
+.\RC.cmd job create --file .\advanced-job.json --job-id advanced-docs --name "Advanced Docs" --source .\sample-source --image .\images\advanced-docs.rcimg --advanced-json-file .\advanced-job-options.json
 .\RC.cmd job export --file .\backup-job.json --output .\backup-job.export.json
 .\RC.cmd job import --file .\backup-job.export.json --target .\backup-job.imported.json
 .\RC.cmd job list --directory . --pattern *.json
@@ -148,6 +149,8 @@ Backup job JSON example:
 }
 ```
 
+For GUI/CLI/PowerShell parity, advanced job policy can also be supplied as a partial options JSON file during create/update. The same file is accepted by the GUI Backup Job tab, CLI `--advanced-json-file`, PowerShell `-AdvancedJsonFile`, and operation parameter `advancedJsonFile`.
+
 Operation request JSON example:
 
 ```json
@@ -203,6 +206,7 @@ Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password
 Copy-RCDirectoryClone -SourcePath .\sample-source -TargetPath .\sample-clone -Confirm:$false
 New-RCBackupJob -Path .\backup-job.json -JobId daily-docs -Name 'Daily Docs' -SourcePath .\sample-source -ImagePath .\images\daily-docs.rcimg -Compression High -VerifyAfterCreate $true -LogDirectory .\backup-logs -Confirm:$false
 Set-RCBackupJob -Path .\backup-job.json -Name 'Daily Docs Updated' -Enabled $true -Compression Medium -Confirm:$false
+New-RCBackupJob -Path .\advanced-job.json -JobId advanced-docs -Name 'Advanced Docs' -SourcePath .\sample-source -ImagePath .\images\advanced-docs.rcimg -AdvancedJsonFile .\advanced-job-options.json -Confirm:$false
 Export-RCBackupJob -Path .\backup-job.json -OutputPath .\backup-job.export.json -Confirm:$false
 Import-RCBackupJob -Path .\backup-job.export.json -TargetPath .\backup-job.imported.json -Confirm:$false
 Get-RCBackupJob -DirectoryPath . -Pattern *.json

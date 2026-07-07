@@ -156,6 +156,7 @@ public partial class MainWindow : Window
                 Password: null,
                 JobVerifyAfterCreateBox.IsChecked == true,
                 EmptyToNull(JobLogDirectoryBox.Text));
+            job = ApplyJobAdvancedOptions(job);
             return _jobRunner.Save(JobPathBox.Text, job);
         });
     }
@@ -170,7 +171,7 @@ public partial class MainWindow : Window
         RunAndReport(() =>
         {
             var compression = Enum.Parse<CompressionMode>(((System.Windows.Controls.ComboBoxItem)JobCompressionBox.SelectedItem).Content.ToString()!);
-            return _jobRunner.Update(JobPathBox.Text, new BackupJobUpdateOptions(
+            var updated = _jobRunner.Update(JobPathBox.Text, new BackupJobUpdateOptions(
                 EmptyToNull(JobIdBox.Text),
                 EmptyToNull(JobNameBox.Text),
                 JobEnabledBox.IsChecked == true,
@@ -180,7 +181,22 @@ public partial class MainWindow : Window
                 Password: null,
                 JobVerifyAfterCreateBox.IsChecked == true,
                 EmptyToNull(JobLogDirectoryBox.Text)));
+            var advanced = ApplyJobAdvancedOptions(updated.After);
+            if (!ReferenceEquals(advanced, updated.After))
+            {
+                _jobRunner.Save(JobPathBox.Text, advanced);
+                updated = new BackupJobUpdateReport(JobPathBox.Text, updated.Before, advanced, DateTimeOffset.UtcNow);
+            }
+            return updated;
         });
+    }
+
+    private BackupJobDefinition ApplyJobAdvancedOptions(BackupJobDefinition job)
+    {
+        var advancedPath = EmptyToNull(JobAdvancedJsonFileBox.Text);
+        return advancedPath is null
+            ? job
+            : _jobRunner.ApplyAdvancedOptions(job, _jobRunner.LoadAdvancedOptions(advancedPath));
     }
 
     private void DeleteJob_Click(object sender, RoutedEventArgs e)
