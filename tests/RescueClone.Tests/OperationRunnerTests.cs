@@ -117,6 +117,51 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunProjectAndUnprojectImageOperations()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var target = Path.Combine(root, "projection");
+        Directory.CreateDirectory(Path.Combine(source, "nested"));
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        File.WriteAllText(Path.Combine(source, "nested", "beta.txt"), "beta");
+        var image = Path.Combine(root, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var runner = new OperationRunner();
+
+        var project = runner.Run(new OperationRequest(
+            "image.project.readonly",
+            new Dictionary<string, JsonElement>
+            {
+                ["image"] = Json("image", image),
+                ["target"] = Json("target", target)
+            },
+            "project-image"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, project.State);
+        Assert.AreEqual(2, project.Result!.Value.GetProperty("fileCount").GetInt32());
+        Assert.AreEqual("alpha", File.ReadAllText(Path.Combine(target, "alpha.txt")));
+        Assert.IsTrue((File.GetAttributes(Path.Combine(target, "alpha.txt")) & FileAttributes.ReadOnly) != 0);
+        Assert.IsTrue(File.Exists(Path.Combine(target, ".rescueclone-projection.json")));
+
+        var unproject = runner.Run(new OperationRequest(
+            "image.project.remove",
+            new Dictionary<string, JsonElement>
+            {
+                ["target"] = Json("target", target)
+            },
+            "unproject-image"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, unproject.State);
+        Assert.AreEqual(2, unproject.Result!.Value.GetProperty("removedFileCount").GetInt32());
+        Assert.IsFalse(File.Exists(Path.Combine(target, "alpha.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(target, "nested", "beta.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(target, ".rescueclone-projection.json")));
+        Assert.IsTrue(File.Exists(unproject.LogPath));
+        Assert.IsTrue(File.Exists(unproject.RecoveryStatePath));
+    }
+
+    [TestMethod]
     public async Task PipeServiceRunsOperationAndWritesRecoveryState()
     {
         var root = NewTempDirectory();
@@ -150,6 +195,60 @@ public sealed class OperationRunnerTests
         Assert.AreEqual(1, response.Report.Result!.Value.GetProperty("fileCount").GetInt32());
         Assert.IsTrue(File.Exists(response.Report.LogPath));
         Assert.IsTrue(File.Exists(response.Report.RecoveryStatePath));
+    }
+
+    [TestMethod]
+    public async Task PipeServiceProjectsAndUnprojectsImage()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var projection = Path.Combine(root, "projection");
+        var logs = Path.Combine(root, "ops");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(root, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var pipeName = "rescueclone-test-" + Guid.NewGuid().ToString("N");
+        using var cancellation = new CancellationTokenSource();
+        var serverTask = new OperationPipeServer().RunAsync(pipeName, logs, cancellation.Token);
+        var client = new OperationPipeClient();
+
+        var project = await client.RunOperationAsync(
+            pipeName,
+            new OperationServiceRequest(new OperationRequest(
+                "image.project.readonly",
+                new Dictionary<string, JsonElement>
+                {
+                    ["image"] = Json("image", image),
+                    ["target"] = Json("target", projection)
+                },
+                "pipe-project")),
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None);
+        var unproject = await client.RunOperationAsync(
+            pipeName,
+            new OperationServiceRequest(new OperationRequest(
+                "image.project.remove",
+                new Dictionary<string, JsonElement>
+                {
+                    ["target"] = Json("target", projection)
+                },
+                "pipe-unproject")),
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None);
+        cancellation.Cancel();
+        await serverTask;
+
+        Assert.IsTrue(project.Succeeded);
+        Assert.IsNotNull(project.Report);
+        Assert.AreEqual(OperationState.Succeeded, project.Report.State);
+        Assert.AreEqual(1, project.Report.Result!.Value.GetProperty("fileCount").GetInt32());
+        Assert.IsTrue(unproject.Succeeded);
+        Assert.IsNotNull(unproject.Report);
+        Assert.AreEqual(OperationState.Succeeded, unproject.Report.State);
+        Assert.AreEqual(1, unproject.Report.Result!.Value.GetProperty("removedFileCount").GetInt32());
+        Assert.IsFalse(File.Exists(Path.Combine(projection, "alpha.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(projection, ".rescueclone-projection.json")));
     }
 
     [TestMethod]

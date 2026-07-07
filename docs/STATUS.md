@@ -30,7 +30,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Local operation runs with a log directory also write a readable recovery-state JSON sidecar containing the original request and final report for both success and failure paths.
 - Local operation reports include structured audit events for operation start, success, and failure.
 - Failed local operation reports include structured `errorDetail` fields with a stable code, original message, and exception type.
-- Local operation runs can dispatch implemented image create/verify/browse/extract/restore operations, backup job create/update/delete/export/import/status/validate/run operations, retention plan/apply operations, and read-only restore planning.
+- Local operation runs can dispatch implemented image create/verify/browse/extract/project/unproject/restore operations, backup job create/update/delete/export/import/status/validate/run operations, retention plan/apply operations, and read-only restore planning.
 - Named-pipe service IPC can host the operation runner and return structured operation reports to CLI, PowerShell, and GUI clients.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify, browse, extract, and restore read both formats.
