@@ -30,11 +30,29 @@ $features = & $rc features | ConvertFrom-Json
 if ($features.Count -lt 1) {
     throw 'Installed CLI returned no features.'
 }
+$operationKinds = & $rc operation kinds | ConvertFrom-Json
+if ($operationKinds.Count -lt 1) {
+    throw 'Installed CLI returned no operation kinds.'
+}
+$requestPath = Join-Path $fullInstallRoot 'native-status.operation.json'
+@{
+    kind = 'native.status'
+    operationId = 'installed-native-status'
+    parameters = @{}
+} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $requestPath -Encoding UTF8
+$operationValidation = & $rc operation validate --request $requestPath | ConvertFrom-Json
+if (-not $operationValidation.valid) {
+    throw 'Installed CLI operation validation failed.'
+}
 
 . $import
 $psFeatures = Get-RCFeature
 if ($psFeatures.Count -ne $features.Count) {
     throw "Installed PowerShell feature count $($psFeatures.Count) did not match CLI feature count $($features.Count)."
+}
+$psOperationValidation = Test-RCOperation -RequestPath $requestPath
+if (-not $psOperationValidation.valid) {
+    throw 'Installed PowerShell operation validation failed.'
 }
 
 $uninstall = & (Join-Path $Root 'scripts\Uninstall-RescueClone.ps1') -InstallRoot $fullInstallRoot -Quiet -NoRestart | ConvertFrom-Json
@@ -47,5 +65,8 @@ if (Test-Path -LiteralPath $fullInstallRoot) {
     Installed = [bool]$install.InstallRoot
     FeatureCount = $features.Count
     PowerShellFeatureCount = $psFeatures.Count
+    OperationKindCount = $operationKinds.Count
+    OperationValidation = $operationValidation.valid
+    PowerShellOperationValidation = $psOperationValidation.valid
     Removed = [bool]$uninstall.Removed
 } | ConvertTo-Json
