@@ -191,6 +191,14 @@ function Import-RCBackupJob {
     }
 }
 
+function Get-RCBackupJobStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path
+    )
+    Invoke-RCJson -ArgumentList @('job','status','--file',$Path)
+}
+
 function Start-RCBackupJob {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

@@ -11,6 +11,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for updating exposed fields in a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for deleting a backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for exporting and importing a validated backup job JSON definition.
+- GUI, CLI, and PowerShell surfaces for backup job status, including validation and the latest parsed run log when present.
 - GUI, CLI, and PowerShell surfaces for validating and running a directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for retention planning and retention enforcement on directory-image repositories.
 - GUI, CLI, and PowerShell surfaces for Windows Task Scheduler XML planning and schedule register/unregister.

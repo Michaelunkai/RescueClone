@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using RescueClone.Core.Logs;
 using RescueClone.Core.Retention;
 
 namespace RescueClone.Core.Jobs;
@@ -74,6 +75,13 @@ public sealed record BackupJobTransferReport(
     string DestinationPath,
     string JobId,
     DateTimeOffset CompletedUtc);
+
+public sealed record BackupJobStatusReport(
+    string Path,
+    BackupJobDefinition Job,
+    BackupJobValidationResult Validation,
+    string LogDirectory,
+    BackupLogEntry? LastRun);
 
 public sealed record BackupJobRunResult(
     string JobId,

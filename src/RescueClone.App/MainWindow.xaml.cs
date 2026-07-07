@@ -108,6 +108,11 @@ public partial class MainWindow : Window
         RunAndReport(() => _jobRunner.Import(JobPathBox.Text, JobTransferPathBox.Text));
     }
 
+    private void JobStatus_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.Status(JobPathBox.Text));
+    }
+
     private void RunJob_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _jobRunner.Run(_jobRunner.Load(JobPathBox.Text), ForceDisabledJobBox.IsChecked == true));

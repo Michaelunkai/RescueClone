@@ -218,6 +218,40 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void StatusReportsValidationAndLatestRun()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var path = Path.Combine(root, "jobs", "status.json");
+        var logDirectory = Path.Combine(root, "logs");
+        var job = new BackupJobDefinition(
+            "status-docs",
+            "Status Docs",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "status.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: logDirectory);
+        var runner = new BackupJobRunner();
+        runner.Save(path, job);
+
+        var beforeRun = runner.Status(path);
+        runner.Run(job);
+        var afterRun = runner.Status(path);
+
+        Assert.IsTrue(beforeRun.Validation.Valid);
+        Assert.AreEqual(Path.GetFullPath(logDirectory), beforeRun.LogDirectory);
+        Assert.IsNull(beforeRun.LastRun);
+        Assert.IsNotNull(afterRun.LastRun);
+        Assert.AreEqual("status-docs", afterRun.LastRun.JobId);
+        Assert.IsTrue(afterRun.LastRun.Verified.GetValueOrDefault());
+    }
+
+    [TestMethod]
     public void RunCreatesVerifiesAndLogsBackupJob()
     {
         var root = NewTempDirectory();
@@ -829,6 +863,17 @@ public sealed class BackupJobRunnerTests
         Assert.AreEqual("Backup Job", feature.Gui);
         Assert.AreEqual("rc job import", feature.Cli);
         Assert.AreEqual("Import-RCBackupJob", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesBackupJobStatusParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "job.backup.directory.status");
+
+        Assert.AreEqual("Backup Job", feature.Gui);
+        Assert.AreEqual("rc job status", feature.Cli);
+        Assert.AreEqual("Get-RCBackupJobStatus", feature.PowerShell);
         Assert.IsTrue(feature.Implemented);
     }
 

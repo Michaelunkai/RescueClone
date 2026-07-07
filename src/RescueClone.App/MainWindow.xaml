@@ -106,6 +106,7 @@
                         <Button Width="140" Height="34" Content="Delete Job" Click="DeleteJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Export Job" Click="ExportJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Import Job" Click="ImportJob_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Job Status" Click="JobStatus_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Validate Job" Click="ValidateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Run Job" Click="RunJob_Click"/>
                     </WrapPanel>

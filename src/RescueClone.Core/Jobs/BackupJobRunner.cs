@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RescueClone.Core.Logs;
 using RescueClone.Core.Retention;
 
 namespace RescueClone.Core.Jobs;
@@ -93,6 +94,23 @@ public sealed class BackupJobRunner
         var job = Load(sourcePath);
         Save(destinationPath, job);
         return new BackupJobTransferReport("import", sourcePath, destinationPath, job.JobId, DateTimeOffset.UtcNow);
+    }
+
+    public BackupJobStatusReport Status(string path)
+    {
+        var fullPath = RequireExistingJobPath(path);
+        var job = Load(fullPath);
+        var validation = Validate(job);
+        var logDirectory = ResolveLogDirectory(job);
+        BackupLogEntry? lastRun = null;
+        if (Directory.Exists(logDirectory))
+        {
+            lastRun = new BackupLogCatalog()
+                .List(new LogListOptions(logDirectory))
+                .FirstOrDefault(entry => entry.Parsed && string.Equals(entry.JobId, job.JobId, StringComparison.Ordinal));
+        }
+
+        return new BackupJobStatusReport(fullPath, job, validation, logDirectory, lastRun);
     }
 
     public BackupJobValidationResult Validate(BackupJobDefinition job)
@@ -468,9 +486,7 @@ public sealed class BackupJobRunner
 
     private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts, RestoreReport? restoreTest, RetentionApplyReport? retention)
     {
-        var directory = string.IsNullOrWhiteSpace(job.LogDirectory)
-            ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
-            : job.LogDirectory;
+        var directory = ResolveLogDirectory(job);
         Directory.CreateDirectory(directory);
         var safeId = SafeFileName(job.JobId);
         var stamp = started.ToString("yyyyMMdd-HHmmss");
@@ -601,6 +617,13 @@ public sealed class BackupJobRunner
     {
         var safe = string.Join("_", value.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         return string.IsNullOrWhiteSpace(safe) ? "backup-job" : safe;
+    }
+
+    private static string ResolveLogDirectory(BackupJobDefinition job)
+    {
+        return string.IsNullOrWhiteSpace(job.LogDirectory)
+            ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
+            : Path.GetFullPath(job.LogDirectory);
     }
 
     private static string RequireExistingJobPath(string path)
