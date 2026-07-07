@@ -55,7 +55,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -75,6 +75,20 @@ static int Run(string[] args)
 
             case "verify":
                 WriteJson(engine.Verify(Required(values, "image"), values.GetValueOrDefault("password")));
+                return 0;
+
+            case "browse":
+                WriteJson(engine.Browse(Required(values, "image"), values.GetValueOrDefault("password")));
+                return 0;
+
+            case "extract":
+                var extract = new ExtractOptions(
+                    Required(values, "image"),
+                    Required(values, "target"),
+                    SplitPaths(Required(values, "paths")),
+                    values.GetValueOrDefault("password"),
+                    values.ContainsKey("overwrite"));
+                WriteJson(engine.Extract(extract));
                 return 0;
 
             case "restore":
@@ -328,6 +342,11 @@ static bool ParseBool(string value, string key)
     return parsed;
 }
 
+static IReadOnlyList<string> SplitPaths(string value)
+{
+    return value.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+
 static string Required(Dictionary<string, string> values, string key)
 {
     if (!values.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
@@ -350,6 +369,8 @@ static void PrintHelp()
     rc features
     rc image create --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--format V1|V2]
     rc image verify --image <file.rcimg> [--password <secret>]
+    rc image browse --image <file.rcimg> [--password <secret>]
+    rc image extract --image <file.rcimg> --target <dir> --paths <relative-paths> [--password <secret>] [--overwrite]
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job update --file <job.json> [--job-id <id>] [--name <name>] [--enabled true|false] [--source <dir>] [--image <file.rcimg>] [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]

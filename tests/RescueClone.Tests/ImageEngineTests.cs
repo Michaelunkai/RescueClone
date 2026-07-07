@@ -75,6 +75,78 @@ public sealed class ImageEngineTests
     }
 
     [TestMethod]
+    public void BrowseReturnsVerifiedImageContents()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var image = Path.Combine(root, "backup.rcimg");
+        Directory.CreateDirectory(Path.Combine(source, "nested"));
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        File.WriteAllText(Path.Combine(source, "nested", "beta.txt"), "beta");
+
+        var engine = new ImageEngine();
+        var created = engine.Create(new ImageOptions(source, image, CompressionMode.Medium, "secret"));
+        var browsed = engine.Browse(image, "secret");
+
+        Assert.AreEqual(created.RootSha256, browsed.RootSha256);
+        Assert.AreEqual(2, browsed.FileCount);
+        CollectionAssert.AreEquivalent(new[] { "alpha.txt", "nested/beta.txt" }, browsed.Files.Select(f => f.RelativePath).ToArray());
+    }
+
+    [TestMethod]
+    public void ExtractRestoresOnlySelectedFiles()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var target = Path.Combine(root, "target");
+        var image = Path.Combine(root, "backup.rcimg");
+        Directory.CreateDirectory(Path.Combine(source, "nested"));
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        File.WriteAllText(Path.Combine(source, "nested", "beta.txt"), "beta");
+        File.WriteAllText(Path.Combine(source, "nested", "gamma.txt"), "gamma");
+
+        var engine = new ImageEngine();
+        engine.Create(new ImageOptions(source, image, CompressionMode.High, null));
+        var report = engine.Extract(new ExtractOptions(image, target, new[] { "nested/beta.txt" }, null, Overwrite: false));
+
+        Assert.AreEqual(1, report.FileCount);
+        Assert.AreEqual("beta", File.ReadAllText(Path.Combine(target, "nested", "beta.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(target, "alpha.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(target, "nested", "gamma.txt")));
+    }
+
+    [TestMethod]
+    public void ExtractRejectsMissingSelectedPath()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var target = Path.Combine(root, "target");
+        var image = Path.Combine(root, "backup.rcimg");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+
+        var engine = new ImageEngine();
+        engine.Create(new ImageOptions(source, image, CompressionMode.None, null));
+
+        Assert.ThrowsException<FileNotFoundException>(() =>
+            engine.Extract(new ExtractOptions(image, target, new[] { "missing.txt" }, null, Overwrite: false)));
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesImageBrowseAndExtractParity()
+    {
+        var browse = FeatureCatalog.All.Single(f => f.FeatureId == "image.browse");
+        var extract = FeatureCatalog.All.Single(f => f.FeatureId == "image.extract.directory");
+
+        Assert.AreEqual("Restore Image", browse.Gui);
+        Assert.AreEqual("rc image browse", browse.Cli);
+        Assert.AreEqual("Get-RCImageContent", browse.PowerShell);
+        Assert.AreEqual("Restore Image", extract.Gui);
+        Assert.AreEqual("rc image extract", extract.Cli);
+        Assert.AreEqual("Export-RCImageFile", extract.PowerShell);
+    }
+
+    [TestMethod]
     public void FeatureCatalogHasGuiCliAndPowerShellForEveryImplementedFeature()
     {
         FeatureCatalog.AssertImplementedParity();

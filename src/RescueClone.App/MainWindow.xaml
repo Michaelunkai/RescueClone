@@ -60,13 +60,19 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBox x:Name="RestoreImagePathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Image path"/>
                     <TextBox x:Name="TargetPathBox" Grid.Row="1" Margin="0,0,0,8" ToolTip="Restore target directory"/>
                     <PasswordBox x:Name="RestorePasswordBox" Grid.Row="2" Width="260" HorizontalAlignment="Left" Margin="0,0,0,8" ToolTip="Optional password"/>
                     <CheckBox x:Name="OverwriteBox" Grid.Row="3" Content="Overwrite existing files" Margin="0,0,0,8"/>
-                    <Button Grid.Row="4" Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Restore Image" Click="RestoreImage_Click"/>
+                    <TextBox x:Name="ExtractPathsBox" Grid.Row="4" Margin="0,0,0,8" ToolTip="Relative file or folder paths to extract; separate multiple paths with semicolons"/>
+                    <WrapPanel Grid.Row="5">
+                        <Button Width="140" Height="34" Content="Browse Image" Click="BrowseImage_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Extract Paths" Click="ExtractImage_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Restore Image" Click="RestoreImage_Click"/>
+                    </WrapPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Backup Job">

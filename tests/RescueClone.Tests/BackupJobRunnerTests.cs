@@ -946,6 +946,16 @@ public sealed class BackupJobRunnerTests
             return new ImageReport(imagePath, 1, 5, 5, "verified123", new[] { new ImageFileEntry("alpha.txt", 5, 5, "verified123") }, FormatVersion: 2);
         }
 
+        public ImageBrowseReport Browse(string imagePath, string? password)
+        {
+            throw new NotSupportedException();
+        }
+
+        public RestoreReport Extract(ExtractOptions options)
+        {
+            throw new NotSupportedException();
+        }
+
         public RestoreReport Restore(RestoreOptions options)
         {
             throw new NotSupportedException();

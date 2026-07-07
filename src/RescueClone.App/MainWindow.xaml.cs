@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Windows;
 using RescueClone.Core;
@@ -44,6 +45,21 @@ public partial class MainWindow : Window
     private void VerifyImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Verify(VerifyImagePathBox.Text, EmptyToNull(VerifyPasswordBox.Password)));
+    }
+
+    private void BrowseImage_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _engine.Browse(RestoreImagePathBox.Text, EmptyToNull(RestorePasswordBox.Password)));
+    }
+
+    private void ExtractImage_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _engine.Extract(new ExtractOptions(
+            RestoreImagePathBox.Text,
+            TargetPathBox.Text,
+            SplitPaths(ExtractPathsBox.Text),
+            EmptyToNull(RestorePasswordBox.Password),
+            OverwriteBox.IsChecked == true)));
     }
 
     private void RestoreImage_Click(object sender, RoutedEventArgs e)
@@ -227,6 +243,11 @@ public partial class MainWindow : Window
     private static int? ParseNullableInt(string value) => string.IsNullOrWhiteSpace(value) ? null : int.Parse(value);
 
     private static long? ParseNullableLong(string value) => string.IsNullOrWhiteSpace(value) ? null : long.Parse(value);
+
+    private static IReadOnlyList<string> SplitPaths(string value)
+    {
+        return value.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
 
     private ScheduleDefinition ReadScheduleDefinition()
     {

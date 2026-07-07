@@ -97,6 +97,34 @@ function Test-RCImage {
     Invoke-RCJson -ArgumentList $args
 }
 
+function Get-RCImageContent {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$ImagePath,
+        [string]$Password
+    )
+    $args = @('image','browse','--image',$ImagePath)
+    if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+    Invoke-RCJson -ArgumentList $args
+}
+
+function Export-RCImageFile {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$ImagePath,
+        [Parameter(Mandatory=$true)][string]$TargetPath,
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string[]]$Path,
+        [string]$Password,
+        [switch]$Overwrite
+    )
+    if ($PSCmdlet.ShouldProcess($TargetPath, "Extract selected image content from $ImagePath")) {
+        $args = @('image','extract','--image',$ImagePath,'--target',$TargetPath,'--paths',($Path -join ';'))
+        if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+        if ($Overwrite) { $args += '--overwrite' }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
 function Restore-RCImage {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
     param(

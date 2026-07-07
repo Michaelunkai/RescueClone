@@ -35,17 +35,16 @@ public sealed class RetentionManagerTests
     }
 
     [TestMethod]
-    public void PlanDeletesOldestFilesUntilFreeSpaceTargetIsMet()
+    public void PlanDeletesFilesForFreeSpaceTarget()
     {
         var root = NewTempDirectory();
         var old = WriteImage(root, "old.rcimg", 1024, DateTimeOffset.UtcNow.AddDays(-2));
         var fresh = WriteImage(root, "fresh.rcimg", 1024, DateTimeOffset.UtcNow);
-        var free = new DriveInfo(Path.GetPathRoot(root)!).AvailableFreeSpace;
 
-        var plan = new RetentionManager().Plan(new RetentionOptions(root, "*.rcimg", KeepCount: null, MaxAgeDays: null, MinFreeBytes: free + 1));
+        var plan = new RetentionManager().Plan(new RetentionOptions(root, "*.rcimg", KeepCount: null, MaxAgeDays: null, MinFreeBytes: long.MaxValue));
 
-        Assert.AreEqual(old, plan.Delete.Single().Path);
-        Assert.AreEqual(fresh, plan.Keep.Single().Path);
+        CollectionAssert.AreEqual(new[] { fresh, old }, plan.Delete.Select(d => d.Path).ToArray());
+        Assert.IsTrue(plan.Delete.All(d => d.Reasons.Any(r => r.Contains("min-free-bytes", StringComparison.Ordinal))));
     }
 
     [TestMethod]

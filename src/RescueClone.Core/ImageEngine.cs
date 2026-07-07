@@ -119,10 +119,22 @@ public sealed class ImageEngine : IImageEngine
 
     public ImageReport Verify(string imagePath, string? password)
     {
-        var (files, formatVersion) = ReadImage(imagePath, password, restorePath: null, overwrite: false, verifyOnly: true);
+        var (files, formatVersion) = ReadImage(imagePath, password, restorePath: null, overwrite: false, verifyOnly: true, includePaths: null);
         var originalBytes = files.Sum(f => f.OriginalLength);
         var storedBytes = files.Sum(f => f.StoredLength);
         return new ImageReport(imagePath, files.Count, originalBytes, storedBytes, ComputeRootHash(files), files, formatVersion);
+    }
+
+    public ImageBrowseReport Browse(string imagePath, string? password)
+    {
+        var verified = Verify(imagePath, password);
+        return new ImageBrowseReport(
+            verified.ImagePath,
+            verified.FileCount,
+            verified.OriginalBytes,
+            verified.RootSha256,
+            verified.Files,
+            verified.FormatVersion);
     }
 
     public RestoreReport Restore(RestoreOptions options)
@@ -131,23 +143,38 @@ public sealed class ImageEngine : IImageEngine
             throw new IOException("Target path is not empty. Pass overwrite=true to restore into it.");
 
         Directory.CreateDirectory(options.TargetPath);
-        var (files, _) = ReadImage(options.ImagePath, options.Password, options.TargetPath, options.Overwrite, verifyOnly: false);
+        var (files, _) = ReadImage(options.ImagePath, options.Password, options.TargetPath, options.Overwrite, verifyOnly: false, includePaths: null);
         return new RestoreReport(options.ImagePath, options.TargetPath, files.Count, files.Sum(f => f.OriginalLength));
     }
 
-    private static (List<ImageFileEntry> Files, int FormatVersion) ReadImage(string imagePath, string? password, string? restorePath, bool overwrite, bool verifyOnly)
+    public RestoreReport Extract(ExtractOptions options)
+    {
+        if (options.RelativePaths.Count == 0)
+            throw new ArgumentException("At least one relative path is required for extraction.");
+        if (Directory.Exists(options.TargetPath) && Directory.EnumerateFileSystemEntries(options.TargetPath).Any() && !options.Overwrite)
+            throw new IOException("Target path is not empty. Pass overwrite=true to extract into it.");
+
+        Directory.CreateDirectory(options.TargetPath);
+        var includePaths = NormalizeIncludePaths(options.RelativePaths);
+        var (files, _) = ReadImage(options.ImagePath, options.Password, options.TargetPath, options.Overwrite, verifyOnly: false, includePaths);
+        if (files.Count == 0)
+            throw new FileNotFoundException("No files in the image matched the requested extraction paths.");
+        return new RestoreReport(options.ImagePath, options.TargetPath, files.Count, files.Sum(f => f.OriginalLength));
+    }
+
+    private static (List<ImageFileEntry> Files, int FormatVersion) ReadImage(string imagePath, string? password, string? restorePath, bool overwrite, bool verifyOnly, IReadOnlyList<string>? includePaths)
     {
         using var input = File.OpenRead(imagePath);
         var magic = new byte[V1Magic.Length];
         ReadExactly(input, magic);
         if (magic.SequenceEqual(V1Magic))
-            return (ReadV1Image(input, password, restorePath, overwrite, verifyOnly), 1);
+            return (ReadV1Image(input, password, restorePath, overwrite, verifyOnly, includePaths), 1);
         if (magic.SequenceEqual(V2Magic))
-            return (ReadV2Image(input, imagePath, password, restorePath, overwrite, verifyOnly), 2);
+            return (ReadV2Image(input, imagePath, password, restorePath, overwrite, verifyOnly, includePaths), 2);
         throw new InvalidDataException("Not a RescueClone image.");
     }
 
-    private static List<ImageFileEntry> ReadV1Image(Stream input, string? password, string? restorePath, bool overwrite, bool verifyOnly)
+    private static List<ImageFileEntry> ReadV1Image(Stream input, string? password, string? restorePath, bool overwrite, bool verifyOnly, IReadOnlyList<string>? includePaths)
     {
         var header = ReadJson<ContainerHeader>(input);
         var compression = Enum.Parse<CompressionMode>(header.Compression);
@@ -170,11 +197,12 @@ public sealed class ImageEngine : IImageEngine
             if (!StringComparer.OrdinalIgnoreCase.Equals(hash, entry.Sha256))
                 throw new InvalidDataException($"Checksum mismatch for {entry.RelativePath}.");
 
-            if (!verifyOnly && restorePath is not null)
+            var included = IsIncluded(entry.RelativePath, includePaths);
+            if (!verifyOnly && restorePath is not null && included)
             {
                 var target = Path.GetFullPath(Path.Combine(restorePath, entry.RelativePath.Replace('/', Path.DirectorySeparatorChar)));
                 var root = Path.GetFullPath(restorePath);
-                if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                if (!IsWithinRoot(root, target))
                     throw new InvalidDataException($"Unsafe relative path in image: {entry.RelativePath}");
                 Directory.CreateDirectory(Path.GetDirectoryName(target) ?? root);
                 if (File.Exists(target) && !overwrite)
@@ -182,13 +210,14 @@ public sealed class ImageEngine : IImageEngine
                 File.WriteAllBytes(target, raw);
             }
 
-            entries.Add(entry);
+            if (included)
+                entries.Add(entry);
         }
 
         return entries;
     }
 
-    private static List<ImageFileEntry> ReadV2Image(FileStream input, string imagePath, string? password, string? restorePath, bool overwrite, bool verifyOnly)
+    private static List<ImageFileEntry> ReadV2Image(FileStream input, string imagePath, string? password, string? restorePath, bool overwrite, bool verifyOnly, IReadOnlyList<string>? includePaths)
     {
         var header = ReadJson<ContainerHeader>(input);
         var compression = Enum.Parse<CompressionMode>(header.Compression);
@@ -202,7 +231,8 @@ public sealed class ImageEngine : IImageEngine
 
         foreach (var file in manifest.Files)
         {
-            var output = verifyOnly || restorePath is null ? null : OpenRestoreTarget(restorePath, file.RelativePath, overwrite);
+            var included = IsIncluded(file.RelativePath, includePaths);
+            var output = verifyOnly || restorePath is null || !included ? null : OpenRestoreTarget(restorePath, file.RelativePath, overwrite);
             using (output)
             using (var hasher = SHA256.Create())
             {
@@ -229,11 +259,13 @@ public sealed class ImageEngine : IImageEngine
                 if (!StringComparer.OrdinalIgnoreCase.Equals(fileHash, file.Sha256))
                     throw new InvalidDataException($"Checksum mismatch for {file.RelativePath}.");
 
-                entries.Add(new ImageFileEntry(file.RelativePath, file.OriginalLength, storedLength, file.Sha256));
+                if (included)
+                    entries.Add(new ImageFileEntry(file.RelativePath, file.OriginalLength, storedLength, file.Sha256));
             }
         }
 
-        var rootHash = ComputeRootHash(entries);
+        var allEntries = manifest.Files.Select(file => new ImageFileEntry(file.RelativePath, file.OriginalLength, file.Blocks.Sum(block => block.StoredLength), file.Sha256)).ToArray();
+        var rootHash = ComputeRootHash(allEntries);
         if (!StringComparer.OrdinalIgnoreCase.Equals(rootHash, manifest.RootSha256))
             throw new InvalidDataException($"Manifest root checksum mismatch in image: {imagePath}");
         return entries;
@@ -243,7 +275,7 @@ public sealed class ImageEngine : IImageEngine
     {
         var target = Path.GetFullPath(Path.Combine(restorePath, relativePath.Replace('/', Path.DirectorySeparatorChar)));
         var root = Path.GetFullPath(restorePath);
-        if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        if (!IsWithinRoot(root, target))
             throw new InvalidDataException($"Unsafe relative path in image: {relativePath}");
         Directory.CreateDirectory(Path.GetDirectoryName(target) ?? root);
         if (File.Exists(target) && !overwrite)
@@ -332,6 +364,31 @@ public sealed class ImageEngine : IImageEngine
     {
         var canonical = string.Join('\n', entries.Select(e => $"{e.RelativePath}|{e.OriginalLength}|{e.Sha256}"));
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
+    }
+
+    private static IReadOnlyList<string> NormalizeIncludePaths(IReadOnlyList<string> relativePaths)
+    {
+        return relativePaths
+            .Select(path => path.Replace('\\', '/').Trim('/'))
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .ToArray();
+    }
+
+    private static bool IsIncluded(string relativePath, IReadOnlyList<string>? includePaths)
+    {
+        if (includePaths is null)
+            return true;
+        var normalized = relativePath.Replace('\\', '/').Trim('/');
+        return includePaths.Any(include =>
+            string.Equals(normalized, include, StringComparison.OrdinalIgnoreCase) ||
+            normalized.StartsWith(include.TrimEnd('/') + "/", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsWithinRoot(string root, string target)
+    {
+        var normalizedRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root)) + Path.DirectorySeparatorChar;
+        var normalizedTarget = Path.GetFullPath(target);
+        return normalizedTarget.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void WriteJson<T>(Stream stream, T value)
