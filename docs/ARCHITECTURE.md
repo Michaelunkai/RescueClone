@@ -241,7 +241,7 @@ The project uses layered verification:
 | Portable smoke | `scripts\Test-Portable.ps1` | Uses the published CLI and PowerShell module for image create, verify, restore, and feature catalog proof. |
 | Install smoke | `scripts\Test-PortableInstall.ps1` | Installs to a disposable root, verifies installed CLI and PowerShell feature catalog access, then uninstalls. |
 | Dependency boundary | `scripts\Test-PortableDependencyBoundary.ps1` | Proves normal CLI service and GUI module loads stay inside project root and `%WINDIR%`. |
-| Package verification | `scripts\New-PortablePackage.ps1` | Builds ZIP, SHA-256 sidecar, and validates required entries. |
+| Package verification | `scripts\New-PortablePackage.ps1` and `scripts\Test-PortablePackage.ps1` | Builds ZIP and SHA-256 sidecar, validates required entries, extracts the ZIP, and runs the extracted CLI and PowerShell feature catalogs. |
 | Parity catalog | `FeatureCatalog` and `docs\PARITY.md` | Ensures documented implemented features expose GUI, CLI, and PowerShell surfaces. |
 
 ## Current Boundaries

@@ -58,6 +58,29 @@ if ($missingEntries.Count -gt 0) {
     throw "Portable package is missing required entries: $($missingEntries -join ', ')"
 }
 
+$extractRoot = Join-Path $Root '.tmp\package-smoke'
+if (Test-Path -LiteralPath $extractRoot) {
+    Remove-Item -LiteralPath $extractRoot -Recurse -Force
+}
+New-Item -ItemType Directory -Path $extractRoot -Force | Out-Null
+Expand-Archive -LiteralPath $packageFull -DestinationPath $extractRoot -Force
+
+$extractedCli = Join-Path $extractRoot 'publish\cli\rc.exe'
+$extractedModule = Join-Path $extractRoot 'powershell\RescueClone\RescueClone.psd1'
+if (-not (Test-Path -LiteralPath $extractedCli -PathType Leaf)) {
+    throw "Extracted package is missing CLI: $extractedCli"
+}
+if (-not (Test-Path -LiteralPath $extractedModule -PathType Leaf)) {
+    throw "Extracted package is missing PowerShell module: $extractedModule"
+}
+
+$features = @(& $extractedCli features | ConvertFrom-Json)
+Import-Module $extractedModule -Force
+$psFeatures = @(Get-RCFeature)
+if ($features.Count -eq 0 -or $features.Count -ne $psFeatures.Count) {
+    throw "Extracted package feature catalog mismatch. CLI=$($features.Count), PowerShell=$($psFeatures.Count)."
+}
+
 [pscustomobject]@{
     PackagePath = $packageFull
     Sha256Path = $hashPath
@@ -65,4 +88,7 @@ if ($missingEntries.Count -gt 0) {
     EntryCount = $entryNames.Count
     RequiredEntryCount = $requiredEntries.Count
     SidecarMatches = $true
+    ExtractRoot = $extractRoot
+    ExtractedCliFeatureCount = $features.Count
+    ExtractedPowerShellFeatureCount = $psFeatures.Count
 } | ConvertTo-Json
