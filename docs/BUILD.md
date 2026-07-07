@@ -27,6 +27,7 @@ It also builds the native C++ engine boundary here:
 - `native\bin\RescueClone.Native.dll`
 
 `scripts\Build-Native.ps1` auto-detects an F-local MinGW `g++.exe`; pass `-CompilerPath` to use a different compiler path.
+`scripts\Build-Portable.ps1` also accepts `-NativeCompilerPath` and forwards it to the native build, which is how CI uses the hosted MSYS2 MinGW compiler.
 
 Direct SDK build commands are still available for development:
 
@@ -35,6 +36,11 @@ dotnet restore RescueClone.sln --packages .\.nuget-packages
 dotnet build RescueClone.sln -c Release
 dotnet test RescueClone.sln -c Release
 ```
+
+CI:
+
+- `.github\workflows\ci.yml` runs on `windows-latest`.
+- It installs .NET SDK `10.0.301` from `global.json`, installs MSYS2 MinGW, runs `scripts\Build-Portable.ps1 -AllowSystemDotNetFallback -NativeCompilerPath C:\msys64\mingw64\bin\g++.exe`, runs `scripts\Test-Portable.ps1`, builds the portable ZIP, and uploads it as an artifact.
 
 CLI examples:
 

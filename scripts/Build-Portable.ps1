@@ -2,6 +2,7 @@
 param(
     [ValidateSet('Release','Debug')]
     [string]$Configuration = 'Release',
+    [string]$NativeCompilerPath,
     [switch]$AllowSystemDotNetFallback
 )
 
@@ -36,7 +37,11 @@ function Invoke-Native {
     }
 }
 
-& (Join-Path $Root 'scripts\Build-Native.ps1') | Out-Host
+$nativeArgs = @{}
+if ($NativeCompilerPath) {
+    $nativeArgs.CompilerPath = $NativeCompilerPath
+}
+& (Join-Path $Root 'scripts\Build-Native.ps1') @nativeArgs | Out-Host
 
 Invoke-Native $DotNet @('restore', (Join-Path $Root 'RescueClone.sln'), '--packages', $env:NUGET_PACKAGES, '-r', 'win-x64')
 Invoke-Native $DotNet @('test', (Join-Path $Root 'RescueClone.sln'), '-c', $Configuration, '--no-restore')
