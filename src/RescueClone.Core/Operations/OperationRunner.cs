@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using RescueClone.Core.Jobs;
 using RescueClone.Core.Retention;
 using RescueClone.Core.RestorePlanning;
@@ -7,7 +8,7 @@ namespace RescueClone.Core.Operations;
 
 public sealed class OperationRunner
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
     private readonly ImageEngine _imageEngine;
     private readonly BackupJobRunner _jobRunner;
     private readonly RestorePlanner _restorePlanner;
@@ -73,6 +74,29 @@ public sealed class OperationRunner
                 RequiredString(request, "target"),
                 OptionalString(request, "password"),
                 BoolValue(request, "overwrite"))),
+            "job.backup.directory.create" => _jobRunner.Save(
+                RequiredString(request, "file"),
+                ReadBackupJobDefinition(request)),
+            "job.backup.directory.update" => _jobRunner.Update(
+                RequiredString(request, "file"),
+                new BackupJobUpdateOptions(
+                    OptionalString(request, "jobId"),
+                    OptionalString(request, "name"),
+                    NullableBoolValue(request, "enabled"),
+                    OptionalString(request, "source"),
+                    OptionalString(request, "image"),
+                    NullableEnumValue<CompressionMode>(request, "compression"),
+                    OptionalString(request, "password"),
+                    NullableBoolValue(request, "verifyAfterCreate"),
+                    OptionalString(request, "logDirectory"))),
+            "job.backup.directory.delete" => _jobRunner.Delete(RequiredString(request, "file")),
+            "job.backup.directory.export" => _jobRunner.Export(
+                RequiredString(request, "file"),
+                RequiredString(request, "output")),
+            "job.backup.directory.import" => _jobRunner.Import(
+                RequiredString(request, "file"),
+                RequiredString(request, "target")),
+            "job.backup.directory.status" => _jobRunner.Status(RequiredString(request, "file")),
             "job.backup.directory.validate" => _jobRunner.Validate(_jobRunner.Load(RequiredString(request, "file"))),
             "job.backup.directory.run" => _jobRunner.Run(_jobRunner.Load(RequiredString(request, "file")), BoolValue(request, "forceDisabled")),
             "retention.plan" => new RetentionManager().Plan(new RetentionOptions(
@@ -99,6 +123,20 @@ public sealed class OperationRunner
                 OptionalString(request, "bcdStore"))),
             _ => throw new ArgumentException($"Unknown operation kind: {request.Kind}")
         };
+    }
+
+    private static BackupJobDefinition ReadBackupJobDefinition(OperationRequest request)
+    {
+        return new BackupJobDefinition(
+            RequiredString(request, "jobId"),
+            RequiredString(request, "name"),
+            BoolValue(request, "enabled", defaultValue: true),
+            RequiredString(request, "source"),
+            RequiredString(request, "image"),
+            EnumValue<CompressionMode>(request, "compression", CompressionMode.Medium),
+            OptionalString(request, "password"),
+            BoolValue(request, "verifyAfterCreate", defaultValue: true),
+            OptionalString(request, "logDirectory"));
     }
 
     private static string? WriteReport(OperationReport report, string? logDirectory)
@@ -134,10 +172,10 @@ public sealed class OperationRunner
         return value.GetString();
     }
 
-    private static bool BoolValue(OperationRequest request, string name)
+    private static bool BoolValue(OperationRequest request, string name, bool defaultValue = false)
     {
         if (!request.Parameters.TryGetValue(name, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return false;
+            return defaultValue;
         return value.ValueKind switch
         {
             JsonValueKind.True => true,
@@ -145,6 +183,13 @@ public sealed class OperationRunner
             JsonValueKind.String => bool.Parse(value.GetString() ?? "false"),
             _ => throw new ArgumentException($"Operation parameter must be a Boolean: {name}")
         };
+    }
+
+    private static bool? NullableBoolValue(OperationRequest request, string name)
+    {
+        if (!request.Parameters.TryGetValue(name, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+        return BoolValue(request, name);
     }
 
     private static long? LongValue(OperationRequest request, string name)
@@ -177,5 +222,20 @@ public sealed class OperationRunner
         if (string.IsNullOrWhiteSpace(value))
             return defaultValue;
         return Enum.Parse<T>(value, ignoreCase: true);
+    }
+
+    private static T? NullableEnumValue<T>(OperationRequest request, string name) where T : struct
+    {
+        var value = OptionalString(request, name);
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.Parse<T>(value, ignoreCase: true);
+    }
+
+    private static JsonSerializerOptions CreateJsonOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
     }
 }

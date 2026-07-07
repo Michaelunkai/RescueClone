@@ -54,6 +54,87 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public void RunJobManagementOperations()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var updatedSource = Path.Combine(root, "updated-source");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(updatedSource);
+        var jobPath = Path.Combine(root, "jobs", "operation-job.json");
+        var exportPath = Path.Combine(root, "exports", "operation-job.json");
+        var importPath = Path.Combine(root, "imports", "operation-job.json");
+        var runner = new OperationRunner();
+
+        var create = runner.Run(new OperationRequest(
+            "job.backup.directory.create",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", jobPath),
+                ["jobId"] = Json("jobId", "operation-job"),
+                ["name"] = Json("name", "Operation Job"),
+                ["source"] = Json("source", source),
+                ["image"] = Json("image", Path.Combine(root, "images", "operation-job.rcimg")),
+                ["compression"] = Json("compression", "Medium"),
+                ["verifyAfterCreate"] = Json("verifyAfterCreate", true),
+                ["logDirectory"] = Json("logDirectory", Path.Combine(root, "logs"))
+            },
+            "job-create"), Path.Combine(root, "ops"));
+        var update = runner.Run(new OperationRequest(
+            "job.backup.directory.update",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", jobPath),
+                ["name"] = Json("name", "Operation Job Updated"),
+                ["source"] = Json("source", updatedSource),
+                ["compression"] = Json("compression", "High"),
+                ["verifyAfterCreate"] = Json("verifyAfterCreate", false)
+            },
+            "job-update"), Path.Combine(root, "ops"));
+        var status = runner.Run(new OperationRequest(
+            "job.backup.directory.status",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", jobPath)
+            },
+            "job-status"), Path.Combine(root, "ops"));
+        var export = runner.Run(new OperationRequest(
+            "job.backup.directory.export",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", jobPath),
+                ["output"] = Json("output", exportPath)
+            },
+            "job-export"), Path.Combine(root, "ops"));
+        var import = runner.Run(new OperationRequest(
+            "job.backup.directory.import",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", exportPath),
+                ["target"] = Json("target", importPath)
+            },
+            "job-import"), Path.Combine(root, "ops"));
+        var delete = runner.Run(new OperationRequest(
+            "job.backup.directory.delete",
+            new Dictionary<string, JsonElement>
+            {
+                ["file"] = Json("file", jobPath)
+            },
+            "job-delete"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, create.State);
+        Assert.AreEqual(OperationState.Succeeded, update.State);
+        Assert.AreEqual("Operation Job Updated", status.Result!.Value.GetProperty("job").GetProperty("name").GetString());
+        Assert.AreEqual("High", status.Result!.Value.GetProperty("job").GetProperty("compression").GetString());
+        Assert.AreEqual(OperationState.Succeeded, export.State);
+        Assert.IsTrue(File.Exists(exportPath));
+        Assert.AreEqual(OperationState.Succeeded, import.State);
+        Assert.IsTrue(File.Exists(importPath));
+        Assert.AreEqual(OperationState.Succeeded, delete.State);
+        Assert.IsFalse(File.Exists(jobPath));
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesOperationParity()
     {
         var feature = FeatureCatalog.All.Single(f => f.FeatureId == "operation.run.local");
