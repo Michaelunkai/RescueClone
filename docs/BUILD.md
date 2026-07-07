@@ -83,7 +83,12 @@ Backup job JSON example:
   "retryCount": 2,
   "retryDelaySeconds": 5,
   "restoreTestAfterCreate": true,
-  "restoreTestTargetPath": "F:\\Backups\\RestoreTests\\daily-docs"
+  "restoreTestTargetPath": "F:\\Backups\\RestoreTests\\daily-docs",
+  "applyRetentionAfterCreate": true,
+  "retentionPattern": "*.rcimg",
+  "retentionKeepCount": 7,
+  "retentionMaxAgeDays": 30,
+  "retentionMinFreeBytes": 10737418240
 }
 ```
 

@@ -16,9 +16,13 @@ public sealed class RetentionManager
             throw new ArgumentOutOfRangeException(nameof(options.MinFreeBytes));
 
         var pattern = string.IsNullOrWhiteSpace(options.Pattern) ? "*.rcimg" : options.Pattern;
+        var excludedPaths = new HashSet<string>(
+            options.ExcludedPaths?.Select(path => Path.GetFullPath(path)) ?? Array.Empty<string>(),
+            StringComparer.OrdinalIgnoreCase);
         var files = Directory.EnumerateFiles(options.RepositoryPath, pattern, SearchOption.TopDirectoryOnly)
             .Select(path => new FileInfo(path))
             .Where(file => file.Exists)
+            .Where(file => !excludedPaths.Contains(file.FullName))
             .OrderByDescending(file => file.LastWriteTimeUtc)
             .ThenBy(file => file.FullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();

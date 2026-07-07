@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using RescueClone.Core.Retention;
 
 namespace RescueClone.Core.Jobs;
 
@@ -29,7 +30,12 @@ public sealed record BackupJobDefinition(
     int? RetryCount = null,
     int? RetryDelaySeconds = null,
     bool RestoreTestAfterCreate = false,
-    string? RestoreTestTargetPath = null)
+    string? RestoreTestTargetPath = null,
+    bool ApplyRetentionAfterCreate = false,
+    string? RetentionPattern = null,
+    int? RetentionKeepCount = null,
+    int? RetentionMaxAgeDays = null,
+    long? RetentionMinFreeBytes = null)
 {
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? JobId : Name;
@@ -57,7 +63,8 @@ public sealed record BackupJobRunResult(
     BackupNotificationResult? WindowsEventLogNotification = null,
     BackupNotificationResult? EmailNotification = null,
     IReadOnlyList<BackupRetryAttempt>? RetryAttempts = null,
-    RestoreReport? RestoreTest = null);
+    RestoreReport? RestoreTest = null,
+    RetentionApplyReport? Retention = null);
 
 public sealed record BackupScriptHookResult(
     string Phase,

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RescueClone.Core.Retention;
 
 namespace RescueClone.Core.Jobs;
 
@@ -59,6 +60,14 @@ public sealed class BackupJobRunner
             errors.Add("RetryDelaySeconds cannot be negative.");
         if (!job.RestoreTestAfterCreate && !string.IsNullOrWhiteSpace(job.RestoreTestTargetPath))
             errors.Add("RestoreTestTargetPath requires RestoreTestAfterCreate.");
+        if (!job.ApplyRetentionAfterCreate && HasRetentionPolicy(job))
+            errors.Add("Retention policy fields require ApplyRetentionAfterCreate.");
+        if (job.RetentionKeepCount is < 0)
+            errors.Add("RetentionKeepCount cannot be negative.");
+        if (job.RetentionMaxAgeDays is < 0)
+            errors.Add("RetentionMaxAgeDays cannot be negative.");
+        if (job.RetentionMinFreeBytes is < 0)
+            errors.Add("RetentionMinFreeBytes cannot be negative.");
         if (job.NotifyEmail)
         {
             if (string.IsNullOrWhiteSpace(job.EmailFrom))
@@ -111,10 +120,11 @@ public sealed class BackupJobRunner
         if (!string.IsNullOrWhiteSpace(job.PostBackupScriptPath))
             hooks.Add(RunScriptHook("post-backup", job.PostBackupScriptPath, job));
 
+        var retention = ApplyRetention(job);
         var finished = DateTimeOffset.UtcNow;
         var notification = TryPublishWindowsEventLogNotification(job, success: true, $"Backup job {job.JobId} completed. Image: {job.ImagePath}");
         var email = TryPublishEmailNotification(job, success: true, $"Backup job {job.JobId} completed", $"Backup job {job.JobId} completed.{Environment.NewLine}Image: {job.ImagePath}{Environment.NewLine}Root SHA-256: {backup.RootSha256}");
-        var reports = WriteRunReports(job, started, finished, backup.Created, backup.Verified, backup.RootSha256, hooks, notification, email, backup.Attempts, backup.RestoreTest);
+        var reports = WriteRunReports(job, started, finished, backup.Created, backup.Verified, backup.RootSha256, hooks, notification, email, backup.Attempts, backup.RestoreTest, retention);
         return new BackupJobRunResult(
             job.JobId,
             job.Name,
@@ -132,7 +142,8 @@ public sealed class BackupJobRunner
             notification,
             email,
             backup.Attempts,
-            backup.RestoreTest);
+            backup.RestoreTest,
+            retention);
     }
 
     private BackupRunAttemptResult RunBackupWithRetry(BackupJobDefinition job)
@@ -254,6 +265,29 @@ public sealed class BackupJobRunner
         return _engine.Restore(new RestoreOptions(job.ImagePath, targetPath, job.Password, Overwrite: false));
     }
 
+    private static RetentionApplyReport? ApplyRetention(BackupJobDefinition job)
+    {
+        if (!job.ApplyRetentionAfterCreate)
+            return null;
+
+        var repositoryPath = Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory;
+        return new RetentionManager().Apply(new RetentionOptions(
+            repositoryPath,
+            string.IsNullOrWhiteSpace(job.RetentionPattern) ? "*.rcimg" : job.RetentionPattern,
+            job.RetentionKeepCount,
+            job.RetentionMaxAgeDays,
+            job.RetentionMinFreeBytes,
+            new[] { job.ImagePath }));
+    }
+
+    private static bool HasRetentionPolicy(BackupJobDefinition job)
+    {
+        return !string.IsNullOrWhiteSpace(job.RetentionPattern)
+            || job.RetentionKeepCount is not null
+            || job.RetentionMaxAgeDays is not null
+            || job.RetentionMinFreeBytes is not null;
+    }
+
     private static string CombineOutput(string output, string error)
     {
         return string.IsNullOrWhiteSpace(error) ? output.Trim() : $"{output.Trim()}{Environment.NewLine}{error.Trim()}".Trim();
@@ -362,7 +396,7 @@ public sealed class BackupJobRunner
             .Where(static recipient => !string.IsNullOrWhiteSpace(recipient));
     }
 
-    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts, RestoreReport? restoreTest)
+    private static BackupJobReportPaths WriteRunReports(BackupJobDefinition job, DateTimeOffset started, DateTimeOffset finished, ImageReport report, bool verified, string rootSha, IReadOnlyList<BackupScriptHookResult> hooks, BackupNotificationResult? notification, BackupNotificationResult? email, IReadOnlyList<BackupRetryAttempt> retryAttempts, RestoreReport? restoreTest, RetentionApplyReport? retention)
     {
         var directory = string.IsNullOrWhiteSpace(job.LogDirectory)
             ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(job.ImagePath)) ?? Environment.CurrentDirectory, "logs")
@@ -389,7 +423,8 @@ public sealed class BackupJobRunner
             notification,
             email,
             retryAttempts,
-            restoreTest);
+            restoreTest,
+            retention);
         File.WriteAllText(logPath, JsonSerializer.Serialize(payload, JsonOptions));
         File.WriteAllText(htmlPath, BuildHtmlReport(payload));
         RotateReports(directory, safeId, job.LogRetentionCount);
@@ -407,6 +442,9 @@ public sealed class BackupJobRunner
         var restoreTestRows = report.RestoreTest is null
             ? "<tr><td colspan=\"4\">Not requested</td></tr>"
             : $"<tr><td>{WebUtility.HtmlEncode(report.RestoreTest.TargetPath)}</td><td>{report.RestoreTest.FileCount}</td><td>{report.RestoreTest.RestoredBytes}</td><td>{WebUtility.HtmlEncode(report.RestoreTest.ImagePath)}</td></tr>";
+        var retentionRows = report.Retention is null
+            ? "<tr><td colspan=\"4\">Not requested</td></tr>"
+            : $"<tr><td>{report.Retention.DeletedFileCount}</td><td>{report.Retention.DeletedBytes}</td><td>{report.Retention.Plan.Keep.Count}</td><td>{report.Retention.Plan.Delete.Count}</td></tr>";
 
         return $$"""
         <!doctype html>
@@ -449,6 +487,11 @@ public sealed class BackupJobRunner
           <table>
             <tr><th>Target</th><th>Files</th><th>Bytes</th><th>Image</th></tr>
             {{restoreTestRows}}
+          </table>
+          <h2>Retention</h2>
+          <table>
+            <tr><th>Deleted Files</th><th>Deleted Bytes</th><th>Kept Candidates</th><th>Delete Candidates</th></tr>
+            {{retentionRows}}
           </table>
           <h2>Notifications</h2>
           <table>

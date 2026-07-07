@@ -5,7 +5,8 @@ public sealed record RetentionOptions(
     string Pattern,
     int? KeepCount,
     int? MaxAgeDays,
-    long? MinFreeBytes);
+    long? MinFreeBytes,
+    IReadOnlyList<string>? ExcludedPaths = null);
 
 public sealed record RetentionCandidate(
     string Path,

@@ -134,6 +134,46 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void RunAppliesRetentionAfterCreateAndRecordsReport()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var imageDirectory = Path.Combine(root, "images");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(imageDirectory);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var oldImage = Path.Combine(imageDirectory, "old.rcimg");
+        File.WriteAllText(oldImage, "old");
+        File.SetLastWriteTimeUtc(oldImage, DateTimeOffset.UtcNow.AddDays(-2).UtcDateTime);
+        var newImage = Path.Combine(imageDirectory, "new.rcimg");
+        var job = new BackupJobDefinition(
+            "retention-docs",
+            "Retention Docs",
+            Enabled: true,
+            source,
+            newImage,
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            ApplyRetentionAfterCreate: true,
+            RetentionKeepCount: 0);
+
+        var result = new BackupJobRunner().Run(job);
+
+        Assert.IsTrue(File.Exists(newImage));
+        Assert.IsFalse(File.Exists(oldImage));
+        Assert.IsNotNull(result.Retention);
+        Assert.AreEqual(1, result.Retention.DeletedFileCount);
+        StringAssert.Contains(File.ReadAllText(result.HtmlReportPath), "Retention");
+
+        var log = JsonSerializer.Deserialize<BackupJobRunResult>(File.ReadAllText(result.LogPath), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.IsNotNull(log);
+        Assert.IsNotNull(log.Retention);
+        Assert.AreEqual(1, log.Retention.DeletedFileCount);
+    }
+
+    [TestMethod]
     public void RunExecutesPreAndPostBackupScriptHooks()
     {
         var root = NewTempDirectory();
@@ -489,6 +529,37 @@ public sealed class BackupJobRunnerTests
 
         Assert.IsFalse(result.Valid);
         Assert.IsTrue(result.Errors.Any(e => e.Contains("RestoreTestTargetPath", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void ValidateRejectsRetentionPolicyWithoutRetentionAndInvalidRetentionSettings()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var job = new BackupJobDefinition(
+            "bad-retention",
+            "Bad Retention",
+            Enabled: true,
+            source,
+            Path.Combine(root, "out.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"),
+            ApplyRetentionAfterCreate: false,
+            RetentionPattern: "*.rcimg",
+            RetentionKeepCount: -1,
+            RetentionMaxAgeDays: -1,
+            RetentionMinFreeBytes: -1);
+
+        var result = new BackupJobRunner().Validate(job);
+
+        Assert.IsFalse(result.Valid);
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("ApplyRetentionAfterCreate", StringComparison.Ordinal)));
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("RetentionKeepCount", StringComparison.Ordinal)));
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("RetentionMaxAgeDays", StringComparison.Ordinal)));
+        Assert.IsTrue(result.Errors.Any(e => e.Contains("RetentionMinFreeBytes", StringComparison.Ordinal)));
     }
 
     [TestMethod]

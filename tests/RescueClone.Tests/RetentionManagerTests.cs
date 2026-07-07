@@ -64,6 +64,19 @@ public sealed class RetentionManagerTests
     }
 
     [TestMethod]
+    public void PlanDoesNotDeleteExcludedPaths()
+    {
+        var root = NewTempDirectory();
+        var oldExcluded = WriteImage(root, "old-excluded.rcimg", 3, DateTimeOffset.UtcNow.AddDays(-5));
+        var oldDelete = WriteImage(root, "old-delete.rcimg", 3, DateTimeOffset.UtcNow.AddDays(-4));
+
+        var plan = new RetentionManager().Plan(new RetentionOptions(root, "*.rcimg", KeepCount: null, MaxAgeDays: 1, MinFreeBytes: null, ExcludedPaths: new[] { oldExcluded }));
+
+        CollectionAssert.DoesNotContain(plan.Delete.Select(d => d.Path).ToArray(), oldExcluded);
+        CollectionAssert.Contains(plan.Delete.Select(d => d.Path).ToArray(), oldDelete);
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesRetentionParity()
     {
         var plan = FeatureCatalog.All.Single(f => f.FeatureId == "retention.plan");
