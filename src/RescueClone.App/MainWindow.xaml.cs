@@ -10,6 +10,7 @@ using RescueClone.Core.Logs;
 using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
+using RescueClone.Core.Rescue;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Scheduling;
 using RescueClone.Core.Services;
@@ -23,6 +24,7 @@ public partial class MainWindow : Window
     private readonly BackupJobRunner _jobRunner = new();
     private readonly BackupLogCatalog _logCatalog = new();
     private readonly RestorePlanner _restorePlanner = new();
+    private readonly RescueAnswerManager _rescueAnswerManager = new();
     private readonly OperationRunner _operationRunner = new();
     private readonly WindowsServiceManager _serviceManager = new();
     private readonly RetentionManager _retentionManager = new();
@@ -198,6 +200,36 @@ public partial class MainWindow : Window
                 PlanHasEfiBox.IsChecked == true,
                 EmptyToNull(PlanBcdStorePathBox.Text)));
         });
+    }
+
+    private void CreateRescueAnswer_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() =>
+        {
+            var bootMode = Enum.Parse<RestoreBootMode>(((System.Windows.Controls.ComboBoxItem)RescueBootModeBox.SelectedItem).Content.ToString()!);
+            return _rescueAnswerManager.Create(new RescueAnswerOptions(
+                RescueAnswerPathBox.Text,
+                RescueRepositoryBox.Text,
+                RescueImageBox.Text,
+                EmptyToNull(RescuePasswordBox.Password),
+                RescueTargetDiskBox.Text,
+                bootMode,
+                ParseNullableLong(RescueTargetDiskSizeBox.Text),
+                ParseNullableLong(RescueRequiredBytesBox.Text),
+                RescueCurrentSystemDiskBox.IsChecked == true,
+                RescueHasEfiBox.IsChecked == true,
+                EmptyToNull(RescueBcdStoreBox.Text),
+                SplitPaths(RescueDriverDirectoriesBox.Text),
+                SplitPaths(RescueNetworkSharesBox.Text),
+                RescueRepairBootBox.IsChecked == true,
+                RescueRebootBox.IsChecked == true,
+                RescueVerifyImageBox.IsChecked == true));
+        });
+    }
+
+    private void ValidateRescueAnswer_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _rescueAnswerManager.Validate(RescueAnswerPathBox.Text, RescueVerifyImageBox.IsChecked == true));
     }
 
     private void RunOperation_Click(object sender, RoutedEventArgs e)

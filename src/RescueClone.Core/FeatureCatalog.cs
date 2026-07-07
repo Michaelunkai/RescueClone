@@ -31,6 +31,8 @@ public static class FeatureCatalog
         new("schedule.register", "Scheduler", "rc schedule register", "Register-RCSchedule", true),
         new("schedule.unregister", "Scheduler", "rc schedule unregister", "Unregister-RCSchedule", true),
         new("restore.plan.readonly", "Restore Plan", "rc restore plan", "Get-RCRestorePlan", true),
+        new("rescue.answer.create", "Rescue", "rc rescue answer-create", "New-RCRescueAnswer", true),
+        new("rescue.answer.validate", "Rescue", "rc rescue answer-validate", "Test-RCRescueAnswer", true),
         new("operation.run.local", "Operations", "rc operation run", "Start-RCOperation", true),
         new("operation.run.service", "Operations", "rc service run-operation", "Start-RCServiceOperation", true),
         new("service.install.plan", "Operations", "rc service plan-install", "Get-RCServiceInstallPlan", true),

@@ -439,6 +439,53 @@ function Get-RCRestorePlan {
     Invoke-RCJson -ArgumentList $args
 }
 
+function New-RCRescueAnswer {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$OutputPath,
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [Parameter(Mandatory=$true)][string]$ImagePath,
+        [string]$Password,
+        [Parameter(Mandatory=$true)][string]$TargetDiskId,
+        [ValidateSet('Bios','Uefi','Unknown')][string]$BootMode = 'Unknown',
+        [long]$TargetDiskSizeBytes,
+        [long]$RequiredBytes,
+        [switch]$TargetIsCurrentSystemDisk,
+        [switch]$HasEfiSystemPartition,
+        [string]$BcdStorePath,
+        [string[]]$DriverDirectory,
+        [string[]]$NetworkShare,
+        [bool]$RepairBoot = $true,
+        [switch]$RebootAfterRestore,
+        [switch]$VerifyImage
+    )
+    if ($PSCmdlet.ShouldProcess($OutputPath, "Create unattended rescue answer file")) {
+        $args = @('rescue','answer-create','--output',$OutputPath,'--repository',$RepositoryPath,'--image',$ImagePath,'--target-disk-id',$TargetDiskId,'--boot-mode',$BootMode,'--repair-boot',[string]$RepairBoot)
+        if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+        if ($PSBoundParameters.ContainsKey('TargetDiskSizeBytes')) { $args += @('--target-disk-size-bytes',[string]$TargetDiskSizeBytes) }
+        if ($PSBoundParameters.ContainsKey('RequiredBytes')) { $args += @('--required-bytes',[string]$RequiredBytes) }
+        if ($TargetIsCurrentSystemDisk) { $args += '--target-is-current-system-disk' }
+        if ($HasEfiSystemPartition) { $args += '--has-efi-system-partition' }
+        if ($PSBoundParameters.ContainsKey('BcdStorePath')) { $args += @('--bcd-store',$BcdStorePath) }
+        if ($PSBoundParameters.ContainsKey('DriverDirectory')) { $args += @('--driver-directories',($DriverDirectory -join ';')) }
+        if ($PSBoundParameters.ContainsKey('NetworkShare')) { $args += @('--network-shares',($NetworkShare -join ';')) }
+        if ($RebootAfterRestore) { $args += '--reboot-after-restore' }
+        if ($VerifyImage) { $args += '--verify-image' }
+        Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
+    }
+}
+
+function Test-RCRescueAnswer {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path,
+        [switch]$VerifyImage
+    )
+    $args = @('rescue','answer-validate','--file',$Path)
+    if ($VerifyImage) { $args += '--verify-image' }
+    Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
+}
+
 function Start-RCOperation {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

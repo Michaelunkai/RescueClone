@@ -158,6 +158,50 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            <TabItem Header="Rescue">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="RescueAnswerPathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Rescue answer JSON path"/>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBox x:Name="RescueRepositoryBox" Width="360" ToolTip="Backup repository folder" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RescueImageBox" Width="360" ToolTip="Image path or repository-relative image name"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBox x:Name="RescueTargetDiskBox" Width="220" ToolTip="Target disk identifier" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="RescueBootModeBox" Width="120" SelectedIndex="0" Margin="0,0,8,0">
+                            <ComboBoxItem Content="Unknown"/>
+                            <ComboBoxItem Content="Bios"/>
+                            <ComboBoxItem Content="Uefi"/>
+                        </ComboBox>
+                        <TextBox x:Name="RescueTargetDiskSizeBox" Width="170" ToolTip="Target disk size bytes" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RescueRequiredBytesBox" Width="170" ToolTip="Required bytes override"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBox x:Name="RescueBcdStoreBox" Width="260" ToolTip="BCD store path" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RescueDriverDirectoriesBox" Width="300" ToolTip="Driver directories separated by semicolons" Margin="0,0,8,0"/>
+                        <TextBox x:Name="RescueNetworkSharesBox" Width="300" ToolTip="Network shares separated by semicolons"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,8">
+                        <PasswordBox x:Name="RescuePasswordBox" Width="220" ToolTip="Optional image password" Margin="0,0,12,0"/>
+                        <CheckBox x:Name="RescueCurrentSystemDiskBox" Content="Target is current system disk" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <CheckBox x:Name="RescueHasEfiBox" Content="Has EFI System Partition" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <CheckBox x:Name="RescueRepairBootBox" Content="Repair boot" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <CheckBox x:Name="RescueRebootBox" Content="Reboot after restore" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <CheckBox x:Name="RescueVerifyImageBox" Content="Verify image" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <WrapPanel Grid.Row="5">
+                        <Button Width="170" Height="34" Content="Create Answer" Click="CreateRescueAnswer_Click" Margin="0,0,8,0"/>
+                        <Button Width="170" Height="34" Content="Validate Answer" Click="ValidateRescueAnswer_Click"/>
+                    </WrapPanel>
+                </Grid>
+            </TabItem>
             <TabItem Header="Operations">
                 <Grid Margin="12">
                     <Grid.RowDefinitions>

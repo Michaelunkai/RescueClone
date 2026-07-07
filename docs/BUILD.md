@@ -65,6 +65,8 @@ CLI examples:
 .\RC.cmd schedule plan --task-name event-docs --job-file .\backup-job.json --cli-path .\publish\cli\rc.exe --frequency Event --event-log Application --event-id 1000 --event-source RescueClone
 .\RC.cmd schedule unregister --task-name nightly-docs
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
+.\RC.cmd rescue answer-create --output .\rescue-answer.json --repository .\images --image daily-docs.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576 --driver-directories .\drivers --network-shares \\server\share --reboot-after-restore --verify-image
+.\RC.cmd rescue answer-validate --file .\rescue-answer.json --verify-image
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
 .\RC.cmd service serve --pipe rescueclone-local --log-directory .\operation-logs
 .\RC.cmd service run-operation --pipe rescueclone-local --request .\operation.json --log-directory .\operation-logs --timeout-ms 30000
@@ -179,6 +181,8 @@ Register-RCSchedule -TaskName nightly-docs -JobFilePath .\backup-job.json -CliPa
 Get-RCSchedulePlan -TaskName event-docs -JobFilePath .\backup-job.json -CliPath .\publish\cli\rc.exe -Frequency Event -EventLog Application -EventId 1000 -EventSource RescueClone
 Unregister-RCSchedule -TaskName nightly-docs -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
+New-RCRescueAnswer -OutputPath .\rescue-answer.json -RepositoryPath .\images -ImagePath daily-docs.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576 -DriverDirectory .\drivers -NetworkShare \\server\share -RebootAfterRestore -VerifyImage -Confirm:$false
+Test-RCRescueAnswer -Path .\rescue-answer.json -VerifyImage
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
 Start-RCServiceOperation -PipeName rescueclone-local -RequestPath .\operation.json -LogDirectory .\operation-logs -TimeoutMilliseconds 30000 -Confirm:$false
 Get-RCServiceInstallPlan -Name RescueClone -PipeName rescueclone-local -CliPath .\publish\cli\rc.exe -LogDirectory .\operation-logs -DisplayName 'RescueClone Operation Service' -StartMode demand
@@ -203,5 +207,7 @@ Portable install note: `scripts\Install-RescueClone.ps1` copies the published se
 Portable package note: `scripts\New-PortablePackage.ps1` creates a ZIP containing `publish`, `powershell`, `docs`, launchers, and portable install/uninstall scripts. It does not build an MSI/EXE.
 
 Projection note: `rc image project`, `Mount-RCImage`, and the GUI Project Image button create a managed read-only directory projection by restoring verified image content, marking projected files read-only, and writing `.rescueclone-projection.json`. `rc image projections`, `Get-RCImageMount`, and the GUI List Projections button enumerate those manifests under a selected root. `rc image unproject`, `Dismount-RCImage`, and the GUI Remove Projection button only remove directories with that manifest. This is a safe user-mode projection layer, not a signed kernel image-mount driver.
+
+Rescue answer note: `rc rescue answer-create`, `New-RCRescueAnswer`, and the GUI Rescue tab write a versioned unattended restore answer JSON with repository, image, target disk, boot mode, driver folders, network shares, boot repair, and reboot policy. Validation verifies the image when requested and reuses the restore planner blockers. This is not WinPE, ISO, USB, or PXE media creation.
 
 Disk safety checks are read-only. The evaluator fingerprints the selected disk from number, friendly name, serial number, partition style, bus type, and size, then blocks by default when the disk is missing, fingerprint-mismatched, boot/system, offline, or read-only.

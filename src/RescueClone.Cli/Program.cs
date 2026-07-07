@@ -6,6 +6,7 @@ using RescueClone.Core.Logs;
 using RescueClone.Core.Native;
 using RescueClone.Core.Operations;
 using RescueClone.Core.Retention;
+using RescueClone.Core.Rescue;
 using RescueClone.Core.RestorePlanning;
 using RescueClone.Core.Scheduling;
 using RescueClone.Core.Services;
@@ -39,6 +40,9 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "restore")
             return RunRestore(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "rescue")
+            return RunRescue(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length >= 2 && args[0] == "retention")
             return RunRetention(args[1], ParseOptions(args.Skip(2).ToArray()));
 
@@ -61,7 +65,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -237,6 +241,39 @@ static int RunStorage(string command, Dictionary<string, string> values)
             return 0;
         default:
             throw new ArgumentException($"Unknown storage command: {command}");
+    }
+}
+
+static int RunRescue(string command, Dictionary<string, string> values)
+{
+    var manager = new RescueAnswerManager();
+    switch (command)
+    {
+        case "answer-create":
+            WriteJson(manager.Create(new RescueAnswerOptions(
+                Required(values, "output"),
+                Required(values, "repository"),
+                Required(values, "image"),
+                values.GetValueOrDefault("password"),
+                Required(values, "target-disk-id"),
+                Enum.Parse<RestoreBootMode>(values.GetValueOrDefault("boot-mode", "Unknown"), ignoreCase: true),
+                TryParseLong(values, "target-disk-size-bytes"),
+                TryParseLong(values, "required-bytes"),
+                values.ContainsKey("target-is-current-system-disk"),
+                values.ContainsKey("has-efi-system-partition"),
+                values.GetValueOrDefault("bcd-store"),
+                SplitPaths(values.GetValueOrDefault("driver-directories", string.Empty)),
+                SplitPaths(values.GetValueOrDefault("network-shares", string.Empty)),
+                ParseBool(values.GetValueOrDefault("repair-boot", "true"), "repair-boot"),
+                values.ContainsKey("reboot-after-restore"),
+                values.ContainsKey("verify-image"))));
+            return 0;
+        case "answer-validate":
+            var report = manager.Validate(Required(values, "file"), values.ContainsKey("verify-image"));
+            WriteJson(report);
+            return report.Valid ? 0 : 3;
+        default:
+            throw new ArgumentException($"Unknown rescue command: {command}");
     }
 }
 
@@ -443,7 +480,7 @@ static Dictionary<string, string> ParseOptions(string[] args)
         if (!arg.StartsWith("--", StringComparison.Ordinal))
             throw new ArgumentException($"Unexpected argument: {arg}");
         var name = arg[2..];
-        if (name is "overwrite" or "verify" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition" or "run-missed" or "allow-boot-system")
+        if (name is "overwrite" or "verify" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition" or "run-missed" or "allow-boot-system" or "verify-image" or "reboot-after-restore")
         {
             values[name] = "true";
             continue;
@@ -530,6 +567,8 @@ static void PrintHelp()
     rc schedule register --task-name <name> --job-file <job.json> [--cli-path <rc.exe>] [--frequency Daily|Weekly|Monthly|Event] [--time HH:mm] [--run-missed] [--event-log <log>] [--event-id <id>] [--event-source <source>]
     rc schedule unregister --task-name <name>
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
+    rc rescue answer-create --output <answer.json> --repository <dir> --image <file.rcimg> --target-disk-id <id> [--password <secret>] [--boot-mode Bios|Uefi|Unknown] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition] [--bcd-store <path>] [--driver-directories <paths>] [--network-shares <shares>] [--repair-boot true|false] [--reboot-after-restore] [--verify-image]
+    rc rescue answer-validate --file <answer.json> [--verify-image]
     rc operation run --request <operation.json> [--log-directory <dir>]
     rc service serve --pipe <name> [--log-directory <dir>]
     rc service host --pipe <name> [--log-directory <dir>]

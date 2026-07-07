@@ -22,6 +22,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for retention planning and retention enforcement on directory-image repositories.
 - GUI, CLI, and PowerShell surfaces for Windows Task Scheduler XML planning and schedule register/unregister.
 - GUI, CLI, and PowerShell surfaces for read-only restore planning with boot/target safety blockers.
+- GUI, CLI, and PowerShell surfaces for unattended rescue answer-file creation and validation.
 - GUI, CLI, and PowerShell surfaces for durable local operation execution from a JSON request.
 - GUI, CLI, and PowerShell surfaces for sending operation requests through a named-pipe service IPC host.
 - GUI, CLI, and PowerShell surfaces for Windows Service install planning, install, status, start, stop, and uninstall of the operation IPC host.
@@ -61,6 +62,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Retention can select and delete `*.rcimg` files by newest-file keep count, max age, and free-space threshold; it does not yet perform GFS chain consolidation.
 - Scheduler registration writes Windows Task Scheduler tasks that run `rc job run --file <job>`, supports daily, weekly, monthly calendar triggers, event-log triggers, and maps missed runs to Task Scheduler `StartWhenAvailable`.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
+- Rescue answer files record repository, image, target disk, boot mode, BCD path, driver directories, network shares, boot repair, and reboot policy, then validate using the same restore planner. They are not bootable media.
 
 The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, signed kernel image mounting driver, privileged driver service, scheduler service, GFS chain consolidation, tamper-protection driver, MSI/EXE installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
 
