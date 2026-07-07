@@ -18,6 +18,7 @@ Published runtime entry points:
 - CLI: `.\RC.cmd`
 - GUI: `.\RUN-GUI.cmd`
 - PowerShell: `Import-Module .\powershell\RescueClone\RescueClone.psd1 -Force`
+- Portable ZIP package: `.\scripts\New-PortablePackage.ps1 -OutputPath .\artifacts\RescueClone-portable.zip -Force`
 - Quiet portable install: `.\scripts\Install-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart -Force`
 - Quiet portable uninstall: `.\scripts\Uninstall-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart`
 

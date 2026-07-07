@@ -74,6 +74,7 @@ Portable dependency status:
 - `scripts\Build-Portable.ps1` requires `.dotnet-sdk\dotnet.exe` by default and only uses machine `dotnet` when `-AllowSystemDotNetFallback` is passed explicitly.
 - `scripts\Test-PortableDependencyBoundary.ps1` verifies the published CLI service loads no non-Windows modules from `C:\`.
 - `scripts\Install-RescueClone.ps1` and `scripts\Uninstall-RescueClone.ps1` provide quiet/no-restart portable install and uninstall flows for the published CLI, GUI, PowerShell module, and docs.
+- `scripts\New-PortablePackage.ps1` builds a portable ZIP package from published outputs and install scripts.
 - Temporary files are redirected to `.tmp` during build and portable tests.
 - Native C++ output is built to `native\bin\RescueClone.Native.dll` by `scripts\Build-Native.ps1` using an F-local MinGW compiler when available.
 - Disk inventory calls built-in Windows PowerShell and `Get-Disk`; this is an operating-system dependency and does not install new C-drive tooling.
