@@ -8,6 +8,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - GUI, CLI, and PowerShell surfaces for image verification.
 - GUI, CLI, and PowerShell surfaces for verified image content browsing.
 - GUI, CLI, and PowerShell surfaces for selected file/folder extraction from verified images.
+- GUI, CLI, and PowerShell surfaces for managed read-only user-mode image projection and unprojection.
 - GUI, CLI, and PowerShell surfaces for directory restore.
 - GUI, CLI, and PowerShell surfaces for creating a validated basic directory backup job JSON definition.
 - GUI, CLI, and PowerShell surfaces for updating exposed fields in a directory backup job JSON definition.
@@ -33,6 +34,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Named-pipe service IPC can host the operation runner and return structured operation reports to CLI, PowerShell, and GUI clients.
 - Compression, optional AES-256 encryption, and SHA-256 verification for every stored file.
 - Directory images can be written as legacy v1 sequential containers or v2 indexed block containers; verify, browse, extract, and restore read both formats.
+- Managed user-mode image projection restores verified image content into a manifest-marked directory, marks projected files read-only, and unprojects only manifest-listed files.
 - V2 directory images include block offsets, per-block SHA-256 hashes, file hashes, a root manifest hash, and a fixed footer that points to the manifest.
 - Completed directory image files are marked read-only after creation; managed retention can clear that bit only for files selected by its deletion plan.
 - Volume inventory reports drive root, readiness, drive type, file system, label, total/free bytes, and whether the root matches the running Windows system root.
@@ -51,7 +53,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Scheduler registration writes Windows Task Scheduler tasks that run `rc job run --file <job>`, supports daily, weekly, monthly calendar triggers, event-log triggers, and maps missed runs to Task Scheduler `StartWhenAvailable`.
 - Restore planning verifies the selected image and reports blockers without writing disks, repairing boot files, or changing EFI/BCD state.
 
-The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, image mounting driver, installed privileged Windows service, scheduler service, GFS chain consolidation, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
+The following requested capabilities are not implemented in this pass and are not represented as working: VSS disk imaging, partition restore, CBT kernel filter driver, boot repair, rescue ISO/USB/PXE, Hyper-V wipe/restore tests, signed kernel image mounting driver, installed privileged Windows service, scheduler service, GFS chain consolidation, tamper-protection driver, installer, dynamic disk/Storage Spaces support, and Macrium-compatible UX parity.
 
 The local machine has incomplete .NET SDK payloads under `C:\Program Files\dotnet`. This repo is retargeted to .NET 10 and seeds a project-local SDK from the complete Codex-local cache.
 

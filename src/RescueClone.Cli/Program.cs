@@ -94,6 +94,19 @@ static int Run(string[] args)
                 WriteJson(engine.Extract(extract));
                 return 0;
 
+            case "project":
+                WriteJson(new ImageProjectionManager(engine).Project(new ImageProjectionOptions(
+                    Required(values, "image"),
+                    Required(values, "target"),
+                    values.GetValueOrDefault("password"),
+                    values.ContainsKey("overwrite"))));
+                return 0;
+
+            case "unproject":
+                WriteJson(new ImageProjectionManager(engine).Unproject(new ImageUnprojectionOptions(
+                    Required(values, "target"))));
+                return 0;
+
             case "restore":
                 var restore = new RestoreOptions(
                     Required(values, "image"),
@@ -411,6 +424,8 @@ static void PrintHelp()
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image browse --image <file.rcimg> [--password <secret>]
     rc image extract --image <file.rcimg> --target <dir> --paths <relative-paths> [--password <secret>] [--overwrite]
+    rc image project --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
+    rc image unproject --target <dir>
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job update --file <job.json> [--job-id <id>] [--name <name>] [--enabled true|false] [--source <dir>] [--image <file.rcimg>] [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]

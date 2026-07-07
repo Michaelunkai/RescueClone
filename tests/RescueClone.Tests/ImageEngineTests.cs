@@ -133,6 +133,43 @@ public sealed class ImageEngineTests
     }
 
     [TestMethod]
+    public void ProjectCreatesReadOnlyManagedProjectionAndUnprojectRemovesIt()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var target = Path.Combine(root, "projection");
+        var image = Path.Combine(root, "backup.rcimg");
+        Directory.CreateDirectory(Path.Combine(source, "nested"));
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        File.WriteAllText(Path.Combine(source, "nested", "beta.txt"), "beta");
+        var manager = new ImageProjectionManager();
+
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var projected = manager.Project(new ImageProjectionOptions(image, target, null, Overwrite: false));
+
+        Assert.AreEqual(2, projected.FileCount);
+        Assert.IsTrue(File.Exists(projected.ManifestPath));
+        Assert.IsTrue((File.GetAttributes(Path.Combine(target, "alpha.txt")) & FileAttributes.ReadOnly) != 0);
+        Assert.IsTrue((File.GetAttributes(Path.Combine(target, "nested", "beta.txt")) & FileAttributes.ReadOnly) != 0);
+
+        var removed = manager.Unproject(new ImageUnprojectionOptions(target));
+
+        Assert.AreEqual(2, removed.RemovedFileCount);
+        Assert.IsFalse(File.Exists(Path.Combine(target, "alpha.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(target, "nested", "beta.txt")));
+        Assert.IsFalse(File.Exists(projected.ManifestPath));
+    }
+
+    [TestMethod]
+    public void UnprojectRejectsUnmanagedDirectory()
+    {
+        var root = NewTempDirectory();
+
+        Assert.ThrowsException<FileNotFoundException>(() =>
+            new ImageProjectionManager().Unproject(new ImageUnprojectionOptions(root)));
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesImageBrowseAndExtractParity()
     {
         var browse = FeatureCatalog.All.Single(f => f.FeatureId == "image.browse");
@@ -144,6 +181,20 @@ public sealed class ImageEngineTests
         Assert.AreEqual("Restore Image", extract.Gui);
         Assert.AreEqual("rc image extract", extract.Cli);
         Assert.AreEqual("Export-RCImageFile", extract.PowerShell);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesImageProjectionParity()
+    {
+        var project = FeatureCatalog.All.Single(f => f.FeatureId == "image.project.readonly");
+        var unproject = FeatureCatalog.All.Single(f => f.FeatureId == "image.project.remove");
+
+        Assert.AreEqual("Restore Image", project.Gui);
+        Assert.AreEqual("rc image project", project.Cli);
+        Assert.AreEqual("Mount-RCImage", project.PowerShell);
+        Assert.AreEqual("Restore Image", unproject.Gui);
+        Assert.AreEqual("rc image unproject", unproject.Cli);
+        Assert.AreEqual("Dismount-RCImage", unproject.PowerShell);
     }
 
     [TestMethod]
@@ -163,6 +214,8 @@ public sealed class ImageEngineTests
                 feature.PowerShell.StartsWith("Start-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Set-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Restore-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Mount-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Dismount-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Invoke-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Export-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Import-RC", StringComparison.Ordinal) ||

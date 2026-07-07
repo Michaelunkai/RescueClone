@@ -125,6 +125,32 @@ function Export-RCImageFile {
     }
 }
 
+function Mount-RCImage {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$ImagePath,
+        [Parameter(Mandatory=$true)][string]$TargetPath,
+        [string]$Password,
+        [switch]$Overwrite
+    )
+    if ($PSCmdlet.ShouldProcess($TargetPath, "Project read-only image content from $ImagePath")) {
+        $args = @('image','project','--image',$ImagePath,'--target',$TargetPath)
+        if ($PSBoundParameters.ContainsKey('Password')) { $args += @('--password',$Password) }
+        if ($Overwrite) { $args += '--overwrite' }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
+function Dismount-RCImage {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$TargetPath
+    )
+    if ($PSCmdlet.ShouldProcess($TargetPath, "Remove RescueClone image projection")) {
+        Invoke-RCJson -ArgumentList @('image','unproject','--target',$TargetPath)
+    }
+}
+
 function Restore-RCImage {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
     param(

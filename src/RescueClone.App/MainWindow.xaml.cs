@@ -64,6 +64,20 @@ public partial class MainWindow : Window
             OverwriteBox.IsChecked == true)));
     }
 
+    private void ProjectImage_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageProjectionManager(_engine).Project(new ImageProjectionOptions(
+            RestoreImagePathBox.Text,
+            TargetPathBox.Text,
+            EmptyToNull(RestorePasswordBox.Password),
+            OverwriteBox.IsChecked == true)));
+    }
+
+    private void UnprojectImage_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageProjectionManager(_engine).Unproject(new ImageUnprojectionOptions(TargetPathBox.Text)));
+    }
+
     private void RestoreImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Restore(new RestoreOptions(RestoreImagePathBox.Text, TargetPathBox.Text, EmptyToNull(RestorePasswordBox.Password), OverwriteBox.IsChecked == true)));

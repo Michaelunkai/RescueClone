@@ -39,6 +39,8 @@ CLI examples:
 .\RC.cmd image verify --image .\sample.rcimg --password secret
 .\RC.cmd image browse --image .\sample.rcimg --password secret
 .\RC.cmd image extract --image .\sample.rcimg --target .\sample-extract --paths nested\report.txt --password secret
+.\RC.cmd image project --image .\sample.rcimg --target .\sample-projection --password secret
+.\RC.cmd image unproject --target .\sample-projection
 .\RC.cmd image restore --image .\sample.rcimg --target .\sample-restore --password secret
 .\RC.cmd job create --file .\backup-job.json --job-id daily-docs --name "Daily Docs" --source .\sample-source --image .\images\daily-docs.rcimg --compression High --verify-after-create true --log-directory .\backup-logs
 .\RC.cmd job update --file .\backup-job.json --name "Daily Docs Updated" --enabled true --compression Medium
@@ -140,6 +142,8 @@ New-RCImage -SourcePath .\sample-source -ImagePath .\sample.rcimg -Compression H
 Test-RCImage -ImagePath .\sample.rcimg -Password secret
 Get-RCImageContent -ImagePath .\sample.rcimg -Password secret
 Export-RCImageFile -ImagePath .\sample.rcimg -TargetPath .\sample-extract -Path nested\report.txt -Password secret -Confirm:$false
+Mount-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-projection -Password secret -Confirm:$false
+Dismount-RCImage -TargetPath .\sample-projection -Confirm:$false
 Restore-RCImage -ImagePath .\sample.rcimg -TargetPath .\sample-restore -Password secret -Confirm:$false
 New-RCBackupJob -Path .\backup-job.json -JobId daily-docs -Name 'Daily Docs' -SourcePath .\sample-source -ImagePath .\images\daily-docs.rcimg -Compression High -VerifyAfterCreate $true -LogDirectory .\backup-logs -Confirm:$false
 Set-RCBackupJob -Path .\backup-job.json -Name 'Daily Docs Updated' -Enabled $true -Compression Medium -Confirm:$false
@@ -168,5 +172,7 @@ Get-RCNativeStatus
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode.
 
 Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current IPC foundation; it is not yet installed as a privileged Windows Service by the installer.
+
+Projection note: `rc image project`, `Mount-RCImage`, and the GUI Project Image button create a managed read-only directory projection by restoring verified image content, marking projected files read-only, and writing `.rescueclone-projection.json`. `rc image unproject`, `Dismount-RCImage`, and the GUI Remove Projection button only remove directories with that manifest. This is a safe user-mode projection layer, not a signed kernel image-mount driver.
 
 Disk safety checks are read-only. The evaluator fingerprints the selected disk from number, friendly name, serial number, partition style, bus type, and size, then blocks by default when the disk is missing, fingerprint-mismatched, boot/system, offline, or read-only.
