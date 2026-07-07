@@ -77,6 +77,24 @@ public sealed class BackupJobRunner
         return new BackupJobUpdateReport(fullPath, before, after, DateTimeOffset.UtcNow);
     }
 
+    public BackupJobTransferReport Export(string path, string outputPath)
+    {
+        var sourcePath = RequireExistingJobPath(path);
+        var destinationPath = Path.GetFullPath(outputPath);
+        var job = Load(sourcePath);
+        Save(destinationPath, job);
+        return new BackupJobTransferReport("export", sourcePath, destinationPath, job.JobId, DateTimeOffset.UtcNow);
+    }
+
+    public BackupJobTransferReport Import(string path, string targetPath)
+    {
+        var sourcePath = RequireExistingJobPath(path);
+        var destinationPath = Path.GetFullPath(targetPath);
+        var job = Load(sourcePath);
+        Save(destinationPath, job);
+        return new BackupJobTransferReport("import", sourcePath, destinationPath, job.JobId, DateTimeOffset.UtcNow);
+    }
+
     public BackupJobValidationResult Validate(BackupJobDefinition job)
     {
         var errors = new List<string>();
@@ -583,6 +601,16 @@ public sealed class BackupJobRunner
     {
         var safe = string.Join("_", value.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         return string.IsNullOrWhiteSpace(safe) ? "backup-job" : safe;
+    }
+
+    private static string RequireExistingJobPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Path is required.");
+        var fullPath = Path.GetFullPath(path);
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException("Backup job definition does not exist.", fullPath);
+        return fullPath;
     }
 
     private sealed record BackupJobReportPaths(string JsonPath, string HtmlPath);

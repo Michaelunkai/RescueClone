@@ -68,6 +68,13 @@ public sealed record BackupJobUpdateReport(
     BackupJobDefinition After,
     DateTimeOffset UpdatedUtc);
 
+public sealed record BackupJobTransferReport(
+    string Operation,
+    string SourcePath,
+    string DestinationPath,
+    string JobId,
+    DateTimeOffset CompletedUtc);
+
 public sealed record BackupJobRunResult(
     string JobId,
     string Name,

@@ -252,6 +252,12 @@ static int RunJob(string command, Dictionary<string, string> values)
                 values.ContainsKey("verify-after-create") ? ParseBool(values["verify-after-create"], "verify-after-create") : null,
                 values.GetValueOrDefault("log-directory"))));
             return 0;
+        case "export":
+            WriteJson(runner.Export(Required(values, "file"), Required(values, "output")));
+            return 0;
+        case "import":
+            WriteJson(runner.Import(Required(values, "file"), Required(values, "target")));
+            return 0;
         case "validate":
             var job = runner.Load(Required(values, "file"));
             WriteJson(runner.Validate(job));
@@ -337,6 +343,8 @@ static void PrintHelp()
     rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job update --file <job.json> [--job-id <id>] [--name <name>] [--enabled true|false] [--source <dir>] [--image <file.rcimg>] [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
     rc job delete --file <job.json>
+    rc job export --file <job.json> --output <exported-job.json>
+    rc job import --file <exported-job.json> --target <job.json>
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]
     rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]

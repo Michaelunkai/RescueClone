@@ -158,6 +158,66 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void ExportCopiesValidatedBackupJobDefinition()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var path = Path.Combine(root, "jobs", "export-me.json");
+        var output = Path.Combine(root, "exports", "exported.json");
+        var runner = new BackupJobRunner();
+        runner.Save(path, new BackupJobDefinition(
+            "export-me",
+            "Export Me",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "export-me.rcimg"),
+            CompressionMode.High,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs")));
+
+        var report = runner.Export(path, output);
+        var exported = runner.Load(output);
+
+        Assert.AreEqual("export", report.Operation);
+        Assert.AreEqual(Path.GetFullPath(path), report.SourcePath);
+        Assert.AreEqual(Path.GetFullPath(output), report.DestinationPath);
+        Assert.AreEqual("export-me", report.JobId);
+        Assert.AreEqual("export-me", exported.JobId);
+        Assert.AreEqual(CompressionMode.High, exported.Compression);
+    }
+
+    [TestMethod]
+    public void ImportCopiesValidatedBackupJobDefinition()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var exportedPath = Path.Combine(root, "exports", "import-me.json");
+        var targetPath = Path.Combine(root, "jobs", "imported.json");
+        var runner = new BackupJobRunner();
+        runner.Save(exportedPath, new BackupJobDefinition(
+            "import-me",
+            "Import Me",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "import-me.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs")));
+
+        var report = runner.Import(exportedPath, targetPath);
+        var imported = runner.Load(targetPath);
+
+        Assert.AreEqual("import", report.Operation);
+        Assert.AreEqual(Path.GetFullPath(exportedPath), report.SourcePath);
+        Assert.AreEqual(Path.GetFullPath(targetPath), report.DestinationPath);
+        Assert.AreEqual("import-me", imported.JobId);
+    }
+
+    [TestMethod]
     public void RunCreatesVerifiesAndLogsBackupJob()
     {
         var root = NewTempDirectory();
@@ -747,6 +807,28 @@ public sealed class BackupJobRunnerTests
         Assert.AreEqual("Backup Job", feature.Gui);
         Assert.AreEqual("rc job update", feature.Cli);
         Assert.AreEqual("Set-RCBackupJob", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesBackupJobExportParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "job.backup.directory.export");
+
+        Assert.AreEqual("Backup Job", feature.Gui);
+        Assert.AreEqual("rc job export", feature.Cli);
+        Assert.AreEqual("Export-RCBackupJob", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesBackupJobImportParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "job.backup.directory.import");
+
+        Assert.AreEqual("Backup Job", feature.Gui);
+        Assert.AreEqual("rc job import", feature.Cli);
+        Assert.AreEqual("Import-RCBackupJob", feature.PowerShell);
         Assert.IsTrue(feature.Implemented);
     }
 

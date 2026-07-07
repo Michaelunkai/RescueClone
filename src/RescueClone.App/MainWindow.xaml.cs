@@ -98,6 +98,16 @@ public partial class MainWindow : Window
         RunAndReport(() => _jobRunner.Delete(JobPathBox.Text));
     }
 
+    private void ExportJob_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.Export(JobPathBox.Text, JobTransferPathBox.Text));
+    }
+
+    private void ImportJob_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.Import(JobPathBox.Text, JobTransferPathBox.Text));
+    }
+
     private void RunJob_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _jobRunner.Run(_jobRunner.Load(JobPathBox.Text), ForceDisabledJobBox.IsChecked == true));

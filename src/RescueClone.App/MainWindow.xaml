@@ -98,14 +98,17 @@
                         <CheckBox x:Name="JobVerifyAfterCreateBox" Content="Verify after create" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <TextBox x:Name="JobLogDirectoryBox" Width="260" ToolTip="Optional log directory"/>
                     </StackPanel>
-                    <StackPanel Grid.Row="5" Orientation="Horizontal">
+                    <TextBox x:Name="JobTransferPathBox" Grid.Row="5" Margin="0,0,0,8" ToolTip="Export output path or import target path"/>
+                    <WrapPanel Grid.Row="6">
                         <CheckBox x:Name="ForceDisabledJobBox" Content="Force disabled job" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <Button Width="140" Height="34" Content="Create Job" Click="CreateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Update Job" Click="UpdateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Delete Job" Click="DeleteJob_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Export Job" Click="ExportJob_Click" Margin="0,0,8,0"/>
+                        <Button Width="140" Height="34" Content="Import Job" Click="ImportJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Validate Job" Click="ValidateJob_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Run Job" Click="RunJob_Click"/>
-                    </StackPanel>
+                    </WrapPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Restore Plan">

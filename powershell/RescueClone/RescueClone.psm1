@@ -169,6 +169,28 @@ function Remove-RCBackupJob {
     }
 }
 
+function Export-RCBackupJob {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Low')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path,
+        [Parameter(Mandatory=$true)][string]$OutputPath
+    )
+    if ($PSCmdlet.ShouldProcess($OutputPath, "Export backup job definition from $Path")) {
+        Invoke-RCJson -ArgumentList @('job','export','--file',$Path,'--output',$OutputPath)
+    }
+}
+
+function Import-RCBackupJob {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path,
+        [Parameter(Mandatory=$true)][string]$TargetPath
+    )
+    if ($PSCmdlet.ShouldProcess($TargetPath, "Import backup job definition from $Path")) {
+        Invoke-RCJson -ArgumentList @('job','import','--file',$Path,'--target',$TargetPath)
+    }
+}
+
 function Start-RCBackupJob {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(
