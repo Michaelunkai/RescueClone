@@ -95,6 +95,12 @@ public sealed class OperationRunner
                 RequiredString(request, "repository"),
                 OptionalString(request, "pattern") ?? "*.rcimg",
                 OptionalString(request, "password"))),
+            "image.protect.audit" => new ImageRepositoryCatalog(_imageEngine).AuditProtection(new ImageRepositoryProtectionOptions(
+                RequiredString(request, "repository"),
+                OptionalString(request, "pattern") ?? "*.rcimg")),
+            "image.protect.apply" => new ImageRepositoryCatalog(_imageEngine).ApplyProtection(new ImageRepositoryProtectionOptions(
+                RequiredString(request, "repository"),
+                OptionalString(request, "pattern") ?? "*.rcimg")),
             "image.compare.source" => new ImageComparer(_imageEngine).Compare(new ImageCompareOptions(
                 RequiredString(request, "image"),
                 RequiredString(request, "source"),

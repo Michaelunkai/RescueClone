@@ -42,6 +42,8 @@ CLI examples:
 .\RC.cmd image create --source .\sample-source --image .\sample.rcimg --compression High --password secret --format V2
 .\RC.cmd image verify --image .\sample.rcimg --password secret
 .\RC.cmd image audit --repository . --pattern *.rcimg --password secret
+.\RC.cmd image protect-audit --repository . --pattern *.rcimg
+.\RC.cmd image protect --repository . --pattern *.rcimg
 .\RC.cmd image compare --image .\sample.rcimg --source .\sample-source --password secret
 .\RC.cmd image list --repository . --pattern *.rcimg --verify --password secret
 .\RC.cmd image browse --image .\sample.rcimg --password secret
@@ -143,11 +145,11 @@ Operation request JSON example:
 ```
 
 Supported local operation kinds currently include `image.create.directory`, `image.verify`,
-`image.audit.repository`, `image.compare.source`, `image.list.repository`, `image.browse`, `image.extract.directory`, `image.project.readonly`, `image.project.list`, `image.project.remove`,
+`image.audit.repository`, `image.protect.audit`, `image.protect.apply`, `image.compare.source`, `image.list.repository`, `image.browse`, `image.extract.directory`, `image.project.readonly`, `image.project.list`, `image.project.remove`,
 `image.restore.directory`,
 `job.backup.directory.create`, `job.backup.directory.update`,
 `job.backup.directory.delete`, `job.backup.directory.export`, `job.backup.directory.import`,
-`job.backup.directory.status`, `job.backup.directory.validate`, `job.backup.directory.run`,
+`job.backup.directory.list`, `job.backup.directory.status`, `job.backup.directory.validate`, `job.backup.directory.run`,
 `retention.plan`, `retention.apply`, `retention.gfs.plan`, `retention.gfs.apply`,
 `restore.plan.readonly`, `rescue.answer.create`, and `rescue.answer.validate`.
 
@@ -166,6 +168,8 @@ Import-Module .\powershell\RescueClone\RescueClone.psd1 -Force
 New-RCImage -SourcePath .\sample-source -ImagePath .\sample.rcimg -Compression High -Format V2 -Password secret -Confirm:$false
 Test-RCImage -ImagePath .\sample.rcimg -Password secret
 Test-RCImageRepository -RepositoryPath . -Pattern *.rcimg -Password secret
+Test-RCImageRepositoryProtection -RepositoryPath . -Pattern *.rcimg
+Set-RCImageRepositoryProtection -RepositoryPath . -Pattern *.rcimg -Confirm:$false
 Compare-RCImage -ImagePath .\sample.rcimg -SourcePath .\sample-source -Password secret
 Get-RCImage -RepositoryPath . -Pattern *.rcimg -Verify -Password secret
 Get-RCImageContent -ImagePath .\sample.rcimg -Password secret

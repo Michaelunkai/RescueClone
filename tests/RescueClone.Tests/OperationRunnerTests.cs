@@ -150,11 +150,31 @@ public sealed class OperationRunnerTests
                 ["repository"] = Json("repository", repository)
             },
             "audit-images"), Path.Combine(root, "ops"));
+        File.SetAttributes(image, File.GetAttributes(image) & ~FileAttributes.ReadOnly);
+        var protectionAudit = new OperationRunner().Run(new OperationRequest(
+            "image.protect.audit",
+            new Dictionary<string, JsonElement>
+            {
+                ["repository"] = Json("repository", repository)
+            },
+            "audit-protection"), Path.Combine(root, "ops"));
+        var protectionApply = new OperationRunner().Run(new OperationRequest(
+            "image.protect.apply",
+            new Dictionary<string, JsonElement>
+            {
+                ["repository"] = Json("repository", repository)
+            },
+            "apply-protection"), Path.Combine(root, "ops"));
 
         Assert.AreEqual(OperationState.Succeeded, audit.State);
         Assert.AreEqual(1, audit.Result!.Value.GetProperty("imageCount").GetInt32());
         Assert.AreEqual(1, audit.Result.Value.GetProperty("verifiedCount").GetInt32());
         Assert.AreEqual(0, audit.Result.Value.GetProperty("failedCount").GetInt32());
+        Assert.AreEqual(OperationState.Succeeded, protectionAudit.State);
+        Assert.AreEqual(0, protectionAudit.Result!.Value.GetProperty("protectedCount").GetInt32());
+        Assert.AreEqual(OperationState.Succeeded, protectionApply.State);
+        Assert.AreEqual(1, protectionApply.Result!.Value.GetProperty("protectedCount").GetInt32());
+        Assert.AreEqual(1, protectionApply.Result.Value.GetProperty("changedCount").GetInt32());
     }
 
     [TestMethod]

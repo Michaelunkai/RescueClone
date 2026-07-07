@@ -61,6 +61,20 @@ public partial class MainWindow : Window
             EmptyToNull(VerifyPasswordBox.Password))));
     }
 
+    private void AuditImageProtection_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageRepositoryCatalog(_engine).AuditProtection(new ImageRepositoryProtectionOptions(
+            VerifyRepositoryPathBox.Text,
+            EmptyToDefault(VerifyRepositoryPatternBox.Text, "*.rcimg"))));
+    }
+
+    private void ProtectImages_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageRepositoryCatalog(_engine).ApplyProtection(new ImageRepositoryProtectionOptions(
+            VerifyRepositoryPathBox.Text,
+            EmptyToDefault(VerifyRepositoryPatternBox.Text, "*.rcimg"))));
+    }
+
     private void BrowseImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Browse(RestoreImagePathBox.Text, EmptyToNull(RestorePasswordBox.Password)));
@@ -405,6 +419,8 @@ public partial class MainWindow : Window
     }
 
     private static string? EmptyToNull(string value) => string.IsNullOrEmpty(value) ? null : value;
+
+    private static string EmptyToDefault(string value, string defaultValue) => string.IsNullOrWhiteSpace(value) ? defaultValue : value;
 
     private static int? ParseNullableInt(string value) => string.IsNullOrWhiteSpace(value) ? null : int.Parse(value);
 

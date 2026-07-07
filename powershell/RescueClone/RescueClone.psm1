@@ -135,6 +135,26 @@ function Test-RCImageRepository {
     Invoke-RCJson -ArgumentList $args -AllowNonZeroExit
 }
 
+function Test-RCImageRepositoryProtection {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [string]$Pattern = '*.rcimg'
+    )
+    Invoke-RCJson -ArgumentList @('image','protect-audit','--repository',$RepositoryPath,'--pattern',$Pattern)
+}
+
+function Set-RCImageRepositoryProtection {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })][string]$RepositoryPath,
+        [string]$Pattern = '*.rcimg'
+    )
+    if ($PSCmdlet.ShouldProcess($RepositoryPath, "Mark matching image files read-only")) {
+        Invoke-RCJson -ArgumentList @('image','protect','--repository',$RepositoryPath,'--pattern',$Pattern)
+    }
+}
+
 function Compare-RCImage {
     [CmdletBinding()]
     param(

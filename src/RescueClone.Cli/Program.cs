@@ -107,6 +107,18 @@ static int Run(string[] args)
                 WriteJson(audit);
                 return audit.FailedCount == 0 ? 0 : 3;
 
+            case "protect-audit":
+                WriteJson(new ImageRepositoryCatalog(engine).AuditProtection(new ImageRepositoryProtectionOptions(
+                    Required(values, "repository"),
+                    values.GetValueOrDefault("pattern", "*.rcimg"))));
+                return 0;
+
+            case "protect":
+                WriteJson(new ImageRepositoryCatalog(engine).ApplyProtection(new ImageRepositoryProtectionOptions(
+                    Required(values, "repository"),
+                    values.GetValueOrDefault("pattern", "*.rcimg"))));
+                return 0;
+
             case "compare":
                 var compare = new ImageComparer(engine).Compare(new ImageCompareOptions(
                     Required(values, "image"),
@@ -590,6 +602,8 @@ static void PrintHelp()
     rc image browse --image <file.rcimg> [--password <secret>]
     rc image list --repository <dir> [--pattern *.rcimg] [--verify] [--password <secret>]
     rc image audit --repository <dir> [--pattern *.rcimg] [--password <secret>]
+    rc image protect-audit --repository <dir> [--pattern *.rcimg]
+    rc image protect --repository <dir> [--pattern *.rcimg]
     rc image compare --image <file.rcimg> --source <dir> [--password <secret>]
     rc image extract --image <file.rcimg> --target <dir> --paths <relative-paths> [--password <secret>] [--overwrite]
     rc image project --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]

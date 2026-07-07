@@ -232,11 +232,41 @@ public sealed class ImageEngineTests
     }
 
     [TestMethod]
+    public void RepositoryProtectionAuditAndApplyMarksImagesReadOnly()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var repository = Path.Combine(root, "images");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(repository);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(repository, "backup.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        File.SetAttributes(image, File.GetAttributes(image) & ~FileAttributes.ReadOnly);
+        var catalog = new ImageRepositoryCatalog();
+
+        var audit = catalog.AuditProtection(new ImageRepositoryProtectionOptions(repository, "*.rcimg"));
+        var apply = catalog.ApplyProtection(new ImageRepositoryProtectionOptions(repository, "*.rcimg"));
+        var after = catalog.AuditProtection(new ImageRepositoryProtectionOptions(repository, "*.rcimg"));
+
+        Assert.AreEqual(1, audit.ImageCount);
+        Assert.AreEqual(0, audit.ProtectedCount);
+        Assert.IsFalse(audit.Applied);
+        Assert.AreEqual(1, apply.ProtectedCount);
+        Assert.AreEqual(1, apply.ChangedCount);
+        Assert.IsTrue(apply.Applied);
+        Assert.AreEqual(1, after.ProtectedCount);
+        Assert.IsTrue((File.GetAttributes(image) & FileAttributes.ReadOnly) != 0);
+    }
+
+    [TestMethod]
     public void FeatureCatalogIncludesImageBrowseAndExtractParity()
     {
         var browse = FeatureCatalog.All.Single(f => f.FeatureId == "image.browse");
         var list = FeatureCatalog.All.Single(f => f.FeatureId == "image.list.repository");
         var audit = FeatureCatalog.All.Single(f => f.FeatureId == "image.audit.repository");
+        var protectionAudit = FeatureCatalog.All.Single(f => f.FeatureId == "image.protect.audit");
+        var protectionApply = FeatureCatalog.All.Single(f => f.FeatureId == "image.protect.apply");
         var compare = FeatureCatalog.All.Single(f => f.FeatureId == "image.compare.source");
         var extract = FeatureCatalog.All.Single(f => f.FeatureId == "image.extract.directory");
 
@@ -249,6 +279,12 @@ public sealed class ImageEngineTests
         Assert.AreEqual("Verify Image", audit.Gui);
         Assert.AreEqual("rc image audit", audit.Cli);
         Assert.AreEqual("Test-RCImageRepository", audit.PowerShell);
+        Assert.AreEqual("Verify Image", protectionAudit.Gui);
+        Assert.AreEqual("rc image protect-audit", protectionAudit.Cli);
+        Assert.AreEqual("Test-RCImageRepositoryProtection", protectionAudit.PowerShell);
+        Assert.AreEqual("Verify Image", protectionApply.Gui);
+        Assert.AreEqual("rc image protect", protectionApply.Cli);
+        Assert.AreEqual("Set-RCImageRepositoryProtection", protectionApply.PowerShell);
         Assert.AreEqual("Verify Image", compare.Gui);
         Assert.AreEqual("rc image compare", compare.Cli);
         Assert.AreEqual("Compare-RCImage", compare.PowerShell);
