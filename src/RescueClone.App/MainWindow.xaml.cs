@@ -188,6 +188,16 @@ public partial class MainWindow : Window
         RunAndReport(() => _diskEnumerator.ListDisks());
     }
 
+    private void CheckDiskSafety_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new DiskTargetSafetyEvaluator().Evaluate(
+            _diskEnumerator.ListDisks(),
+            new DiskTargetSafetyOptions(
+                int.Parse(DiskSafetyNumberBox.Text),
+                EmptyToNull(DiskSafetyFingerprintBox.Text),
+                DiskSafetyAllowBootSystemBox.IsChecked == true)));
+    }
+
     private void ListLogs_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _logCatalog.List(new LogListOptions(

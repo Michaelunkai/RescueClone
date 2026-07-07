@@ -57,6 +57,7 @@ CLI examples:
 .\RC.cmd logs list --directory .\backup-logs
 .\RC.cmd storage volumes
 .\RC.cmd storage disks
+.\RC.cmd storage disk-safety --disk-number 1 --expected-fingerprint <sha256>
 .\RC.cmd native status
 ```
 
@@ -150,7 +151,10 @@ Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -
 Get-RCLog -DirectoryPath .\backup-logs
 Get-RCVolume
 Get-RCDisk
+Get-RCDiskSafety -DiskNumber 1 -ExpectedFingerprint <sha256>
 Get-RCNativeStatus
 ```
 
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode.
+
+Disk safety checks are read-only. The evaluator fingerprints the selected disk from number, friendly name, serial number, partition style, bus type, and size, then blocks by default when the disk is missing, fingerprint-mismatched, boot/system, offline, or read-only.

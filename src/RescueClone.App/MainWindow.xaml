@@ -215,7 +215,18 @@
             </TabItem>
             <TabItem Header="Disks">
                 <Grid Margin="12">
-                    <Button Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Refresh Disks" Click="RefreshDisks_Click"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Width="140" Height="34" Content="Refresh Disks" Click="RefreshDisks_Click" Margin="0,0,8,0"/>
+                        <TextBox x:Name="DiskSafetyNumberBox" Width="120" ToolTip="Target disk number" Margin="0,0,8,0"/>
+                        <TextBox x:Name="DiskSafetyFingerprintBox" Width="360" ToolTip="Optional expected disk fingerprint" Margin="0,0,8,0"/>
+                        <CheckBox x:Name="DiskSafetyAllowBootSystemBox" Content="Allow boot/system" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    </StackPanel>
+                    <Button Grid.Row="1" Width="160" Height="34" HorizontalAlignment="Left" Content="Check Disk Safety" Click="CheckDiskSafety_Click"/>
                 </Grid>
             </TabItem>
             <TabItem Header="Logs">

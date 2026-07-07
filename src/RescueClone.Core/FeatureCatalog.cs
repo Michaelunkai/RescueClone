@@ -27,6 +27,7 @@ public static class FeatureCatalog
         new("logs.backup.list", "Logs", "rc logs list", "Get-RCLog", true),
         new("storage.volume.list", "Volumes", "rc storage volumes", "Get-RCVolume", true),
         new("storage.disk.list", "Disks", "rc storage disks", "Get-RCDisk", true),
+        new("storage.disk.safety", "Disks", "rc storage disk-safety", "Get-RCDiskSafety", true),
         new("native.status", "Native Engine", "rc native status", "Get-RCNativeStatus", true)
     };
 

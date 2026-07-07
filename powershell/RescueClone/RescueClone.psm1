@@ -51,6 +51,19 @@ function Get-RCDisk {
     Invoke-RCJson -ArgumentList @('storage','disks')
 }
 
+function Get-RCDiskSafety {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][int]$DiskNumber,
+        [string]$ExpectedFingerprint,
+        [switch]$AllowBootSystem
+    )
+    $args = @('storage','disk-safety','--disk-number',[string]$DiskNumber)
+    if ($PSBoundParameters.ContainsKey('ExpectedFingerprint')) { $args += @('--expected-fingerprint',$ExpectedFingerprint) }
+    if ($AllowBootSystem) { $args += '--allow-boot-system' }
+    Invoke-RCJson -ArgumentList $args
+}
+
 function Get-RCNativeStatus {
     [CmdletBinding()]
     param()

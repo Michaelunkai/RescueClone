@@ -32,6 +32,7 @@ The implemented, verified feature set is intentionally limited to one complete v
 - Completed directory image files are marked read-only after creation; managed retention can clear that bit only for files selected by its deletion plan.
 - Volume inventory reports drive root, readiness, drive type, file system, label, total/free bytes, and whether the root matches the running Windows system root.
 - Disk inventory reports disk number, friendly name, serial number, partition style, bus type, size, boot/system flags, offline state, and read-only state using built-in Windows storage cmdlets in read-only mode.
+- Disk target safety checks fingerprint selected disks and block missing, fingerprint-mismatched, boot/system, offline, and read-only targets before destructive restore work is enabled.
 - Job runs can perform post-create verification and write a structured JSON run log.
 - Job runs can execute configured pre-backup and post-backup script hooks non-interactively, fail the job on nonzero hook exit or timeout, and include hook exit/output records in the structured JSON run log.
 - Job runs write paired machine-readable JSON and human-readable HTML reports and can rotate old reports by per-job keep count.

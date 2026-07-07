@@ -49,7 +49,7 @@ static int Run(string[] args)
             return RunLogs(args[1], ParseOptions(args.Skip(2).ToArray()));
 
         if (args.Length >= 2 && args[0] == "storage")
-            return RunStorage(args[1]);
+            return RunStorage(args[1], ParseOptions(args.Skip(2).ToArray()));
 
         if (args.Length >= 2 && args[0] == "native")
             return RunNative(args[1]);
@@ -155,7 +155,7 @@ static int RunRetention(string command, Dictionary<string, string> values)
     }
 }
 
-static int RunStorage(string command)
+static int RunStorage(string command, Dictionary<string, string> values)
 {
     switch (command)
     {
@@ -164,6 +164,14 @@ static int RunStorage(string command)
             return 0;
         case "disks":
             WriteJson(new DiskEnumerator().ListDisks());
+            return 0;
+        case "disk-safety":
+            WriteJson(new DiskTargetSafetyEvaluator().Evaluate(
+                new DiskEnumerator().ListDisks(),
+                new DiskTargetSafetyOptions(
+                    int.Parse(Required(values, "disk-number")),
+                    values.GetValueOrDefault("expected-fingerprint"),
+                    values.ContainsKey("allow-boot-system"))));
             return 0;
         default:
             throw new ArgumentException($"Unknown storage command: {command}");
@@ -283,7 +291,7 @@ static Dictionary<string, string> ParseOptions(string[] args)
         if (!arg.StartsWith("--", StringComparison.Ordinal))
             throw new ArgumentException($"Unexpected argument: {arg}");
         var name = arg[2..];
-        if (name is "overwrite" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition" or "run-missed")
+        if (name is "overwrite" or "force-disabled" or "target-is-current-system-disk" or "has-efi-system-partition" or "run-missed" or "allow-boot-system")
         {
             values[name] = "true";
             continue;
@@ -361,6 +369,7 @@ static void PrintHelp()
     rc logs list --directory <dir> [--pattern *.json]
     rc storage volumes
     rc storage disks
+    rc storage disk-safety --disk-number <n> [--expected-fingerprint <sha256>] [--allow-boot-system]
     rc native status
     """);
 }

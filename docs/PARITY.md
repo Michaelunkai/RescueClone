@@ -25,6 +25,7 @@ The source of truth for implemented parity is `RescueClone.Core.FeatureCatalog`.
 | Centralized backup log listing | Logs tab | `rc logs list` | `Get-RCLog` |
 | Read-only volume inventory | Volumes tab | `rc storage volumes` | `Get-RCVolume` |
 | Read-only disk inventory | Disks tab | `rc storage disks` | `Get-RCDisk` |
+| Disk target safety check | Disks tab | `rc storage disk-safety` | `Get-RCDiskSafety` |
 | Native engine status | Native Engine tab | `rc native status` | `Get-RCNativeStatus` |
 
 The test suite asserts that every implemented feature has GUI, CLI, and PowerShell entries in the catalog. New functionality must be added to all three surfaces before it is marked implemented.
