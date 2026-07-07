@@ -1,6 +1,6 @@
 # RescueClone
 
-RescueClone is a clean-room Windows backup/recovery suite foundation. The current verified slice supports directory image creation with selectable v1/v2 containers, verification, image-to-source comparison, repository image listing and integrity audit with optional verification, repository read-only protection audit/apply, image content browsing, selected file/folder extraction, managed read-only user-mode image projection/listing/unprojection, restore, verified directory cloning, JSON-defined directory backup job creation/update/deletion/export/import/list/status/history/runs, count/age/free-space and GFS-style retention planning/enforcement for directory-image repositories, Windows Task Scheduler XML planning/register/status/run/unregister for calendar and event-triggered backup jobs, read-only restore planning, unattended rescue answer-file creation/validation, operation-kind discovery, operation request validation, durable local operation execution, named-pipe service IPC operation execution, Windows Service registration and recovery policy for the operation IPC host, centralized backup log listing, read-only volume and disk inventory, read-only disk target safety checks, and a native C++ v2 block-planning boundary through the GUI, CLI, and PowerShell module.
+RescueClone is a clean-room Windows backup/recovery suite foundation. The current verified slice supports directory image creation with selectable v1/v2 containers, verification, image-to-source comparison, repository image listing and integrity audit with optional verification, repository read-only protection audit/apply, image content browsing, selected file/folder extraction, managed read-only user-mode image projection/listing/unprojection, restore, verified directory cloning, JSON-defined directory backup job creation/update/deletion/export/import/list/status/history/runs, count/age/free-space and GFS-style retention planning/enforcement for directory-image repositories, Windows Task Scheduler XML planning/register/status/run/unregister for calendar and event-triggered backup jobs, read-only restore planning, unattended rescue answer-file creation/validation/safe directory execution, operation-kind discovery, operation request validation, durable local operation execution, named-pipe service IPC operation execution, Windows Service registration and recovery policy for the operation IPC host, centralized backup log listing, read-only volume and disk inventory, read-only disk target safety checks, and a native C++ v2 block-planning boundary through the GUI, CLI, and PowerShell module.
 
 This is not a Macrium Reflect clone. It does not currently implement VSS disk imaging, boot repair, kernel drivers, image mounting, rescue media, scheduler services, or bare-metal restore.
 
@@ -13,6 +13,7 @@ The developer architecture guide is `docs\ARCHITECTURE.md`.
 ```powershell
 .\scripts\Build-Portable.ps1
 .\scripts\Test-Portable.ps1
+.\scripts\Test-All.ps1
 ```
 
 Published runtime entry points:
