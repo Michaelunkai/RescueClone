@@ -379,6 +379,21 @@ function Start-RCOperation {
     }
 }
 
+function Start-RCServiceOperation {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param(
+        [Parameter(Mandatory=$true)][string]$PipeName,
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$RequestPath,
+        [string]$LogDirectory,
+        [int]$TimeoutMilliseconds = 30000
+    )
+    if ($PSCmdlet.ShouldProcess($PipeName, "Run RescueClone operation request through service IPC")) {
+        $args = @('service','run-operation','--pipe',$PipeName,'--request',$RequestPath,'--timeout-ms',[string]$TimeoutMilliseconds)
+        if ($PSBoundParameters.ContainsKey('LogDirectory')) { $args += @('--log-directory',$LogDirectory) }
+        Invoke-RCJson -ArgumentList $args
+    }
+}
+
 function Get-RCLog {
     [CmdletBinding()]
     param(

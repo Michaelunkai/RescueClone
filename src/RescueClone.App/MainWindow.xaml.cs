@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Windows;
 using RescueClone.Core;
 using RescueClone.Core.Jobs;
@@ -157,6 +159,23 @@ public partial class MainWindow : Window
         RunAndReport(() => _operationRunner.Run(
             _operationRunner.LoadRequest(OperationRequestPathBox.Text),
             EmptyToNull(OperationLogDirectoryBox.Text)));
+    }
+
+    private void RunServiceOperation_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() =>
+        {
+            var response = new OperationPipeClient().RunOperationAsync(
+                OperationPipeNameBox.Text,
+                new OperationServiceRequest(
+                    _operationRunner.LoadRequest(OperationRequestPathBox.Text),
+                    EmptyToNull(OperationLogDirectoryBox.Text)),
+                TimeSpan.FromSeconds(30),
+                CancellationToken.None).GetAwaiter().GetResult();
+            if (!response.Succeeded)
+                throw new InvalidOperationException(response.Error ?? "Operation service request failed.");
+            return response.Report ?? throw new InvalidDataException("Operation service returned no report.");
+        });
     }
 
     private void PlanRetention_Click(object sender, RoutedEventArgs e)

@@ -117,6 +117,42 @@ public sealed class OperationRunnerTests
     }
 
     [TestMethod]
+    public async Task PipeServiceRunsOperationAndWritesRecoveryState()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        var logs = Path.Combine(root, "ops");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.txt"), "alpha");
+        var image = Path.Combine(root, "image.rcimg");
+        new ImageEngine().Create(new ImageOptions(source, image, CompressionMode.Medium, null));
+        var pipeName = "rescueclone-test-" + Guid.NewGuid().ToString("N");
+        using var cancellation = new CancellationTokenSource();
+        var serverTask = new OperationPipeServer().RunAsync(pipeName, logs, cancellation.Token);
+
+        var response = await new OperationPipeClient().RunOperationAsync(
+            pipeName,
+            new OperationServiceRequest(new OperationRequest(
+                "image.verify",
+                new Dictionary<string, JsonElement>
+                {
+                    ["image"] = Json("image", image)
+                },
+                "pipe-verify")),
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None);
+        cancellation.Cancel();
+        await serverTask;
+
+        Assert.IsTrue(response.Succeeded);
+        Assert.IsNotNull(response.Report);
+        Assert.AreEqual(OperationState.Succeeded, response.Report.State);
+        Assert.AreEqual(1, response.Report.Result!.Value.GetProperty("fileCount").GetInt32());
+        Assert.IsTrue(File.Exists(response.Report.LogPath));
+        Assert.IsTrue(File.Exists(response.Report.RecoveryStatePath));
+    }
+
+    [TestMethod]
     public void RunJobManagementOperations()
     {
         var root = NewTempDirectory();
@@ -205,6 +241,17 @@ public sealed class OperationRunnerTests
         Assert.AreEqual("Operations", feature.Gui);
         Assert.AreEqual("rc operation run", feature.Cli);
         Assert.AreEqual("Start-RCOperation", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesServiceOperationParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "operation.run.service");
+
+        Assert.AreEqual("Operations", feature.Gui);
+        Assert.AreEqual("rc service run-operation", feature.Cli);
+        Assert.AreEqual("Start-RCServiceOperation", feature.PowerShell);
         Assert.IsTrue(feature.Implemented);
     }
 

@@ -26,6 +26,7 @@ public static class FeatureCatalog
         new("schedule.unregister", "Scheduler", "rc schedule unregister", "Unregister-RCSchedule", true),
         new("restore.plan.readonly", "Restore Plan", "rc restore plan", "Get-RCRestorePlan", true),
         new("operation.run.local", "Operations", "rc operation run", "Start-RCOperation", true),
+        new("operation.run.service", "Operations", "rc service run-operation", "Start-RCServiceOperation", true),
         new("logs.backup.list", "Logs", "rc logs list", "Get-RCLog", true),
         new("storage.volume.list", "Volumes", "rc storage volumes", "Get-RCVolume", true),
         new("storage.disk.list", "Disks", "rc storage disks", "Get-RCDisk", true),

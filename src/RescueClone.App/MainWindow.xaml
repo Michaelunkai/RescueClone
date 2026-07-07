@@ -154,11 +154,16 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBox x:Name="OperationRequestPathBox" Grid.Row="0" Margin="0,0,0,8" ToolTip="Operation request JSON path"/>
                     <TextBox x:Name="OperationLogDirectoryBox" Grid.Row="1" Margin="0,0,0,8" ToolTip="Optional operation log directory"/>
-                    <Button Grid.Row="2" Width="140" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Content="Run Operation" Click="RunOperation_Click"/>
+                    <TextBox x:Name="OperationPipeNameBox" Grid.Row="2" Margin="0,0,0,8" ToolTip="Service pipe name"/>
+                    <WrapPanel Grid.Row="3">
+                        <Button Width="140" Height="34" Content="Run Operation" Click="RunOperation_Click" Margin="0,0,8,0"/>
+                        <Button Width="180" Height="34" Content="Run Via Service" Click="RunServiceOperation_Click"/>
+                    </WrapPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Retention">

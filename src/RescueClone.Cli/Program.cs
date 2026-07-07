@@ -45,6 +45,9 @@ static int Run(string[] args)
         if (args.Length >= 2 && args[0] == "operation")
             return RunOperation(args[1], ParseOptions(args.Skip(2).ToArray()));
 
+        if (args.Length >= 2 && args[0] == "service")
+            return RunService(args[1], ParseOptions(args.Skip(2).ToArray()));
+
         if (args.Length >= 2 && args[0] == "logs")
             return RunLogs(args[1], ParseOptions(args.Skip(2).ToArray()));
 
@@ -55,7 +58,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc operation <run>, rc service <serve|run-operation>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -209,6 +212,43 @@ static int RunOperation(string command, Dictionary<string, string> values)
     var request = runner.LoadRequest(Required(values, "request"));
     WriteJson(runner.Run(request, values.GetValueOrDefault("log-directory")));
     return 0;
+}
+
+static int RunService(string command, Dictionary<string, string> values)
+{
+    switch (command)
+    {
+        case "serve":
+            using (var cancellation = new CancellationTokenSource())
+            {
+                Console.CancelKeyPress += (_, eventArgs) =>
+                {
+                    eventArgs.Cancel = true;
+                    cancellation.Cancel();
+                };
+                new OperationPipeServer().RunAsync(
+                    Required(values, "pipe"),
+                    values.GetValueOrDefault("log-directory"),
+                    cancellation.Token).GetAwaiter().GetResult();
+            }
+            return 0;
+        case "run-operation":
+            var runner = new OperationRunner();
+            var request = runner.LoadRequest(Required(values, "request"));
+            var response = new OperationPipeClient().RunOperationAsync(
+                Required(values, "pipe"),
+                new OperationServiceRequest(request, values.GetValueOrDefault("log-directory")),
+                TimeSpan.FromMilliseconds(TryParseInt(values, "timeout-ms") ?? 30000),
+                CancellationToken.None).GetAwaiter().GetResult();
+            if (!response.Succeeded)
+                throw new InvalidOperationException(response.Error ?? "Operation service request failed.");
+            if (response.Report is null)
+                throw new InvalidDataException("Operation service returned no report.");
+            WriteJson(response.Report);
+            return response.Report.State == OperationState.Succeeded ? 0 : 3;
+        default:
+            throw new ArgumentException($"Unknown service command: {command}");
+    }
 }
 
 static int RunLogs(string command, Dictionary<string, string> values)
@@ -387,6 +427,8 @@ static void PrintHelp()
     rc schedule unregister --task-name <name>
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc operation run --request <operation.json> [--log-directory <dir>]
+    rc service serve --pipe <name> [--log-directory <dir>]
+    rc service run-operation --pipe <name> --request <operation.json> [--log-directory <dir>] [--timeout-ms <n>]
     rc logs list --directory <dir> [--pattern *.json]
     rc storage volumes
     rc storage disks

@@ -56,6 +56,8 @@ CLI examples:
 .\RC.cmd schedule unregister --task-name nightly-docs
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
+.\RC.cmd service serve --pipe rescueclone-local --log-directory .\operation-logs
+.\RC.cmd service run-operation --pipe rescueclone-local --request .\operation.json --log-directory .\operation-logs --timeout-ms 30000
 .\RC.cmd logs list --directory .\backup-logs
 .\RC.cmd storage volumes
 .\RC.cmd storage disks
@@ -155,6 +157,7 @@ Get-RCSchedulePlan -TaskName event-docs -JobFilePath .\backup-job.json -CliPath 
 Unregister-RCSchedule -TaskName nightly-docs -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
+Start-RCServiceOperation -PipeName rescueclone-local -RequestPath .\operation.json -LogDirectory .\operation-logs -TimeoutMilliseconds 30000 -Confirm:$false
 Get-RCLog -DirectoryPath .\backup-logs
 Get-RCVolume
 Get-RCDisk
@@ -163,5 +166,7 @@ Get-RCNativeStatus
 ```
 
 Dependency note: normal CLI, GUI, and PowerShell use the self-contained binaries in `publish`. After `scripts\Install-FLocalDotNet.ps1`, build commands use `.dotnet-sdk\dotnet.exe` from the project folder. The default seed source is the Codex-local SDK cache under `C:\Users\micha\.codex\tools\dotnet-sdk-10.0.301`; pass `-SourceDotNetRoot` to seed from a different drive. Disk inventory uses the built-in Windows `Get-Disk` storage cmdlet through Windows PowerShell in read-only mode.
+
+Service IPC note: `rc service serve --pipe <name>` hosts the current operation runner on a Windows named pipe. `rc service run-operation`, `Start-RCServiceOperation`, and the GUI Operations tab's service button send the same operation request JSON through that pipe and return the structured operation report. This is the current IPC foundation; it is not yet installed as a privileged Windows Service by the installer.
 
 Disk safety checks are read-only. The evaluator fingerprints the selected disk from number, friendly name, serial number, partition style, bus type, and size, then blocks by default when the disk is missing, fingerprint-mismatched, boot/system, offline, or read-only.
