@@ -36,6 +36,10 @@ jobs:
         shell: pwsh
         run: .\scripts\Test-Portable.ps1
 
+      - name: Portable install smoke test
+        shell: pwsh
+        run: .\scripts\Test-PortableInstall.ps1
+
       - name: Build portable package
         shell: pwsh
         run: .\scripts\New-PortablePackage.ps1 -OutputPath .\artifacts\RescueClone-portable.zip -Force

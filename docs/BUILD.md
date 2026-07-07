@@ -7,6 +7,7 @@ From the repository root, the preferred portable build is:
 .\scripts\Build-Portable.ps1
 .\scripts\Test-PortableDependencyBoundary.ps1
 .\scripts\New-PortablePackage.ps1 -OutputPath .\artifacts\RescueClone-portable.zip -Force
+.\scripts\Test-PortableInstall.ps1 -InstallRoot F:\Tools\RescueClone-Smoke
 .\scripts\Install-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart -Force
 .\scripts\Uninstall-RescueClone.ps1 -InstallRoot F:\Tools\RescueClone -Quiet -NoRestart
 ```
@@ -40,7 +41,7 @@ dotnet test RescueClone.sln -c Release
 CI:
 
 - `.github\workflows\ci.yml` runs on `windows-latest`.
-- It installs .NET SDK `10.0.301` from `global.json`, installs MSYS2 MinGW, runs `scripts\Build-Portable.ps1 -AllowSystemDotNetFallback -NativeCompilerPath C:\msys64\mingw64\bin\g++.exe`, runs `scripts\Test-Portable.ps1`, builds the portable ZIP, and uploads it as an artifact.
+- It installs .NET SDK `10.0.301` from `global.json`, installs MSYS2 MinGW, runs `scripts\Build-Portable.ps1 -AllowSystemDotNetFallback -NativeCompilerPath C:\msys64\mingw64\bin\g++.exe`, runs `scripts\Test-Portable.ps1`, runs `scripts\Test-PortableInstall.ps1`, builds the portable ZIP, and uploads it as an artifact.
 
 CLI examples:
 
