@@ -33,6 +33,7 @@ public sealed class OperationRunner
         var started = DateTimeOffset.UtcNow;
         JsonElement? result = null;
         string? error = null;
+        OperationError? errorDetail = null;
         var state = OperationState.Succeeded;
         var auditEvents = new List<OperationAuditEvent>
         {
@@ -48,11 +49,12 @@ public sealed class OperationRunner
         {
             state = OperationState.Failed;
             error = ex.Message;
+            errorDetail = ClassifyError(ex);
             auditEvents.Add(new OperationAuditEvent("operation.failed", DateTimeOffset.UtcNow, $"Operation {operationId} failed: {ex.Message}"));
         }
 
         var finished = DateTimeOffset.UtcNow;
-        var report = new OperationReport(operationId, request.Kind, state, started, finished, null, result, error, AuditEvents: auditEvents);
+        var report = new OperationReport(operationId, request.Kind, state, started, finished, null, result, error, AuditEvents: auditEvents, ErrorDetail: errorDetail);
         var logPath = WriteReport(report, logDirectory);
         var reportWithLog = report with { LogPath = logPath };
         var recoveryStatePath = WriteRecoveryState(request, reportWithLog, logDirectory);
@@ -178,6 +180,21 @@ public sealed class OperationRunner
     {
         using var document = JsonDocument.Parse(JsonSerializer.Serialize(value, JsonOptions));
         return document.RootElement.Clone();
+    }
+
+    private static OperationError ClassifyError(Exception ex)
+    {
+        var code = ex switch
+        {
+            FileNotFoundException or DirectoryNotFoundException => "not_found",
+            ArgumentException => "invalid_request",
+            InvalidOperationException => "operation_failed",
+            InvalidDataException => "invalid_data",
+            UnauthorizedAccessException => "access_denied",
+            IOException => "io_error",
+            _ => "unexpected_error"
+        };
+        return new OperationError(code, ex.Message, ex.GetType().Name);
     }
 
     private static string RequiredString(OperationRequest request, string name)

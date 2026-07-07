@@ -62,6 +62,9 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(File.Exists(report.RecoveryStatePath));
         Assert.IsTrue(report.Error!.Contains("missing.rcimg", StringComparison.OrdinalIgnoreCase));
         AssertAuditEvents(report, OperationState.Failed);
+        Assert.IsNotNull(report.ErrorDetail);
+        Assert.AreEqual("not_found", report.ErrorDetail.Code);
+        Assert.AreEqual(nameof(FileNotFoundException), report.ErrorDetail.ExceptionType);
 
         var state = ReadRecoveryState(report.RecoveryStatePath!);
         Assert.IsNotNull(state);
@@ -69,6 +72,8 @@ public sealed class OperationRunnerTests
         Assert.AreEqual(OperationState.Failed, state.Report.State);
         Assert.IsTrue(state.Report.Error!.Contains("missing.rcimg", StringComparison.OrdinalIgnoreCase));
         AssertAuditEvents(state.Report, OperationState.Failed);
+        Assert.IsNotNull(state.Report.ErrorDetail);
+        Assert.AreEqual("not_found", state.Report.ErrorDetail.Code);
     }
 
     [TestMethod]

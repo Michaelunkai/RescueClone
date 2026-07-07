@@ -23,7 +23,8 @@ public sealed record OperationReport(
     JsonElement? Result,
     string? Error,
     string? RecoveryStatePath = null,
-    IReadOnlyList<OperationAuditEvent>? AuditEvents = null);
+    IReadOnlyList<OperationAuditEvent>? AuditEvents = null,
+    OperationError? ErrorDetail = null);
 
 public sealed record OperationRecoveryState(
     OperationRequest Request,
@@ -34,3 +35,8 @@ public sealed record OperationAuditEvent(
     string EventType,
     DateTimeOffset OccurredUtc,
     string Message);
+
+public sealed record OperationError(
+    string Code,
+    string Message,
+    string ExceptionType);

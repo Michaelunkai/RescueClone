@@ -123,7 +123,9 @@ When `rc operation run` or `Start-RCOperation` receives `--log-directory` / `-Lo
 the runner writes `<operation-id>.json` plus `<operation-id>.state.json`. The state sidecar
 contains the original request and final report so a failed unattended operation leaves a readable
 recovery artifact. Operation reports include structured audit events named `operation.started`,
-`operation.succeeded`, and `operation.failed`.
+`operation.succeeded`, and `operation.failed`. Failed operation reports include `errorDetail`
+with one of the current codes: `not_found`, `invalid_request`, `operation_failed`,
+`invalid_data`, `access_denied`, `io_error`, or `unexpected_error`.
 
 PowerShell examples:
 
