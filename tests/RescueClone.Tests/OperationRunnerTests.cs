@@ -670,6 +670,25 @@ public sealed class OperationRunnerTests
         Assert.IsTrue(feature.Implemented);
     }
 
+    [TestMethod]
+    public void OperationKindCatalogIncludesDispatchableKindsAndFeatureParity()
+    {
+        OperationKindCatalog.AssertUniqueKinds();
+        var kinds = OperationKindCatalog.All.Select(kind => kind.Kind).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Assert.IsTrue(kinds.Contains("image.verify"));
+        Assert.IsTrue(kinds.Contains("job.backup.directory.run"));
+        Assert.IsTrue(kinds.Contains("schedule.register"));
+        Assert.IsTrue(kinds.Contains("rescue.answer.validate"));
+        Assert.IsTrue(OperationKindCatalog.All.Single(kind => kind.Kind == "image.extract.directory").RequiredParameters.Contains("paths"));
+
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "operation.kind.list");
+        Assert.AreEqual("Operations", feature.Gui);
+        Assert.AreEqual("rc operation kinds", feature.Cli);
+        Assert.AreEqual("Get-RCOperationKind", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
     private static JsonElement Json<T>(string name, T value)
     {
         using var document = JsonDocument.Parse(JsonSerializer.Serialize(new Dictionary<string, T> { [name] = value }));

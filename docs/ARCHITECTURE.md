@@ -157,6 +157,8 @@ Validation reuses image verification and restore-planner blockers. The current a
 
 `Operations\OperationRunner` dispatches durable JSON operation requests by kind. It writes structured operation reports and recovery state sidecars when a log directory is supplied.
 
+`OperationKindCatalog` lists the supported durable request kinds, descriptions, required parameters, and optional parameters. It is exposed through the GUI Operations tab, CLI `rc operation kinds`, and PowerShell `Get-RCOperationKind`.
+
 Operation reports include:
 
 - operation id

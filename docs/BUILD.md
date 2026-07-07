@@ -86,6 +86,7 @@ CLI examples:
 .\RC.cmd restore plan --image .\sample.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576
 .\RC.cmd rescue answer-create --output .\rescue-answer.json --repository .\images --image daily-docs.rcimg --target-disk-id disk-fixture-1 --boot-mode Bios --bcd-store .\BCD --target-disk-size-bytes 1048576 --driver-directories .\drivers --network-shares \\server\share --reboot-after-restore --verify-image
 .\RC.cmd rescue answer-validate --file .\rescue-answer.json --verify-image
+.\RC.cmd operation kinds
 .\RC.cmd operation run --request .\operation.json --log-directory .\operation-logs
 .\RC.cmd service serve --pipe rescueclone-local --log-directory .\operation-logs
 .\RC.cmd service run-operation --pipe rescueclone-local --request .\operation.json --log-directory .\operation-logs --timeout-ms 30000
@@ -165,6 +166,7 @@ Supported local operation kinds currently include `image.create.directory`, `ima
 `retention.plan`, `retention.apply`, `retention.gfs.plan`, `retention.gfs.apply`,
 `schedule.plan`, `schedule.register`, `schedule.status`, `schedule.run`, `schedule.unregister`,
 `restore.plan.readonly`, `rescue.answer.create`, and `rescue.answer.validate`.
+Use `rc operation kinds` or `Get-RCOperationKind` to retrieve the current operation kind catalog with required and optional parameters.
 
 When `rc operation run` or `Start-RCOperation` receives `--log-directory` / `-LogDirectory`,
 the runner writes `<operation-id>.json` plus `<operation-id>.state.json`. The state sidecar
@@ -214,6 +216,7 @@ Unregister-RCSchedule -TaskName nightly-docs -Confirm:$false
 Get-RCRestorePlan -ImagePath .\sample.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576
 New-RCRescueAnswer -OutputPath .\rescue-answer.json -RepositoryPath .\images -ImagePath daily-docs.rcimg -TargetDiskId disk-fixture-1 -BootMode Bios -BcdStorePath .\BCD -TargetDiskSizeBytes 1048576 -DriverDirectory .\drivers -NetworkShare \\server\share -RebootAfterRestore -VerifyImage -Confirm:$false
 Test-RCRescueAnswer -Path .\rescue-answer.json -VerifyImage
+Get-RCOperationKind
 Start-RCOperation -RequestPath .\operation.json -LogDirectory .\operation-logs -Confirm:$false
 Start-RCServiceOperation -PipeName rescueclone-local -RequestPath .\operation.json -LogDirectory .\operation-logs -TimeoutMilliseconds 30000 -Confirm:$false
 Get-RCServiceInstallPlan -Name RescueClone -PipeName rescueclone-local -CliPath .\publish\cli\rc.exe -LogDirectory .\operation-logs -DisplayName 'RescueClone Operation Service' -StartMode demand

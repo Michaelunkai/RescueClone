@@ -263,6 +263,12 @@ public partial class MainWindow : Window
             EmptyToNull(OperationLogDirectoryBox.Text)));
     }
 
+    private void ListOperationKinds_Click(object sender, RoutedEventArgs e)
+    {
+        OperationKindCatalog.AssertUniqueKinds();
+        RunAndReport(() => OperationKindCatalog.All);
+    }
+
     private void RunServiceOperation_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() =>

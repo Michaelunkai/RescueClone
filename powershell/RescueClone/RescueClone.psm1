@@ -589,6 +589,12 @@ function Start-RCOperation {
     }
 }
 
+function Get-RCOperationKind {
+    [CmdletBinding()]
+    param()
+    Invoke-RCJson -ArgumentList @('operation','kinds')
+}
+
 function Start-RCServiceOperation {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(

@@ -231,6 +231,7 @@
                         <TextBox x:Name="ServiceCliPathBox" Width="320" ToolTip="rc.exe path for Windows Service"/>
                     </StackPanel>
                     <WrapPanel Grid.Row="4" Margin="0,0,0,8">
+                        <Button Width="140" Height="34" Content="List Kinds" Click="ListOperationKinds_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Run Operation" Click="RunOperation_Click" Margin="0,0,8,0"/>
                         <Button Width="180" Height="34" Content="Run Via Service" Click="RunServiceOperation_Click" Margin="0,0,8,0"/>
                         <Button Width="150" Height="34" Content="Plan Service" Click="PlanService_Click" Margin="0,0,8,0"/>

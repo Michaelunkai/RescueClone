@@ -145,6 +145,15 @@ This creates and validates an unattended restore answer JSON. It does not build 
 
 ## Operations And Service IPC
 
+Discover supported durable operation request kinds:
+
+```powershell
+.\RC.cmd operation kinds
+Get-RCOperationKind
+```
+
+The GUI has the matching Operations tab `List Kinds` action. The returned catalog lists each durable operation kind plus required and optional JSON parameters.
+
 Create an operation request JSON and run it locally:
 
 ```powershell

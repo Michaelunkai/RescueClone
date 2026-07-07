@@ -65,7 +65,7 @@ static int Run(string[] args)
             return RunNative(args[1]);
 
         if (args.Length < 2 || args[0] != "image")
-            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
+            throw new ArgumentException("Expected: rc image <create|verify|browse|extract|restore>, rc job <validate|run>, rc retention <plan|apply>, rc schedule <plan|register|unregister>, rc restore <plan>, rc rescue <answer-create|answer-validate>, rc operation <kinds|run>, rc service <serve|host|run-operation|plan-install|install|uninstall|start|stop|status|recovery|recovery-status>, rc logs <list>, rc storage <volumes>, or rc native <status>.");
 
         var command = args[1];
         var values = ParseOptions(args.Skip(2).ToArray());
@@ -328,6 +328,13 @@ static int RunNative(string command)
 
 static int RunOperation(string command, Dictionary<string, string> values)
 {
+    if (command == "kinds")
+    {
+        OperationKindCatalog.AssertUniqueKinds();
+        WriteJson(OperationKindCatalog.All);
+        return 0;
+    }
+
     if (command != "run")
         throw new ArgumentException($"Unknown operation command: {command}");
 
@@ -635,6 +642,7 @@ static void PrintHelp()
     rc restore plan --image <file.rcimg> --target-disk-id <id> --boot-mode Bios|Uefi --bcd-store <path> [--password <secret>] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition]
     rc rescue answer-create --output <answer.json> --repository <dir> --image <file.rcimg> --target-disk-id <id> [--password <secret>] [--boot-mode Bios|Uefi|Unknown] [--target-disk-size-bytes <n>] [--required-bytes <n>] [--target-is-current-system-disk] [--has-efi-system-partition] [--bcd-store <path>] [--driver-directories <paths>] [--network-shares <shares>] [--repair-boot true|false] [--reboot-after-restore] [--verify-image]
     rc rescue answer-validate --file <answer.json> [--verify-image]
+    rc operation kinds
     rc operation run --request <operation.json> [--log-directory <dir>]
     rc service serve --pipe <name> [--log-directory <dir>]
     rc service host --pipe <name> [--log-directory <dir>]
