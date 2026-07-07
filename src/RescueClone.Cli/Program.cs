@@ -92,6 +92,14 @@ static int Run(string[] args)
                     values.GetValueOrDefault("password"))));
                 return 0;
 
+            case "audit":
+                var audit = new ImageRepositoryCatalog(engine).Audit(new ImageRepositoryAuditOptions(
+                    Required(values, "repository"),
+                    values.GetValueOrDefault("pattern", "*.rcimg"),
+                    values.GetValueOrDefault("password")));
+                WriteJson(audit);
+                return audit.FailedCount == 0 ? 0 : 3;
+
             case "extract":
                 var extract = new ExtractOptions(
                     Required(values, "image"),
@@ -437,6 +445,7 @@ static void PrintHelp()
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image browse --image <file.rcimg> [--password <secret>]
     rc image list --repository <dir> [--pattern *.rcimg] [--verify] [--password <secret>]
+    rc image audit --repository <dir> [--pattern *.rcimg] [--password <secret>]
     rc image extract --image <file.rcimg> --target <dir> --paths <relative-paths> [--password <secret>] [--overwrite]
     rc image project --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc image projections --root <dir>

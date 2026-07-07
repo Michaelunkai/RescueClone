@@ -90,6 +90,10 @@ public sealed class OperationRunner
                 OptionalString(request, "pattern") ?? "*.rcimg",
                 BoolValue(request, "verify"),
                 OptionalString(request, "password"))),
+            "image.audit.repository" => new ImageRepositoryCatalog(_imageEngine).Audit(new ImageRepositoryAuditOptions(
+                RequiredString(request, "repository"),
+                OptionalString(request, "pattern") ?? "*.rcimg",
+                OptionalString(request, "password"))),
             "image.extract.directory" => _imageEngine.Extract(new ExtractOptions(
                 RequiredString(request, "image"),
                 RequiredString(request, "target"),

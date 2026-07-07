@@ -10,6 +10,7 @@ public static class FeatureCatalog
         new("image.verify", "Verify Image", "rc image verify", "Test-RCImage", true),
         new("image.browse", "Restore Image", "rc image browse", "Get-RCImageContent", true),
         new("image.list.repository", "Restore Image", "rc image list", "Get-RCImage", true),
+        new("image.audit.repository", "Verify Image", "rc image audit", "Test-RCImageRepository", true),
         new("image.extract.directory", "Restore Image", "rc image extract", "Export-RCImageFile", true),
         new("image.project.readonly", "Restore Image", "rc image project", "Mount-RCImage", true),
         new("image.project.list", "Restore Image", "rc image projections", "Get-RCImageMount", true),

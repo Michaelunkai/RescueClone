@@ -63,6 +63,14 @@ public partial class MainWindow : Window
             EmptyToNull(RestorePasswordBox.Password))));
     }
 
+    private void AuditImages_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => new ImageRepositoryCatalog(_engine).Audit(new ImageRepositoryAuditOptions(
+            RestoreImagePathBox.Text,
+            "*.rcimg",
+            EmptyToNull(RestorePasswordBox.Password))));
+    }
+
     private void ExtractImage_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _engine.Extract(new ExtractOptions(

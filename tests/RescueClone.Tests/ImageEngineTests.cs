@@ -190,6 +190,7 @@ public sealed class ImageEngineTests
         var catalog = new ImageRepositoryCatalog();
         var metadataOnly = catalog.List(new ImageRepositoryListOptions(repository, "*.rcimg", Verify: false, Password: null));
         var verified = catalog.List(new ImageRepositoryListOptions(repository, "*.rcimg", Verify: true, Password: null));
+        var audit = catalog.Audit(new ImageRepositoryAuditOptions(repository, "*.rcimg", Password: null));
 
         Assert.AreEqual(1, metadataOnly.ImageCount);
         Assert.AreEqual(image, metadataOnly.Images[0].ImagePath);
@@ -200,6 +201,9 @@ public sealed class ImageEngineTests
         Assert.AreEqual(1, verified.Images[0].FileCount);
         Assert.AreEqual(2, verified.Images[0].FormatVersion);
         Assert.IsFalse(string.IsNullOrWhiteSpace(verified.Images[0].RootSha256));
+        Assert.AreEqual(1, audit.ImageCount);
+        Assert.AreEqual(1, audit.VerifiedCount);
+        Assert.AreEqual(0, audit.FailedCount);
     }
 
     [TestMethod]
@@ -207,6 +211,7 @@ public sealed class ImageEngineTests
     {
         var browse = FeatureCatalog.All.Single(f => f.FeatureId == "image.browse");
         var list = FeatureCatalog.All.Single(f => f.FeatureId == "image.list.repository");
+        var audit = FeatureCatalog.All.Single(f => f.FeatureId == "image.audit.repository");
         var extract = FeatureCatalog.All.Single(f => f.FeatureId == "image.extract.directory");
 
         Assert.AreEqual("Restore Image", browse.Gui);
@@ -215,6 +220,9 @@ public sealed class ImageEngineTests
         Assert.AreEqual("Restore Image", list.Gui);
         Assert.AreEqual("rc image list", list.Cli);
         Assert.AreEqual("Get-RCImage", list.PowerShell);
+        Assert.AreEqual("Verify Image", audit.Gui);
+        Assert.AreEqual("rc image audit", audit.Cli);
+        Assert.AreEqual("Test-RCImageRepository", audit.PowerShell);
         Assert.AreEqual("Restore Image", extract.Gui);
         Assert.AreEqual("rc image extract", extract.Cli);
         Assert.AreEqual("Export-RCImageFile", extract.PowerShell);

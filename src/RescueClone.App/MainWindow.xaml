@@ -71,6 +71,7 @@
                     <WrapPanel Grid.Row="5">
                         <Button Width="140" Height="34" Content="Browse Image" Click="BrowseImage_Click" Margin="0,0,8,0"/>
                         <Button Width="120" Height="34" Content="List Images" Click="ListImages_Click" Margin="0,0,8,0"/>
+                        <Button Width="130" Height="34" Content="Audit Images" Click="AuditImages_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Extract Paths" Click="ExtractImage_Click" Margin="0,0,8,0"/>
                         <Button Width="140" Height="34" Content="Project Image" Click="ProjectImage_Click" Margin="0,0,8,0"/>
                         <Button Width="150" Height="34" Content="List Projections" Click="ListProjections_Click" Margin="0,0,8,0"/>

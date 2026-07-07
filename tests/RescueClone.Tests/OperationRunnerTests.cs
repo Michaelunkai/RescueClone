@@ -142,6 +142,19 @@ public sealed class OperationRunnerTests
         Assert.AreEqual(image, report.Result.Value.GetProperty("images")[0].GetProperty("imagePath").GetString());
         Assert.IsTrue(report.Result.Value.GetProperty("images")[0].GetProperty("verified").GetBoolean());
         Assert.AreEqual(1, report.Result.Value.GetProperty("images")[0].GetProperty("fileCount").GetInt32());
+
+        var audit = new OperationRunner().Run(new OperationRequest(
+            "image.audit.repository",
+            new Dictionary<string, JsonElement>
+            {
+                ["repository"] = Json("repository", repository)
+            },
+            "audit-images"), Path.Combine(root, "ops"));
+
+        Assert.AreEqual(OperationState.Succeeded, audit.State);
+        Assert.AreEqual(1, audit.Result!.Value.GetProperty("imageCount").GetInt32());
+        Assert.AreEqual(1, audit.Result.Value.GetProperty("verifiedCount").GetInt32());
+        Assert.AreEqual(0, audit.Result.Value.GetProperty("failedCount").GetInt32());
     }
 
     [TestMethod]

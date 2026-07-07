@@ -25,6 +25,19 @@ public sealed record ImageRepositoryListReport(
     int ImageCount,
     IReadOnlyList<ImageRepositoryItem> Images);
 
+public sealed record ImageRepositoryAuditOptions(
+    string RepositoryPath,
+    string Pattern,
+    string? Password);
+
+public sealed record ImageRepositoryAuditReport(
+    string RepositoryPath,
+    string Pattern,
+    int ImageCount,
+    int VerifiedCount,
+    int FailedCount,
+    IReadOnlyList<ImageRepositoryItem> Images);
+
 public sealed class ImageRepositoryCatalog
 {
     private readonly ImageEngine _engine;
@@ -48,6 +61,19 @@ public sealed class ImageRepositoryCatalog
             .ToArray();
 
         return new ImageRepositoryListReport(root, pattern, options.Verify, images.Length, images);
+    }
+
+    public ImageRepositoryAuditReport Audit(ImageRepositoryAuditOptions options)
+    {
+        var listed = List(new ImageRepositoryListOptions(options.RepositoryPath, options.Pattern, Verify: true, options.Password));
+        var failed = listed.Images.Count(image => !image.Verified);
+        return new ImageRepositoryAuditReport(
+            listed.RepositoryPath,
+            listed.Pattern,
+            listed.ImageCount,
+            listed.Images.Count(image => image.Verified),
+            failed,
+            listed.Images);
     }
 
     private ImageRepositoryItem BuildItem(string path, ImageRepositoryListOptions options)
