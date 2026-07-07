@@ -46,6 +46,11 @@ public sealed record BackupJobValidationResult(
     IReadOnlyList<string> Errors,
     IReadOnlyList<string> Warnings);
 
+public sealed record BackupJobDeleteReport(
+    string Path,
+    bool Deleted,
+    DateTimeOffset DeletedUtc);
+
 public sealed record BackupJobRunResult(
     string JobId,
     string Name,

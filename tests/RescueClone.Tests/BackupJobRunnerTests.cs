@@ -56,6 +56,42 @@ public sealed class BackupJobRunnerTests
     }
 
     [TestMethod]
+    public void DeleteRemovesBackupJobDefinition()
+    {
+        var root = NewTempDirectory();
+        var source = Path.Combine(root, "source");
+        Directory.CreateDirectory(source);
+        var path = Path.Combine(root, "jobs", "delete-me.json");
+        var job = new BackupJobDefinition(
+            "delete-me",
+            "Delete Me",
+            Enabled: true,
+            source,
+            Path.Combine(root, "images", "delete-me.rcimg"),
+            CompressionMode.Medium,
+            Password: null,
+            VerifyAfterCreate: true,
+            LogDirectory: Path.Combine(root, "logs"));
+        var runner = new BackupJobRunner();
+        runner.Save(path, job);
+
+        var report = runner.Delete(path);
+
+        Assert.IsTrue(report.Deleted);
+        Assert.AreEqual(Path.GetFullPath(path), report.Path);
+        Assert.IsFalse(File.Exists(path));
+    }
+
+    [TestMethod]
+    public void DeleteRejectsMissingBackupJobDefinition()
+    {
+        var root = NewTempDirectory();
+        var path = Path.Combine(root, "missing.json");
+
+        Assert.ThrowsException<FileNotFoundException>(() => new BackupJobRunner().Delete(path));
+    }
+
+    [TestMethod]
     public void RunCreatesVerifiesAndLogsBackupJob()
     {
         var root = NewTempDirectory();
@@ -623,6 +659,17 @@ public sealed class BackupJobRunnerTests
         Assert.AreEqual("Backup Job", feature.Gui);
         Assert.AreEqual("rc job create", feature.Cli);
         Assert.AreEqual("New-RCBackupJob", feature.PowerShell);
+        Assert.IsTrue(feature.Implemented);
+    }
+
+    [TestMethod]
+    public void FeatureCatalogIncludesBackupJobDeleteParity()
+    {
+        var feature = FeatureCatalog.All.Single(f => f.FeatureId == "job.backup.directory.delete");
+
+        Assert.AreEqual("Backup Job", feature.Gui);
+        Assert.AreEqual("rc job delete", feature.Cli);
+        Assert.AreEqual("Remove-RCBackupJob", feature.PowerShell);
         Assert.IsTrue(feature.Implemented);
     }
 

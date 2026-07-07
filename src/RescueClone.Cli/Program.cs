@@ -237,6 +237,9 @@ static int RunJob(string command, Dictionary<string, string> values)
                 values.GetValueOrDefault("log-directory"));
             WriteJson(runner.Save(Required(values, "file"), definition));
             return 0;
+        case "delete":
+            WriteJson(runner.Delete(Required(values, "file")));
+            return 0;
         case "validate":
             var job = runner.Load(Required(values, "file"));
             WriteJson(runner.Validate(job));
@@ -320,6 +323,7 @@ static void PrintHelp()
     rc image verify --image <file.rcimg> [--password <secret>]
     rc image restore --image <file.rcimg> --target <dir> [--password <secret>] [--overwrite]
     rc job create --file <job.json> --job-id <id> --name <name> --source <dir> --image <file.rcimg> [--compression None|Medium|High] [--password <secret>] [--verify-after-create true|false] [--log-directory <dir>]
+    rc job delete --file <job.json>
     rc job validate --file <job.json>
     rc job run --file <job.json> [--force-disabled]
     rc retention plan --repository <dir> [--pattern *.rcimg] [--keep-count <n>] [--max-age-days <n>] [--min-free-bytes <n>]

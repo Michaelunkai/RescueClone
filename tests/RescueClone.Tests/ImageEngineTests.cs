@@ -92,7 +92,8 @@ public sealed class ImageEngineTests
                 feature.PowerShell.StartsWith("Restore-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Invoke-RC", StringComparison.Ordinal) ||
                 feature.PowerShell.StartsWith("Register-RC", StringComparison.Ordinal) ||
-                feature.PowerShell.StartsWith("Unregister-RC", StringComparison.Ordinal), feature.FeatureId);
+                feature.PowerShell.StartsWith("Unregister-RC", StringComparison.Ordinal) ||
+                feature.PowerShell.StartsWith("Remove-RC", StringComparison.Ordinal), feature.FeatureId);
         }
 
         Assert.AreEqual(FeatureCatalog.All.Count, FeatureCatalog.All.Select(f => f.Cli).Distinct(StringComparer.OrdinalIgnoreCase).Count());

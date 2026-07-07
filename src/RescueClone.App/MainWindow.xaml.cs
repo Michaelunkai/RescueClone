@@ -75,6 +75,11 @@ public partial class MainWindow : Window
         RunAndReport(() => _jobRunner.Validate(_jobRunner.Load(JobPathBox.Text)));
     }
 
+    private void DeleteJob_Click(object sender, RoutedEventArgs e)
+    {
+        RunAndReport(() => _jobRunner.Delete(JobPathBox.Text));
+    }
+
     private void RunJob_Click(object sender, RoutedEventArgs e)
     {
         RunAndReport(() => _jobRunner.Run(_jobRunner.Load(JobPathBox.Text), ForceDisabledJobBox.IsChecked == true));

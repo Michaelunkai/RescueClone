@@ -38,6 +38,18 @@ public sealed class BackupJobRunner
         return job;
     }
 
+    public BackupJobDeleteReport Delete(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Path is required.");
+        var fullPath = Path.GetFullPath(path);
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException("Backup job definition does not exist.", fullPath);
+
+        File.Delete(fullPath);
+        return new BackupJobDeleteReport(fullPath, Deleted: true, DateTimeOffset.UtcNow);
+    }
+
     public BackupJobValidationResult Validate(BackupJobDefinition job)
     {
         var errors = new List<string>();

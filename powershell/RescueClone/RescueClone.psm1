@@ -130,6 +130,16 @@ function Test-RCBackupJob {
     Invoke-RCJson -ArgumentList @('job','validate','--file',$Path)
 }
 
+function Remove-RCBackupJob {
+    [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
+    param(
+        [Parameter(Mandatory=$true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$Path
+    )
+    if ($PSCmdlet.ShouldProcess($Path, "Delete backup job definition")) {
+        Invoke-RCJson -ArgumentList @('job','delete','--file',$Path)
+    }
+}
+
 function Start-RCBackupJob {
     [CmdletBinding(SupportsShouldProcess=$true, ConfirmImpact='Medium')]
     param(
